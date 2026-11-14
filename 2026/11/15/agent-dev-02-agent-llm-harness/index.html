@@ -1,0 +1,331 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Agent 开发第二课：Agent = LLM + Harness | NomiraX 的博客</title><meta name="keywords" content="Agent,LLM,架构"><meta name="description" content="大模型给了 agent 一个会思考的大脑，harness 给了它手脚、记忆、循环和运行时。少任何一样，它都只是个会聊天的接口。 整理自 B 站视频：Agent&#x3D; LLM + Harness  agent 这个词其实很老中文译作“代理”或“中介”：能替你思考、替你办事的东西。人类对这个概念的想象比计算机早得多——从神话里的机关人，到织布机，到工业机械臂，都是“按预定程序替人干活”，但没人叫它们 a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent 开发第二课：Agent &#x3D; LLM + Harness">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/15/agent-dev-02-agent-llm-harness/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="大模型给了 agent 一个会思考的大脑，harness 给了它手脚、记忆、循环和运行时。少任何一样，它都只是个会聊天的接口。 整理自 B 站视频：Agent&#x3D; LLM + Harness  agent 这个词其实很老中文译作“代理”或“中介”：能替你思考、替你办事的东西。人类对这个概念的想象比计算机早得多——从神话里的机关人，到织布机，到工业机械臂，都是“按预定程序替人干活”，但没人叫它们 a">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-11-14T22:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-14T20:05:35.080Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="架构">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/agent-dev-02-agent-llm-harness/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
+lightGallery(document.getElementById('post-bg'), {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>Agent 开发第二课：Agent = LLM + Harness</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T22:30:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>大模型给了 agent 一个会思考的大脑，harness 给了它手脚、记忆、循环和运行时。少任何一样，它都只是个会聊天的接口。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1bjH565Evy/">Agent= LLM + Harness</a></p>
+</blockquote>
+<h2 id="agent-这个词其实很老"><a href="#agent-这个词其实很老" class="headerlink" title="agent 这个词其实很老"></a>agent 这个词其实很老</h2><p>中文译作“代理”或“中介”：能替你思考、替你办事的东西。人类对这个概念的想象比计算机早得多——从神话里的机关人，到织布机，到工业机械臂，都是“按预定程序替人干活”，但没人叫它们 agent，因为它们不能思考，只能执行写死的步骤。</p>
+<p>后来的路是一点点补上“理解”和“决策”：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>代表</th>
+<th>补上了什么</th>
+<th>还缺什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>预设程序</td>
+<td>机械臂、织布机</td>
+<td>执行力</td>
+<td>不会思考</td>
+</tr>
+<tr>
+<td>语音助手</td>
+<td>Siri</td>
+<td>能听懂一部分自然语言</td>
+<td>指令仍是预设的，能力有限</td>
+</tr>
+<tr>
+<td>搜索与博弈</td>
+<td>AlphaGo</td>
+<td>在巨大策略空间里自主决策</td>
+<td>只在一个领域内成立</td>
+</tr>
+<tr>
+<td>对话模型</td>
+<td>ChatGPT</td>
+<td>通用理解、生成复杂内容</td>
+<td>只能说话，办不了事</td>
+</tr>
+<tr>
+<td>工具调用</td>
+<td>2025 年之后的 agent</td>
+<td>能操作外部世界，围绕目标多步执行</td>
+<td>可靠性与安全问题</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一个更实用的定义：<strong>能感知环境、能思考决策、能采取行动，并反复迭代直到目标完成</strong>。按这个标准，AlphaGo 算 agent，但它是特定领域的；今天讨论的 agent 默认由大模型驱动，所以具备通用的世界理解和通用的决策能力。</p>
+<p>这也解释了为什么 2025 年之后 agent 突然普及：模型能力早就够了，缺的是“手脚”——工具调用协议成熟之后，对话才变成行动。</p>
+<h2 id="只有模型接口，不是-agent"><a href="#只有模型接口，不是-agent" class="headerlink" title="只有模型接口，不是 agent"></a>只有模型接口，不是 agent</h2><p>这一课做了三个很干净的实验，说明模型本身缺什么。</p>
+<p><strong>实验一：让它读本地文件。</strong> 给它一个 PRD 的文件名，让它评审。模型的回答是：我读不到你本地的文件，请把内容贴过来。它会思考，但没有手脚，拿不到文件系统里的任何东西。</p>
+<p><strong>实验二：连续两次调用。</strong> 第一次告诉它“评审 PRD 时重点看数据指标是否有依据”，它回答“收到”。第二次只问“我刚才让你重点看什么”，它回答“你还没有告诉我重点看什么”。它把上一句忘得干干净净。</p>
+<p><strong>实验三：把历史拼回去。</strong> 这一次把第一次的 user 消息、第一次的 assistant 回复、第二次的追问一起发过去，它立刻答对了：“你刚才让我重点关注 PRD 里的数据指标是否有依据。”</p>
+<p>结论很清楚：模型没有记忆，所谓“它记得”只是你把历史重新贴了一遍。这件事不只是实现细节——API 无状态本身也是隐私设计，否则 A 用户的内容会泄漏给 B 用户。</p>
+<p>到这里，模型比 agent 少的三样东西就清楚了：</p>
+<ul>
+<li><strong>工具</strong>：跟外部世界交互的通道；</li>
+<li><strong>循环</strong>：一次调用不够，要能多轮推进；</li>
+<li><strong>上下文</strong>：把历史喂回去，才有连贯性。</li>
+</ul>
+<h2 id="还差一层：运行时"><a href="#还差一层：运行时" class="headerlink" title="还差一层：运行时"></a>还差一层：运行时</h2><p>工具、循环、上下文凑齐，demo 能跑，但离“能用”还差一层。真实的 agent 会遇到：</p>
+<ul>
+<li>工具调用超时、报错、返回垃圾数据，怎么处理；</li>
+<li>长任务跑到一半进程挂了，状态存哪；</li>
+<li>工具改动了外部环境（写文件、下单、发消息），怎么隔离、怎么回滚；</li>
+<li>危险操作之前要不要人确认；</li>
+<li>出了错怎么复盘，钱花在哪。</li>
+</ul>
+<p>这些不属于模型、也不属于单个工具，而是<strong>运行时（runtime）</strong>的职责。所以本课给的公式是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">Agent = LLM + Harness<br>Harness = 工具 + 上下文 + 循环 + 运行时<br></code></pre></td></tr></table></figure>
+<p>harness（马具、挽具）这个词很形象：模型是马，harness 是把它的力气接到车上的那套东西。业界也有另一种等价说法——<code>agent = 大模型 + 工具 + 记忆 + 规划</code>——维度不同，指的是同一件事。</p>
+<p>在这个底座上还能继续往外扩：<code>memory</code> 存跨会话的信息，<code>RAG</code> 接外部知识，<code>skill</code> 封装做事的套路。它们都属于 harness 的范畴，因为它们的共同点是“模型之外、为了让模型能干活而存在的一切”。</p>
+<p>判断一个框架是不是 harness，看它有没有这几件事就够了：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>职责</th>
+<th>具体内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>上下文组装</td>
+<td>系统提示、历史裁剪、工具定义注入、知识召回</td>
+</tr>
+<tr>
+<td>工具执行</td>
+<td>参数校验、并发调度、超时重试、错误回填</td>
+</tr>
+<tr>
+<td>循环控制</td>
+<td>终止条件、轮数预算、token 预算</td>
+</tr>
+<tr>
+<td>运行时</td>
+<td>会话状态、沙箱、权限、人工审批、日志与追踪</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="大模型、Workflow、Agent：谁决定路径"><a href="#大模型、Workflow、Agent：谁决定路径" class="headerlink" title="大模型、Workflow、Agent：谁决定路径"></a>大模型、Workflow、Agent：谁决定路径</h2><p>这三个词经常混着用，判断标准只有一个：<strong>执行过程由谁决定</strong>。</p>
+<p>还是 PRD 评审这个任务，三种写法对比：</p>
+<p><strong>裸模型</strong>：读 PRD → 拼进提示词 → 让它指出最多三个问题。结果很泛：它不知道点击率到底多少，只能说“请明确基线”；也没有核实用户反馈的依据，建议停留在“可以做个 AB 实验”。开发者明明知道该查数据，但没写进提示词，模型也不会主动要求。</p>
+<p><strong>Workflow</strong>：把步骤写死成代码——读 PRD、检查完备性、生成三条评审意见，每个节点调一次模型。结果比裸模型靠谱，因为它有固定工序。但工序是人写的，人忘了“查数据”这一步，结果照样粗略；要加一步，就得改代码。</p>
+<p><strong>Agent</strong>：只告诉它目标和边界——“你是 PRD 评审助手；PRD 缺数据支撑时，去查指标；最多三步”。把 <code>read_doc</code> 和 <code>query_metric</code> 两个工具交给它，路径由它自己排。结果它先读文档，再连续查了三个指标，甚至还多做了一次无关的搜索。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>裸模型</th>
+<th>Workflow</th>
+<th>Agent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>谁决定执行路径</td>
+<td>开发者（只调一次）</td>
+<td>开发者（预编排）</td>
+<td>模型（在目标和边界内）</td>
+</tr>
+<tr>
+<td>确定性</td>
+<td>低，取决于提示词</td>
+<td>高，每次一样</td>
+<td>中，可能漏步也可能多做</td>
+</tr>
+<tr>
+<td>能力边界</td>
+<td>窄，只处理输入里的信息</td>
+<td>中，工序之外就卡住</td>
+<td>宽，能组合工具应对新情况</td>
+</tr>
+<tr>
+<td>调试难度</td>
+<td>低</td>
+<td>低</td>
+<td>高，路径不固定</td>
+</tr>
+<tr>
+<td>适合的场景</td>
+<td>单步生成、结构化抽取</td>
+<td>流程稳定、要求可预测</td>
+<td>目标明确但路径不确定</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>视频里说得很实在：确定性下降是 agent 的代价。它可能忘查某一步，也可能顺手调了不该调的接口。所以工程上不是“有了 agent 就不要 workflow”，而是反过来——<strong>把确定的小步骤固化成 workflow，让 agent 去调度它们</strong>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">agent 负责：理解目标、决定顺序、处理意外<br>workflow 负责：每段流程内部的固定工序<br></code></pre></td></tr></table></figure>
+<p>大任务拆成小任务，小任务里有幻觉风险的环节交给代码，需要判断的环节交回模型。这个组合在真实业务里比纯 agent 稳得多。</p>
+<h2 id="一个-coding-agent-修-bug-的完整路径"><a href="#一个-coding-agent-修-bug-的完整路径" class="headerlink" title="一个 coding agent 修 bug 的完整路径"></a>一个 coding agent 修 bug 的完整路径</h2><p>把上面的东西套一遍会更清楚。用户只给一句“修一下这个 bug”，agent 要做的是：</p>
+<ol>
+<li>读代码，理解目标，定位原因；</li>
+<li>修改文件；</li>
+<li>跑测试，看结果对不对；</li>
+<li>不对就看错误信息继续改，直到通过。</li>
+</ol>
+<p>这就是“决策 → 执行 → 观察 → 调整”的循环，和人类开发者一模一样。区别在于：它需要运行时提供真实的开发环境（能跑命令的沙箱）、需要权限控制（不能随便推到远端）、需要状态管理（改了哪些文件要记着）。</p>
+<p>所以 agent 开发不是“写好提示词”这么简单，它本质上是<strong>围绕大模型构建一套能自主执行、可靠交付的软件系统</strong>。这句话里的“软件系统”是重点。</p>
+<h2 id="顺着这个公式，要学的就四层"><a href="#顺着这个公式，要学的就四层" class="headerlink" title="顺着这个公式，要学的就四层"></a>顺着这个公式，要学的就四层</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>学什么</th>
+<th>解决什么问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>基础原理</td>
+<td>模型怎么工作、消息怎么组织、最小的 agent 怎么写</td>
+<td>能跑起来</td>
+</tr>
+<tr>
+<td>行动能力</td>
+<td>工具设计、MCP、RAG、记忆、skill</td>
+<td>能拿到对的信息、能做对的事</td>
+</tr>
+<tr>
+<td>架构与运行</td>
+<td>plan、workflow、单 agent 与多 agent、harness、沙箱、状态管理</td>
+<td>能做复杂任务、能跑稳</td>
+</tr>
+<tr>
+<td>工程化</td>
+<td>评测、可观测、权限、成本、交互</td>
+<td>能从 demo 变成产品</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>第一层对应上一篇的五十行代码；后面三篇笔记会陆续展开。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ol>
+<li>agent 不是模型的新能力，而是模型外面那套系统的名字；<code>Agent = LLM + Harness</code> 是最好用的拆解工具。</li>
+<li>模型无状态、无手脚、无终止条件，这三件事分别对应上下文、工具、循环。</li>
+<li>选择用模型还是用 workflow，看的是“执行路径由谁决定”，而成熟的做法是让 agent 调度 workflow，而不是二选一。</li>
+</ol>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/building-effective-agents">Building effective agents（Anthropic）</a></li>
+<li><a target="_blank" rel="noopener" href="https://openai.github.io/openai-agents-python/">OpenAI Agents SDK</a></li>
+<li>原视频：BV1bjH565Evy</li>
+</ul>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages"><div class="footer-link" style="width: 50%;text-align:right;border-right:1px #fe2 solid"><a href="/2026/11/15/agent-dev-03-token-context-window/">← 下一篇 Agent 开发第三课：Token 与 Context Window</a></div><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/agent-dev-01-minimal-agent-loop/">Agent 开发第一课：50 行代码跑通一个 Agent 循环 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>记录学习、技术与日常</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#agent-%E8%BF%99%E4%B8%AA%E8%AF%8D%E5%85%B6%E5%AE%9E%E5%BE%88%E8%80%81"><span class="toc-number">1.</span> <span class="toc-text">agent 这个词其实很老</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AA%E6%9C%89%E6%A8%A1%E5%9E%8B%E6%8E%A5%E5%8F%A3%EF%BC%8C%E4%B8%8D%E6%98%AF-agent"><span class="toc-number">2.</span> <span class="toc-text">只有模型接口，不是 agent</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%98%E5%B7%AE%E4%B8%80%E5%B1%82%EF%BC%9A%E8%BF%90%E8%A1%8C%E6%97%B6"><span class="toc-number">3.</span> <span class="toc-text">还差一层：运行时</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%A7%E6%A8%A1%E5%9E%8B%E3%80%81Workflow%E3%80%81Agent%EF%BC%9A%E8%B0%81%E5%86%B3%E5%AE%9A%E8%B7%AF%E5%BE%84"><span class="toc-number">4.</span> <span class="toc-text">大模型、Workflow、Agent：谁决定路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA-coding-agent-%E4%BF%AE-bug-%E7%9A%84%E5%AE%8C%E6%95%B4%E8%B7%AF%E5%BE%84"><span class="toc-number">5.</span> <span class="toc-text">一个 coding agent 修 bug 的完整路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%BA%E7%9D%80%E8%BF%99%E4%B8%AA%E5%85%AC%E5%BC%8F%EF%BC%8C%E8%A6%81%E5%AD%A6%E7%9A%84%E5%B0%B1%E5%9B%9B%E5%B1%82"><span class="toc-number">6.</span> <span class="toc-text">顺着这个公式，要学的就四层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">7.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">8.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>

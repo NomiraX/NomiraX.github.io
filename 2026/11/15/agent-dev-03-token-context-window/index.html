@@ -1,0 +1,290 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Agent 开发第三课：Token 与 Context Window | NomiraX 的博客</title><meta name="keywords" content="Agent,LLM,上下文"><meta name="description" content="agent 的成本和失败，大半都写在这两个词里：token 决定你花多少钱，context window 决定你在第几轮开始出错。 整理自 B 站视频：Token 与 Context Window  为什么这两个概念在 agent 里格外要紧普通问答只调一次模型，上下文是一个定值。agent 不一样：它每一轮都要把系统提示、全部历史、工具定义、工具结果重新发一遍，轮数越多，单次请求的输入越长。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent 开发第三课：Token 与 Context Window">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/15/agent-dev-03-token-context-window/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="agent 的成本和失败，大半都写在这两个词里：token 决定你花多少钱，context window 决定你在第几轮开始出错。 整理自 B 站视频：Token 与 Context Window  为什么这两个概念在 agent 里格外要紧普通问答只调一次模型，上下文是一个定值。agent 不一样：它每一轮都要把系统提示、全部历史、工具定义、工具结果重新发一遍，轮数越多，单次请求的输入越长。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-11-14T22:50:00.000Z">
+<meta property="article:modified_time" content="2026-11-14T20:05:43.356Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="上下文">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/agent-dev-03-token-context-window/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
+lightGallery(document.getElementById('post-bg'), {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>Agent 开发第三课：Token 与 Context Window</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T22:50:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>agent 的成本和失败，大半都写在这两个词里：token 决定你花多少钱，context window 决定你在第几轮开始出错。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1b8xi6UE4M/">Token 与 Context Window</a></p>
+</blockquote>
+<h2 id="为什么这两个概念在-agent-里格外要紧"><a href="#为什么这两个概念在-agent-里格外要紧" class="headerlink" title="为什么这两个概念在 agent 里格外要紧"></a>为什么这两个概念在 agent 里格外要紧</h2><p>普通问答只调一次模型，上下文是一个定值。agent 不一样：它每一轮都要把系统提示、全部历史、工具定义、工具结果重新发一遍，轮数越多，单次请求的输入越长。</p>
+<p>于是有两个问题同时出现：<strong>钱</strong>和<strong>窗口</strong>。token 决定每次调用怎么计费，context window 决定一次调用最多能装多少。不理解这两个概念，就没法理解后面所有的上下文管理技巧、记忆机制、RAG 和长任务设计——它们本质上都是在处理“窗口有限”这一件事。</p>
+<h2 id="token-是什么"><a href="#token-是什么" class="headerlink" title="token 是什么"></a>token 是什么</h2><p>模型不直接处理文字。输入文本先经过分词器，被切成一个个小片段，每个片段就是一个 token。</p>
+<p>切分规则不是“一个字一个 token”，也不是“一个词一个 token”。它是模型训练时学出来的，可能一个字一个、两个字一个、一个单词的一部分、甚至一个生僻字拆成几个字节片段。所以同一句话在不同模型上切出的 token 数往往不同——词表和规则都由各家的 tokenizer 决定。</p>
+<p>切完之后是一连串变换：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">文本 → 分词器切分 → token → 查词表得到 token id → embedding 变成向量 → 加上位置信息 → 送入 transformer<br></code></pre></td></tr></table></figure>
+<p>token 是这整条链路的中间产物，也正因为如此，它成了最自然的计量单位和计费单位。</p>
+<p>几个常见误解值得先破掉：</p>
+<ul>
+<li><strong>一个 token 约等于 0.75 个英文单词</strong>，或者中文里大致一到两个汉字一个 token，但这只是统计上的手感，具体文本差别很大；</li>
+<li><strong>代码和 JSON 更费 token</strong>：缩进、括号、引号、换行都会被切，同样的字符数往往比自然语言用掉更多 token；</li>
+<li><strong>生僻字、emoji、罕见符号更贵</strong>：词表里没有，会被拆成多个字节级 token。</li>
+</ul>
+<p>想准确知道一段文本多少 token，不要估，直接用工具算：OpenAI 的 <code>tiktoken</code>，或者厂商提供的 <code>count_tokens</code> 类接口。</p>
+<h2 id="输入-token-与输出-token"><a href="#输入-token-与输出-token" class="headerlink" title="输入 token 与输出 token"></a>输入 token 与输出 token</h2><p>API 的用量统计总是分成两栏，因为它们价格不同、也对应完全不同的计算过程。</p>
+<p><strong>输入 token</strong> 是你发过去的一切：</p>
+<ul>
+<li>系统提示词；</li>
+<li>全部历史消息（user 和 assistant）；</li>
+<li>工具定义与参数的 JSON Schema——<strong>每一轮都要重发</strong>；</li>
+<li>工具的执行结果；</li>
+<li>贴进去的文档、检索到的片段。</li>
+</ul>
+<p><strong>输出 token</strong> 是模型生成的一切：</p>
+<ul>
+<li>最终回答；</li>
+<li>工具调用的函数名和参数（这部分也计费，而且经常被忽略）；</li>
+<li>如果开启了思考/推理模式，思考过程也算输出。</li>
+</ul>
+<p>注意最后一条：现在很多模型的思考过程是单独返回的字段，但计费上仍按输出 token 算。开不开思考、思考多长，对账单的影响非常直接。</p>
+<h2 id="为什么输出比输入贵"><a href="#为什么输出比输入贵" class="headerlink" title="为什么输出比输入贵"></a>为什么输出比输入贵</h2><p>同一个 token，输出通常比输入贵 3 到 5 倍。原因在推理的两个阶段。</p>
+<p><strong>prefill（预填充）</strong>：把整段输入一次性并行算完，生成 KV cache。所有输入 token 一起过一遍，模型权重只读一次，GPU 的算力能吃到接近饱和。这个阶段是计算密集型的，效率很高。</p>
+<p><strong>decode（解码）</strong>：一个 token 一个 token 地生成。每生成一个，都要把模型权重和之前累积的 KV cache 再读一遍，然后只产出一个 token。这个阶段是访存密集型的，GPU 大部分时间在等数据搬运，算力用不上。输出越长，这个低效过程重复越多次。</p>
+<p>一句话概括：<strong>输入是批量的并行计算，输出是串行的逐字生成</strong>，后者对硬件的利用率低得多，所以更贵。</p>
+<p>顺着这个逻辑还能推出两件事：</p>
+<ul>
+<li>输出长度对成本的影响比输入更敏感，让模型“简短回答”是真的省钱；</li>
+<li>输入虽然便宜，但 agent 每轮都全量重发，量堆起来同样可观。</li>
+</ul>
+<h2 id="两种缓存，别搞混"><a href="#两种缓存，别搞混" class="headerlink" title="两种缓存，别搞混"></a>两种缓存，别搞混</h2><p>这两种缓存都叫 cache，但作用范围完全不同。</p>
+<p><strong>KV cache</strong> 是单次推理内部的优化。解码到第 n 个 token 时，前 n-1 个 token 的注意力键值对已经算好，直接复用即可。它只活在这一次请求里，请求结束就没了。</p>
+<p><strong>prompt caching</strong>（提示词缓存）是跨请求的。上一次请求算出的前缀 KV 被服务端留着，下一次请求如果前缀一模一样，就直接复用这部分计算，只算新增的部分。</p>
+<p>为什么可以这样复用？因为 decoder-only 模型用了因果掩码：每个 token 只能看到自己和之前的位置，看不到后面。所以你在前缀后面追加内容，前缀那部分的计算结果不受影响。这正是 agent 场景的常态——<code>messages</code> 数组只追加、不改动，前面那一大段天然稳定。</p>
+<p>命中缓存后，输入侧单价通常会降到十分之一甚至更低。各家机制不同：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>提供方</th>
+<th>触发方式</th>
+<th>关键约束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DeepSeek</td>
+<td>自动，按前缀块匹配</td>
+<td>无需改代码，前缀稳定即可命中</td>
+</tr>
+<tr>
+<td>OpenAI</td>
+<td>自动前缀缓存</td>
+<td>前缀至少 1024 token，缓存保留几分钟到一小时</td>
+</tr>
+<tr>
+<td>Anthropic</td>
+<td>显式 <code>cache_control</code> 标记断点</td>
+<td>写入要额外付费，读取约为十分之一；TTL 可选</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>这里有个直接影响写法的结论：<strong>前缀必须稳定</strong>。前缀里改一个字，后面的缓存全部作废。所以：</p>
+<ul>
+<li>系统提示、工具定义放最前面，它们是天然稳定的最大前缀；</li>
+<li>不要把时间戳、随机 ID、每轮变化的排序结果放在提示词开头；</li>
+<li>不要把“重新格式化一遍历史消息”当成常规操作，格式化会让前缀全变；</li>
+<li>这也是为什么上下文压缩不能太频繁——每压缩一次，缓存就重建一次。等上下文涨到窗口的七八成才压一次，是有账算的做法。</li>
+</ul>
+<h2 id="context-window-是一个共享容器"><a href="#context-window-是一个共享容器" class="headerlink" title="context window 是一个共享容器"></a>context window 是一个共享容器</h2><p>很多人以为 context window 是“输入上限”，其实它是<strong>输入加输出的总和</strong>。模型一次调用能处理的总 token 数就是窗口大小，中间怎么分配由你决定。</p>
+<p>主流模型从 128k 到上百万 token 不等。看起来很大，但对 agent 来说消耗速度是惊人的：</p>
+<ul>
+<li>一个工具定义几百 token，十个工具就是几千；</li>
+<li>一轮工具结果可能是几千 token（读文件、查日志、接口返回）；</li>
+<li>历史消息只增不减。</li>
+</ul>
+<p>超限的后果有两种，都很糟：</p>
+<ol>
+<li><strong>请求被拒绝</strong>：直接报错，任务中断；</li>
+<li><strong>静默裁剪</strong>：服务端按它的规则截断，你不知道它丢了哪一段。丢的可能恰好是任务目标或关键约束，agent 会开始做出莫名其妙的行为。</li>
+</ol>
+<p>第二种更危险，因为它是无声的。</p>
+<p>还有一个实操上常被忽略的点：窗口是共享的，所以你能用的输入上限 = 窗口大小 − 你给输出预留的空间。如果 <code>max_tokens</code> 设得很大，实际可用的输入空间就相应变小。做长文档处理时，要按“窗口减去预留输出”来算能塞多少内容。</p>
+<h2 id="一个能看见增长过程的实验"><a href="#一个能看见增长过程的实验" class="headerlink" title="一个能看见增长过程的实验"></a>一个能看见增长过程的实验</h2><p>视频里用一个日志排查 agent 演示了消耗速度：给它一个排查任务，五轮里每轮塞进一页日志（约 2880 字符），并让模型逐页分析。</p>
+<p>第一轮，系统提示加用户问题才几十个字符，窗口占用 0.15%；第二轮 0.28%；到第五轮已经是 0.69%。<strong>五轮就吃掉了七成窗口</strong>，而真实的日志排查往往要几十轮。</p>
+<p>这里的成本结构还有个特点：每轮都把历史全量重发，所以第 n 轮的输入包含前 n-1 轮的内容。总输入量大致随轮数平方增长。前缀缓存能把这笔账压下来不少，但只要有一轮改了前缀（比如压缩了历史），缓存就要重建。</p>
+<h2 id="context-engineering-在管理什么"><a href="#context-engineering-在管理什么" class="headerlink" title="context engineering 在管理什么"></a>context engineering 在管理什么</h2><p>问题来源很简单：agent 运行时，系统指令、工具、历史、外部知识、长期记忆都在往上下文里灌，而窗口是有限的。</p>
+<p>所以要做的事只有两件：<strong>控制塞进去的量</strong>，<strong>保住任务需要的关键信息</strong>。常见手段有五类：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>做法</th>
+<th>代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>滑动窗口</td>
+<td>只保留最近 N 轮对话</td>
+<td>早期信息直接丢失，可能丢掉目标</td>
+</tr>
+<tr>
+<td>压缩摘要</td>
+<td>把早期内容压成摘要，保留决策和结论</td>
+<td>摘要本身有信息损失，且会让缓存失效</td>
+</tr>
+<tr>
+<td>按需检索</td>
+<td>文档、知识、历史记录放外部，需要时再召回</td>
+<td>依赖检索质量，召回错了全错</td>
+</tr>
+<tr>
+<td>复用计算</td>
+<td>利用 prompt caching 复用稳定前缀</td>
+<td>前缀必须稳定，不能频繁重排</td>
+</tr>
+<tr>
+<td>状态外置</td>
+<td>进度、中间结果存到外部存储，按需取回</td>
+<td>要自己设计状态结构</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>实践中这几种是配合用的，而不是选一个：最近几轮保留原文（滑动窗口），更早的压成摘要，参考资料放外部按需检索，系统提示和工具定义永久固定在前面吃缓存。</p>
+<p>这里也能解释一个看似矛盾的经验：<strong>压缩并不是越频繁越省钱</strong>。压得太勤，缓存次次失效，每轮都在全额付费重算前缀，反而更贵。</p>
+<h2 id="memory、skill、RAG-都来自同一个限制"><a href="#memory、skill、RAG-都来自同一个限制" class="headerlink" title="memory、skill、RAG 都来自同一个限制"></a>memory、skill、RAG 都来自同一个限制</h2><p>这三个词经常被当成三个独立技术点，其实它们的出发点完全相同：窗口有限，不能把所有东西都放进去。</p>
+<p><strong>memory</strong> 解决跨会话的问题。会话结束上下文就没了，所以把用户偏好、历史事实、任务摘要存到外部，下次需要时再放回来。</p>
+<p><strong>skill</strong> 解决“套路太多”的问题。如果把所有操作手册都塞进系统提示，光定义就占满窗口。做法是渐进式披露：一开始只给模型一句描述“这个技能是干什么的”，它判断需要时再加载详细内容。更进一步，具体执行往往交给本地脚本，脚本跑完只把结果返回——中间过程根本不经过模型，一个 token 都不花。</p>
+<p><strong>RAG</strong> 解决外部知识的问题。企业知识库动辄几十万文档，全塞进去窗口瞬间爆掉，所以用向量检索只召回相关片段，放进上下文。</p>
+<p>理解了“窗口有限”这个共同前提，这三个技术就不用死记了——它们只是三种把信息挡在窗口外面的方式。</p>
+<h2 id="实操清单"><a href="#实操清单" class="headerlink" title="实操清单"></a>实操清单</h2><p>给自己的项目做体检时，按这几条走：</p>
+<ol>
+<li><strong>量一遍</strong>：用 <code>tiktoken</code> 或厂商接口，把系统提示、工具定义、一次典型历史各占多少 token 算清楚，很多问题一算就露出来了。</li>
+<li><strong>看账单的两个数</strong>：每次请求记录 <code>prompt_tokens</code> 和其中缓存命中的部分（响应里的 <code>cached_tokens</code> 之类字段），命中率低就是前缀不稳定。</li>
+<li><strong>设阈值</strong>：窗口占用到 70%~80% 触发压缩，且压缩放在任务段落边界，不要每轮都做。</li>
+<li><strong>精简工具集</strong>：工具定义每轮都进输入，用不到的工具不要挂上；能拆成多个小 agent 的场景，别让一个 agent 背二十个工具。</li>
+<li><strong>控制输出</strong>：用输出上限和“简短回答”的指令压输出长度，这是单位成本最高的一栏。</li>
+<li><strong>预留输出空间</strong>：算输入预算时，从窗口里先减掉给输出留的部分。</li>
+</ol>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ol>
+<li>token 是模型处理文本的中间产物，也是计费单位；输出 token 比输入贵，因为解码是逐 token 的访存密集型过程。</li>
+<li>prompt caching 复用跨请求的稳定前缀，能把输入成本压一个数量级——代价是前缀不能动。</li>
+<li>context window 是输入加输出共用的容器，agent 每轮全量重发，不做管理必然超限，而超限的静默截断比报错更危险。</li>
+</ol>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://platform.openai.com/docs/guides/prompt-caching">OpenAI Prompt Caching</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching">Anthropic Prompt Caching</a></li>
+<li><a target="_blank" rel="noopener" href="https://api-docs.deepseek.com/guides/kv_cache">DeepSeek 上下文硬盘缓存</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/openai/tiktoken">tiktoken</a></li>
+<li>原视频：BV1b8xi6UE4M</li>
+</ul>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/agent-dev-02-agent-llm-harness/">Agent 开发第二课：Agent = LLM + Harness 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>记录学习、技术与日常</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%B8%A4%E4%B8%AA%E6%A6%82%E5%BF%B5%E5%9C%A8-agent-%E9%87%8C%E6%A0%BC%E5%A4%96%E8%A6%81%E7%B4%A7"><span class="toc-number">1.</span> <span class="toc-text">为什么这两个概念在 agent 里格外要紧</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#token-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">2.</span> <span class="toc-text">token 是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BE%93%E5%85%A5-token-%E4%B8%8E%E8%BE%93%E5%87%BA-token"><span class="toc-number">3.</span> <span class="toc-text">输入 token 与输出 token</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BE%93%E5%87%BA%E6%AF%94%E8%BE%93%E5%85%A5%E8%B4%B5"><span class="toc-number">4.</span> <span class="toc-text">为什么输出比输入贵</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%A4%E7%A7%8D%E7%BC%93%E5%AD%98%EF%BC%8C%E5%88%AB%E6%90%9E%E6%B7%B7"><span class="toc-number">5.</span> <span class="toc-text">两种缓存，别搞混</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#context-window-%E6%98%AF%E4%B8%80%E4%B8%AA%E5%85%B1%E4%BA%AB%E5%AE%B9%E5%99%A8"><span class="toc-number">6.</span> <span class="toc-text">context window 是一个共享容器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E8%83%BD%E7%9C%8B%E8%A7%81%E5%A2%9E%E9%95%BF%E8%BF%87%E7%A8%8B%E7%9A%84%E5%AE%9E%E9%AA%8C"><span class="toc-number">7.</span> <span class="toc-text">一个能看见增长过程的实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#context-engineering-%E5%9C%A8%E7%AE%A1%E7%90%86%E4%BB%80%E4%B9%88"><span class="toc-number">8.</span> <span class="toc-text">context engineering 在管理什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#memory%E3%80%81skill%E3%80%81RAG-%E9%83%BD%E6%9D%A5%E8%87%AA%E5%90%8C%E4%B8%80%E4%B8%AA%E9%99%90%E5%88%B6"><span class="toc-number">9.</span> <span class="toc-text">memory、skill、RAG 都来自同一个限制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E6%93%8D%E6%B8%85%E5%8D%95"><span class="toc-number">10.</span> <span class="toc-text">实操清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">11.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">12.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Agent 开发第一课：50 行代码跑通一个 Agent 循环 | NomiraX 的博客</title><meta name="keywords" content="Agent,LLM,工具调用"><meta name="description" content="Agent 的门槛比听起来低得多：一个模型、一份工具清单、一个不断追加的消息列表、一个 while 循环，就能让它自己去查资料、拿结果、再回答。 整理自 B 站视频：Agent 开发第一课：50 行代码实现极简Agent  这个系列打算讲什么先把课程地图摆出来，后面几篇笔记才好定位。     层次 内容     入门 什么是 agent、大模型基础 API、流式输出、最简单的循环范式   核心能">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent 开发第一课：50 行代码跑通一个 Agent 循环">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/15/agent-dev-01-minimal-agent-loop/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="Agent 的门槛比听起来低得多：一个模型、一份工具清单、一个不断追加的消息列表、一个 while 循环，就能让它自己去查资料、拿结果、再回答。 整理自 B 站视频：Agent 开发第一课：50 行代码实现极简Agent  这个系列打算讲什么先把课程地图摆出来，后面几篇笔记才好定位。     层次 内容     入门 什么是 agent、大模型基础 API、流式输出、最简单的循环范式   核心能">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-11-14T22:10:00.000Z">
+<meta property="article:modified_time" content="2026-11-14T20:05:35.039Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="工具调用">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/agent-dev-01-minimal-agent-loop/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
+lightGallery(document.getElementById('post-bg'), {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>Agent 开发第一课：50 行代码跑通一个 Agent 循环</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T22:10:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>Agent 的门槛比听起来低得多：一个模型、一份工具清单、一个不断追加的消息列表、一个 while 循环，就能让它自己去查资料、拿结果、再回答。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1W1nT67EB1/">Agent 开发第一课：50 行代码实现极简Agent</a></p>
+</blockquote>
+<h2 id="这个系列打算讲什么"><a href="#这个系列打算讲什么" class="headerlink" title="这个系列打算讲什么"></a>这个系列打算讲什么</h2><p>先把课程地图摆出来，后面几篇笔记才好定位。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入门</td>
+<td>什么是 agent、大模型基础 API、流式输出、最简单的循环范式</td>
+</tr>
+<tr>
+<td>核心能力</td>
+<td>工具、MCP、skill、RAG、plan、记忆、上下文管理</td>
+</tr>
+<tr>
+<td>架构与协议</td>
+<td>workflow、单 agent 与多 agent、human-in-the-loop、通信协议</td>
+</tr>
+<tr>
+<td>框架</td>
+<td>LangGraph、OpenAI Agents SDK、Google ADK、Vercel AI SDK、LlamaIndex</td>
+</tr>
+<tr>
+<td>coding agent</td>
+<td>基于 CLI 或 SDK 做代码修改类 agent</td>
+</tr>
+<tr>
+<td>harness 与运行时</td>
+<td>状态管理、checkpoint、可观测、评测、沙箱、权限</td>
+</tr>
+<tr>
+<td>趋势</td>
+<td>大厂布局与前沿方向</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>贯穿整个系列的是一个 personal agent 项目：能回消息、能写代码、能沉淀能力，本质上是个人的数字分身。</p>
+<p>视频里有个判断值得记下来：agent 开发正在从“高级岗位的技能”变成“通用基本功”，校招、社招、算法岗都会被问到，而且问得越来越深——“会用 RAG”远远不够，会问工具怎么设计、循环怎么终止、上下文怎么控制。</p>
+<h2 id="agent-拆成四块"><a href="#agent-拆成四块" class="headerlink" title="agent 拆成四块"></a>agent 拆成四块</h2><p>去掉各种花哨的定义，一个能跑起来的 agent 只有四部分：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>组成</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>大模型</td>
+<td>理解任务、分析现状、决定下一步</td>
+</tr>
+<tr>
+<td>工具</td>
+<td>和外部世界交互：查数据库、调接口、读写文件、执行命令</td>
+</tr>
+<tr>
+<td>上下文</td>
+<td>模型这一轮能看到的全部信息：系统提示、历史、工具定义与结果</td>
+</tr>
+<tr>
+<td>循环</td>
+<td>一次搞不定就多轮迭代，直到模型认为可以给答案</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>只调一次 API 得到一段文本，那不是 agent，那是问答。agent 的关键在于“模型输出的是一个决策，而这个决策需要外面的程序去执行，执行结果再回到模型眼前”。</p>
+<h2 id="ReAct：一轮循环长什么样"><a href="#ReAct：一轮循环长什么样" class="headerlink" title="ReAct：一轮循环长什么样"></a>ReAct：一轮循环长什么样</h2><p>ReAct = Reasoning + Action，思考加行动。它描述的是一轮里发生的事：</p>
+<ol>
+<li>模型读当前上下文，分析已经有什么、还缺什么；</li>
+<li>缺什么就决定调哪个工具、传什么参数（action）；</li>
+<li>程序执行工具，把结果塞回上下文（observation）；</li>
+<li>模型再看一眼：够了吗？够就给答案，不够继续第 1 步。</li>
+</ol>
+<p>对人来说这就是“查一下、看一眼、再查一下”的过程，agent 只是把这个过程写成了循环。要注意第 3 步的执行者是<strong>你的程序</strong>，不是模型。模型只负责说“请帮我调 get_price，参数是蓝牙耳机”，真正的函数调用发生在模型外面。这是初学最容易混淆的一点。</p>
+<h2 id="消息列表就是-agent-的状态"><a href="#消息列表就是-agent-的状态" class="headerlink" title="消息列表就是 agent 的状态"></a>消息列表就是 agent 的状态</h2><p>模型 API 是无状态的：每次请求你发什么它就看什么，上一轮说过的话它一概不知。所以 agent 的“记忆”不在模型里，而在你维护的那个 <code>messages</code> 数组里。</p>
+<p>数组里每条消息都有一个 <code>role</code>，各司其职：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>role</th>
+<th>谁写的</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>system</code></td>
+<td>你</td>
+<td>角色设定与行为约束，放第一条，整个循环都生效</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>用户</td>
+<td>这次任务的起点，也是循环要推进到的目标</td>
+</tr>
+<tr>
+<td><code>assistant</code></td>
+<td>模型</td>
+<td>模型的回复；带 <code>tool_calls</code> 时相当于 ReAct 的 action</td>
+</tr>
+<tr>
+<td><code>tool</code></td>
+<td>你的程序</td>
+<td>工具执行结果，相当于 observation；靠 <code>tool_call_id</code> 和上面的 action 对应</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>有三个细节必须做对，否则一定报错：</p>
+<ul>
+<li>模型返回的那条 <code>assistant</code> 消息要<strong>原样</strong>追加回数组，包括里面的 <code>tool_calls</code> 和它们的 <code>id</code>；</li>
+<li>模型一次可能发起<strong>多个</strong>工具调用（并行调用），每个都要执行，每个的结果都要用对应的 <code>tool_call_id</code> 回填；</li>
+<li><code>tool</code> 消息的 <code>content</code> 必须是字符串，字典要先 <code>json.dumps</code>。</li>
+</ul>
+<p>漏掉其中一个 <code>tool_call_id</code>，OpenAI 兼容接口会直接返回 400：它认为你欠它一条结果。</p>
+<h2 id="工具怎么描述给模型"><a href="#工具怎么描述给模型" class="headerlink" title="工具怎么描述给模型"></a>工具怎么描述给模型</h2><p>模型没法猜你的函数长什么样，所以要用它认识的标准格式告诉它有哪些工具、每个工具干什么、要什么参数。本质是一段 JSON Schema：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;function&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;function&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;get_price&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;按商品名称查询当前售价，一次只查一个商品；查不到返回错误信息。&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;parameters&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;object&quot;</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;properties&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>          <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;string&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;商品名称，例如 蓝牙耳机&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><br>      <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;required&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;name&quot;</span><span class="hljs-punctuation">]</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>写工具描述的经验：</p>
+<ul>
+<li><code>name</code> 用语义化的动词短语，模型是靠名字和描述建立联想的；</li>
+<li><code>description</code> 要写清<strong>什么时候用</strong>和<strong>有什么限制</strong>，只写“查询价格”太弱，加上“一次只查一个”能明显减少乱传参数；</li>
+<li><code>parameters</code> 里的 <code>description</code> 同样重要，它是模型填参数时的唯一依据；</li>
+<li>工具定义会随每次请求一起进上下文，工具多了输入 token 会明显变贵，别把一套 API 全塞进去。</li>
+</ul>
+<h2 id="50-行代码"><a href="#50-行代码" class="headerlink" title="50 行代码"></a>50 行代码</h2><p>下面这个例子让 agent 比较两款耳机的价格，价格来自本地字典，不真的发网络请求。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> json<br><span class="hljs-keyword">import</span> os<br><br><span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI<br><br>client = OpenAI(<br>    api_key=os.environ[<span class="hljs-string">&quot;DEEPSEEK_API_KEY&quot;</span>],<br>    base_url=<span class="hljs-string">&quot;https://api.deepseek.com&quot;</span>,<br>)<br><br>PRICES = &#123;<span class="hljs-string">&quot;蓝牙耳机&quot;</span>: <span class="hljs-number">129</span>, <span class="hljs-string">&quot;降噪耳机&quot;</span>: <span class="hljs-number">299</span>&#125;<br><br>TOOLS = [&#123;<br>    <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;function&quot;</span>,<br>    <span class="hljs-string">&quot;function&quot;</span>: &#123;<br>        <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;get_price&quot;</span>,<br>        <span class="hljs-string">&quot;description&quot;</span>: <span class="hljs-string">&quot;按商品名称查询当前售价，一次只查一个商品；查不到返回错误。&quot;</span>,<br>        <span class="hljs-string">&quot;parameters&quot;</span>: &#123;<br>            <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;object&quot;</span>,<br>            <span class="hljs-string">&quot;properties&quot;</span>: &#123;<span class="hljs-string">&quot;name&quot;</span>: &#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;string&quot;</span>, <span class="hljs-string">&quot;description&quot;</span>: <span class="hljs-string">&quot;商品名称&quot;</span>&#125;&#125;,<br>            <span class="hljs-string">&quot;required&quot;</span>: [<span class="hljs-string">&quot;name&quot;</span>],<br>        &#125;,<br>    &#125;,<br>&#125;]<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">get_price</span>(<span class="hljs-params">name: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">dict</span>:<br>    <span class="hljs-keyword">if</span> name <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> PRICES:<br>        <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">f&quot;没有找到商品 <span class="hljs-subst">&#123;name&#125;</span>&quot;</span>&#125;<br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;name&quot;</span>: name, <span class="hljs-string">&quot;price&quot;</span>: PRICES[name], <span class="hljs-string">&quot;currency&quot;</span>: <span class="hljs-string">&quot;CNY&quot;</span>&#125;<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">run_tool</span>(<span class="hljs-params">name: <span class="hljs-built_in">str</span>, args: <span class="hljs-built_in">dict</span></span>) -&gt; <span class="hljs-built_in">str</span>:<br>    <span class="hljs-keyword">if</span> name == <span class="hljs-string">&quot;get_price&quot;</span>:<br>        <span class="hljs-keyword">return</span> json.dumps(get_price(args.get(<span class="hljs-string">&quot;name&quot;</span>, <span class="hljs-string">&quot;&quot;</span>)), ensure_ascii=<span class="hljs-literal">False</span>)<br>    <span class="hljs-keyword">return</span> json.dumps(&#123;<span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-string">f&quot;未知工具 <span class="hljs-subst">&#123;name&#125;</span>&quot;</span>&#125;, ensure_ascii=<span class="hljs-literal">False</span>)<br><br><br>messages = [<br>    &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;system&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;你是导购助手。比较价格前必须先调用 get_price 查价，不许猜测。&quot;</span>&#125;,<br>    &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;蓝牙耳机和降噪耳机哪个便宜？便宜多少？&quot;</span>&#125;,<br>]<br><br><span class="hljs-keyword">for</span> step <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">5</span>):<br>    resp = client.chat.completions.create(<br>        model=<span class="hljs-string">&quot;deepseek-chat&quot;</span>, messages=messages, tools=TOOLS<br>    )<br>    msg = resp.choices[<span class="hljs-number">0</span>].message<br>    messages.append(msg.model_dump(exclude_none=<span class="hljs-literal">True</span>))<br><br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> msg.tool_calls:<br>        <span class="hljs-built_in">print</span>(msg.content)<br>        <span class="hljs-keyword">break</span><br><br>    <span class="hljs-keyword">for</span> call <span class="hljs-keyword">in</span> msg.tool_calls:<br>        result = run_tool(call.function.name, json.loads(call.function.arguments))<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;[action] <span class="hljs-subst">&#123;call.function.name&#125;</span>(<span class="hljs-subst">&#123;call.function.arguments&#125;</span>)&quot;</span>)<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;[observation] <span class="hljs-subst">&#123;result&#125;</span>&quot;</span>)<br>        messages.append(&#123;<br>            <span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;tool&quot;</span>,<br>            <span class="hljs-string">&quot;tool_call_id&quot;</span>: call.<span class="hljs-built_in">id</span>,<br>            <span class="hljs-string">&quot;content&quot;</span>: result,<br>        &#125;)<br><span class="hljs-keyword">else</span>:<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;达到最大轮数，终止&quot;</span>)<br></code></pre></td></tr></table></figure>
+<p>把注释和打印去掉，骨架就是五十行左右。视频里统计的“五十行”指的就是这部分。</p>
+<p>几处值得单独说：</p>
+<ul>
+<li><code>base_url</code> 指向 DeepSeek 的兼容端点，换成任何 OpenAI 兼容服务都只改这一行和 <code>model</code> 名；</li>
+<li><code>model_dump(exclude_none=True)</code> 是 OpenAI SDK 提供的便捷方法，能把 pydantic 对象转成可以直接回传的字典，且不塞进一堆 <code>null</code>；</li>
+<li>循环上限 5 轮是必需的护栏，模型有概率陷进“再查一次”的死循环；</li>
+<li><code>else</code> 分支挂在 <code>for</code> 上，只有循环跑完没 break 才执行，正好用来处理“超轮数”。</li>
+</ul>
+<h2 id="跑起来是什么样"><a href="#跑起来是什么样" class="headerlink" title="跑起来是什么样"></a>跑起来是什么样</h2><p>第一轮模型不会直接回答，而是同时发起两个 <code>get_price</code> 调用——一次查蓝牙耳机，一次查降噪耳机。程序依次执行，把两条结果回填：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs text">[action] get_price(&#123;&quot;name&quot;: &quot;蓝牙耳机&quot;&#125;)<br>[observation] &#123;&quot;name&quot;: &quot;蓝牙耳机&quot;, &quot;price&quot;: 129, &quot;currency&quot;: &quot;CNY&quot;&#125;<br>[action] get_price(&#123;&quot;name&quot;: &quot;降噪耳机&quot;&#125;)<br>[observation] &#123;&quot;name&quot;: &quot;降噪耳机&quot;, &quot;price&quot;: 299, &quot;currency&quot;: &quot;CNY&quot;&#125;<br></code></pre></td></tr></table></figure>
+<p>第二轮模型看到了两个价格，<code>tool_calls</code> 为空，直接给结论：蓝牙耳机更便宜，便宜 170 元，并说明这是根据查询结果算出来的，不是估的。</p>
+<p>注意这个结论有依据，是因为 299 - 129 这个算术建立在两个真实返回值上。如果把工具返回值改成错的，模型会跟着错——它只对上下文里的数字负责。</p>
+<h2 id="第二个例子：查真实天气"><a href="#第二个例子：查真实天气" class="headerlink" title="第二个例子：查真实天气"></a>第二个例子：查真实天气</h2><p>比价用的是假数据，第二个 demo 换成真实接口。任务是“对比北京和上海现在哪个更热，给穿衣建议”，工具只有两个：</p>
+<ul>
+<li><code>search_city</code>：城市名 → 经纬度；</li>
+<li><code>get_weather</code>：经纬度 → 当前天气。</li>
+</ul>
+<p>注意这里的依赖关系：天气 API 只认经纬度，所以模型必须先查坐标再查天气。这正好是 agent 比单次调用强的地方——<strong>它自己排出了调用顺序</strong>，你只给了目标和两个工具。</p>
+<p>这次演示里发生了一件更有意思的事：第一次调天气接口时网络出错，失败结果作为 observation 回到了模型。模型读到错误信息，判断是网络问题，把两个城市的英文名重新转了一遍（中文名直接调外网 API 常失败），又发起一轮调用，第二次成功。</p>
+<p>这是本节最实用的一课：<strong>工具失败时不要把异常抛出去终止流程，把错误当成 observation 返回给模型</strong>。模型能读懂 <code>error</code> 字段并自行更换参数重试，这比你在外面写一堆重试逻辑更省事。当然，能重试几次、重试哪类错误，还是要你来兜底。</p>
+<h2 id="这-50-行里还缺什么"><a href="#这-50-行里还缺什么" class="headerlink" title="这 50 行里还缺什么"></a>这 50 行里还缺什么</h2><p>能跑通和能用之间隔着这些东西，也是后面几课要补的：</p>
+<ul>
+<li><strong>错误处理</strong>：工具抛异常要转成结构化错误回填，而不是让整个循环崩掉；</li>
+<li><strong>参数校验</strong>：模型给的 JSON 可能缺字段、类型不对，<code>json.loads</code> 之前最好做 schema 校验；</li>
+<li><strong>并发</strong>：多个 <code>tool_calls</code> 目前是串行执行，互相独立的调用应该并发；</li>
+<li><strong>流式输出</strong>：真实产品里要边生成边显示，<code>stream=True</code> 后还要处理流式返回的 <code>tool_calls</code> 分片；</li>
+<li><strong>计费与观测</strong>：每轮记 <code>prompt_tokens</code>、<code>completion_tokens</code> 和其中的 <code>cached_tokens</code>，否则不知道钱花在哪；</li>
+<li><strong>终止条件</strong>：除了轮数上限，还应该有总 token 预算、总耗时上限；</li>
+<li><strong>安全</strong>：工具参数是模型生成的，拼 SQL、拼 shell、拼路径之前必须校验和转义，能力越强的工具越要限制参数——这是生产环境里出事最多的地方；</li>
+<li><strong>权限与审批</strong>：删文件、发消息、下单这类有副作用的操作，要有人工确认或白名单。</li>
+</ul>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>三句话：</p>
+<ol>
+<li>agent 的骨架是“消息列表 + 循环”，模型负责决策，你的程序负责执行，执行结果回到列表里。</li>
+<li>消息的 <code>role</code> 和 <code>tool_call_id</code> 是协议层，写错一处整条链路就断。</li>
+<li>五十行能跑通，但错误处理、并发、计费、权限这四件事决定它能不能上生产。</li>
+</ol>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://platform.openai.com/docs/guides/function-calling">OpenAI Function Calling</a></li>
+<li><a target="_blank" rel="noopener" href="https://api-docs.deepseek.com/">DeepSeek API 文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2210.03629">ReAct: Synergizing Reasoning and Acting in Language Models</a></li>
+<li>原视频：BV1W1nT67EB1</li>
+</ul>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages"><div class="footer-link" style="width: 50%;text-align:right;border-right:1px #fe2 solid"><a href="/2026/11/15/agent-dev-02-agent-llm-harness/">← 下一篇 Agent 开发第二课：Agent = LLM + Harness</a></div><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/common-llm-apis-and-message-structure/">常用大模型 API 与消息结构 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>记录学习、技术与日常</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E4%B8%AA%E7%B3%BB%E5%88%97%E6%89%93%E7%AE%97%E8%AE%B2%E4%BB%80%E4%B9%88"><span class="toc-number">1.</span> <span class="toc-text">这个系列打算讲什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#agent-%E6%8B%86%E6%88%90%E5%9B%9B%E5%9D%97"><span class="toc-number">2.</span> <span class="toc-text">agent 拆成四块</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ReAct%EF%BC%9A%E4%B8%80%E8%BD%AE%E5%BE%AA%E7%8E%AF%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7"><span class="toc-number">3.</span> <span class="toc-text">ReAct：一轮循环长什么样</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%88%97%E8%A1%A8%E5%B0%B1%E6%98%AF-agent-%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toc-number">4.</span> <span class="toc-text">消息列表就是 agent 的状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7%E6%80%8E%E4%B9%88%E6%8F%8F%E8%BF%B0%E7%BB%99%E6%A8%A1%E5%9E%8B"><span class="toc-number">5.</span> <span class="toc-text">工具怎么描述给模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#50-%E8%A1%8C%E4%BB%A3%E7%A0%81"><span class="toc-number">6.</span> <span class="toc-text">50 行代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B7%91%E8%B5%B7%E6%9D%A5%E6%98%AF%E4%BB%80%E4%B9%88%E6%A0%B7"><span class="toc-number">7.</span> <span class="toc-text">跑起来是什么样</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E4%B8%AA%E4%BE%8B%E5%AD%90%EF%BC%9A%E6%9F%A5%E7%9C%9F%E5%AE%9E%E5%A4%A9%E6%B0%94"><span class="toc-number">8.</span> <span class="toc-text">第二个例子：查真实天气</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99-50-%E8%A1%8C%E9%87%8C%E8%BF%98%E7%BC%BA%E4%BB%80%E4%B9%88"><span class="toc-number">9.</span> <span class="toc-text">这 50 行里还缺什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">10.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">11.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>
