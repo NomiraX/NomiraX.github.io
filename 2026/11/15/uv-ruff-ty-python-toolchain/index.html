@@ -1,0 +1,321 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>uv + ruff + ty：一套现代 Python 工具链 | NomiraX 的博客</title><meta name="keywords" content="Python,uv,ruff,ty,工具链,视频笔记"><meta name="description" content="这是一篇视频笔记，源内容是 B 站「AI日日新」的 《现代 Python 工具链：uv、ruff、ty》（约 8 分钟）。视频以演示为主，我按自己的习惯重排了顺序，补上了官方文档里必须知道、但视频没展开的细节，并订正了口播、机器字幕和作者 README 里的几处错误 —— 订正集中列在文末，正文只写正确的东西。命令我都在 uv 0.13.8 上复核过，和视频录制时的 uv 0.11.8 有差异的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="uv + ruff + ty：一套现代 Python 工具链">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/15/uv-ruff-ty-python-toolchain/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="这是一篇视频笔记，源内容是 B 站「AI日日新」的 《现代 Python 工具链：uv、ruff、ty》（约 8 分钟）。视频以演示为主，我按自己的习惯重排了顺序，补上了官方文档里必须知道、但视频没展开的细节，并订正了口播、机器字幕和作者 README 里的几处错误 —— 订正集中列在文末，正文只写正确的东西。命令我都在 uv 0.13.8 上复核过，和视频录制时的 uv 0.11.8 有差异的">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-11-14T19:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-14T18:31:03.478Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="ruff">
+<meta property="article:tag" content="ty">
+<meta property="article:tag" content="uv">
+<meta property="article:tag" content="工具链">
+<meta property="article:tag" content="视频笔记">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/uv-ruff-ty-python-toolchain/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
+lightGallery(document.getElementById('post-bg'), {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>uv + ruff + ty：一套现代 Python 工具链</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T19:00:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>这是一篇视频笔记，源内容是 B 站「AI日日新」的 <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1De7p6FEfs/">《现代 Python 工具链：uv、ruff、ty》</a>（约 8 分钟）。视频以演示为主，我按自己的习惯重排了顺序，补上了官方文档里必须知道、但视频没展开的细节，并订正了口播、机器字幕和作者 README 里的几处错误 —— 订正集中列在文末，正文只写正确的东西。命令我都在 uv 0.13.8 上复核过，和视频录制时的 uv 0.11.8 有差异的地方单独标了。</p>
+</blockquote>
+<p>一句话总结：<strong>uv 管项目与依赖，ruff 管风格与 lint，ty 管类型</strong>。三个都是 Rust 写的、都出自 Astral，组合起来可以替换掉 <code>pip + venv + pip-tools + flake8 + isort + black + mypy</code> 这一整排。</p>
+<span id="more"></span>
+<h2 id="一、三个工具，各管一段"><a href="#一、三个工具，各管一段" class="headerlink" title="一、三个工具，各管一段"></a>一、三个工具，各管一段</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>负责</th>
+<th>替代掉</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>uv</strong></td>
+<td>包与项目管理、虚拟环境、Python 版本</td>
+<td>pip、venv、pip-tools、poetry 的一部分</td>
+</tr>
+<tr>
+<td><strong>ruff</strong></td>
+<td>lint + 格式化（含 import 排序）</td>
+<td>flake8、isort、black、pyupgrade</td>
+</tr>
+<tr>
+<td><strong>ty</strong></td>
+<td>类型检查 + 语言服务器</td>
+<td>mypy、Pyright、Pylance</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>三者同属 Astral。顺带记一笔背景：Astral 已在 2026 年 3 月<a target="_blank" rel="noopener" href="https://openai.com/zh-Hans-CN/index/openai-to-acquire-astral/">被 OpenAI 收购</a>，官方承诺工具继续开源（MIT）。视频里只说了「同一家公司」，这条算补充。</p>
+<p>成熟度上得说实话：<strong>uv 和 ruff 现在可以直接上，ty 还在 Beta</strong>（2025 年 12 月发布 Beta，至今仍是 0.0.x 版本号）。ty 已经能替代 mypy 的日常用法，但规则覆盖率还在补，建议先和现有类型检查并行跑一段。</p>
+<h2 id="二、装-uv，先把镜像配好"><a href="#二、装-uv，先把镜像配好" class="headerlink" title="二、装 uv，先把镜像配好"></a>二、装 uv，先把镜像配好</h2><p>Windows 上三种装法，任选：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-comment"># 1) 用 pip 装（视频里的做法，前提是已经有 Python）</span><br>pip install uv<br><br><span class="hljs-comment"># 2) 官方独立安装脚本（不依赖任何 Python）</span><br>powershell <span class="hljs-literal">-ExecutionPolicy</span> ByPass <span class="hljs-literal">-c</span> <span class="hljs-string">&quot;irm https://astral.sh/uv/install.ps1 | iex&quot;</span><br><br><span class="hljs-comment"># 3) winget</span><br>winget install <span class="hljs-literal">--id</span>=astral<span class="hljs-literal">-sh</span>.uv <span class="hljs-literal">-e</span><br></code></pre></td></tr></table></figure>
+<p>装完 <code>uv --version</code> 确认。接着配国内镜像 —— 视频里是打开「系统环境变量」新建 <code>UV_DEFAULT_INDEX</code>，值填 <code>https://mirrors.aliyun.com/pypi/simple</code>。这个变量名是对的；网上不少老教程写的 <code>UV_INDEX_URL</code> 已经废弃，照抄会收到一条 deprecation 警告。临时用的话：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-variable">$env:UV_DEFAULT_INDEX</span> = <span class="hljs-string">&quot;https://mirrors.aliyun.com/pypi/simple&quot;</span><br></code></pre></td></tr></table></figure>
+<p>两个容易混的点：</p>
+<ul>
+<li><code>pip install uv</code> 这一步的下载走的是 <strong>pip 自己的镜像配置</strong>，和 uv 的索引无关。uv 的索引只影响 <code>uv add</code> / <code>uv lock</code> / <code>uv sync</code> 去哪个源找包。</li>
+<li>这条环境变量不必长期手动维护：<code>uv init</code> 之后第一次 <code>uv add</code> 时，uv 会把当前生效的默认索引<strong>写进 <code>pyproject.toml</code></strong>（就是下面那张 <code>[[tool.uv.index]]</code> 表，<code>default = true</code>）。所以项目一提交，换台机器不用再配环境变量也能复现 —— 视频里「包管理文件会记录镜像源」说的就是这件事。</li>
+</ul>
+<h2 id="三、初始化项目"><a href="#三、初始化项目" class="headerlink" title="三、初始化项目"></a>三、初始化项目</h2><p>视频的命令是 <code>uv init --python=3.13</code>，产物是 <code>.python-version</code>、<code>pyproject.toml</code>、<code>main.py</code>、<code>README.md</code>（0.11 还会带一个 <code>.gitignore</code>）。</p>
+<p><strong>⚠️ 版本提醒</strong>：uv 0.13 起 <code>uv init</code> 的默认布局变了，现在生成的是「可打包项目」—— <code>src/&lt;包名&gt;/__init__.py</code>、<code>[project.scripts]</code> 入口、<code>uv_build</code> 构建后端，没有平铺的 <code>main.py</code>。想要视频里那种一个 <code>main.py</code> 的简单项目，加 <code>--no-package</code>：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv init <span class="hljs-literal">--python</span> <span class="hljs-number">3.13</span> <span class="hljs-literal">--no-package</span> myproj<br></code></pre></td></tr></table></figure>
+<p>生成的 <code>pyproject.toml</code> 关键两行：</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs toml"><span class="hljs-attr">requires-python</span> = <span class="hljs-string">&quot;&gt;=3.13&quot;</span>   <span class="hljs-comment"># 兼容范围：&gt;=3.13 的 Python 都行</span><br></code></pre></td></tr></table></figure>
+<p>加上 <code>.python-version</code> 里的 <code>3.13</code>（固定用哪个解释器），两者分工不同：前者是「这个项目声明支持哪些版本」，后者是「我本机用哪个版本跑」。想连小版本一起锁死，把 <code>requires-python</code> 改成 <code>==3.13.*</code> 即可。</p>
+<p><code>.python-version</code> 里的版本如果本机没有，uv 会自己去下（<code>uv python install 3.13</code> 可手动预装，<code>uv python list</code> 看已有的）。</p>
+<h2 id="四、虚拟环境：uv-venv-其实可以省"><a href="#四、虚拟环境：uv-venv-其实可以省" class="headerlink" title="四、虚拟环境：uv venv 其实可以省"></a>四、虚拟环境：<code>uv venv</code> 其实可以省</h2><p>视频说「初始化项目后还需要创建虚拟环境」。在 uv 的工作流里这一步是<strong>自动</strong>的：<code>uv add</code>、<code>uv run</code>、<code>uv sync</code> 发现没有 <code>.venv</code> 都会自己建一个（0.13.8 实测 <code>uv sync</code> 直接输出 <code>Creating virtual environment at: .venv</code>）。</p>
+<p>手动 <code>uv venv</code> 只在两种场合需要：想指定解释器（<code>uv venv --python 3.12</code>），或想指定别的目录。</p>
+<p>另外平时也不用 activate。<code>uv run main.py</code> 会自动用项目环境、必要时先同步依赖再跑。只有要进交互式 REPL、或者让 GUI 调试器挂上去的时候才激活：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs powershell">.venv\Scripts\activate      <span class="hljs-comment"># Windows</span><br>source .venv/bin/activate   <span class="hljs-comment"># macOS / Linux</span><br></code></pre></td></tr></table></figure>
+<h2 id="五、装包、锁、同步、运行"><a href="#五、装包、锁、同步、运行" class="headerlink" title="五、装包、锁、同步、运行"></a>五、装包、锁、同步、运行</h2><p>日常就这几条：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv add numpy              <span class="hljs-comment"># 装运行时依赖，写进 dependencies</span><br>uv add <span class="hljs-literal">--dev</span> ruff         <span class="hljs-comment"># 装开发依赖，写进 [dependency-groups] dev</span><br>uv remove numpy<br>uv sync                   <span class="hljs-comment"># 按 uv.lock 把环境装成锁文件的样子（≈ npm install）</span><br>uv run main.py            <span class="hljs-comment"># 同步环境 + 用项目环境执行</span><br>uvx ruff check .          <span class="hljs-comment"># 一次性运行工具，不进项目依赖</span><br></code></pre></td></tr></table></figure>
+<p>几个值得写进笔记的细节：</p>
+<ul>
+<li><strong><code>uv.lock</code> 要提交进 git</strong>。它是跨平台的通用锁文件（不是只锁当前机器），并且记录了每个包的 hash。</li>
+<li><strong>CI 用 <code>uv sync --frozen</code></strong>：只按锁装、不尝试更新锁；锁文件和 <code>pyproject.toml</code> 对不上时直接失败，避免线上悄悄换了版本。</li>
+<li>升级依赖是单独的动作：<code>uv lock --upgrade</code>（全升）或 <code>uv lock --upgrade-package numpy</code>（单升）。</li>
+<li><code>uv add</code> 默认用「兼容」范围写依赖（<code>numpy&gt;=2.5.0</code>），精确版本记录在 <code>uv.lock</code> 里 —— 这正是它比 <code>pip install</code> 稳的地方。</li>
+</ul>
+<p>视频里 <code>uv add numpy</code> 装到 <code>numpy==2.5.0</code>，<code>uv add --dev ruff</code> 装到 <code>ruff==0.15.20</code>；画面上 <code>uv run main.py</code> 直接输出了 <code>Hello from uv-ruff-ty!</code>。</p>
+<h2 id="六、PyTorch-这类要专用索引的包（视频重点，也最容易踩坑）"><a href="#六、PyTorch-这类要专用索引的包（视频重点，也最容易踩坑）" class="headerlink" title="六、PyTorch 这类要专用索引的包（视频重点，也最容易踩坑）"></a>六、PyTorch 这类要专用索引的包（视频重点，也最容易踩坑）</h2><p>现象：<code>uv add torch</code> 装完发现是几个 G 的 CUDA 包，而机器上根本没有显卡。视频的原话是「不设置索引它会默认安装 CUDA 版本，那么需要修改文件，指向 CPU 版」。</p>
+<p>原因：PyPI 上 torch 的默认 wheel 带 CUDA，CPU 版轮子只发布在 PyTorch 自己的索引里。所以要告诉 uv「torch 去那个源找」。写进 <code>pyproject.toml</code> 的写法（<strong>已订正</strong>，见下方警告）：</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs toml"><span class="hljs-section">[[tool.uv.index]]</span><br><span class="hljs-attr">url</span> = <span class="hljs-string">&quot;https://mirrors.aliyun.com/pypi/simple&quot;</span><br><span class="hljs-attr">default</span> = <span class="hljs-literal">true</span><br><br><span class="hljs-section">[[tool.uv.index]]</span><br><span class="hljs-attr">name</span> = <span class="hljs-string">&quot;pytorch-cpu&quot;</span><br><span class="hljs-attr">url</span> = <span class="hljs-string">&quot;https://mirrors.nju.edu.cn/pytorch/whl/cpu&quot;</span><br><span class="hljs-attr">explicit</span> = <span class="hljs-literal">true</span><br><br><span class="hljs-section">[tool.uv.sources]</span><br><span class="hljs-attr">torch</span> = [&#123; index = <span class="hljs-string">&quot;pytorch-cpu&quot;</span> &#125;]<br></code></pre></td></tr></table></figure>
+<p>三个字段的含义，看懂了就不会乱改：</p>
+<ul>
+<li><code>default = true</code>：这条是默认索引，等价于把 <code>UV_DEFAULT_INDEX</code> 写进项目。</li>
+<li><code>explicit = true</code>：这条索引<strong>只给显式点名它的包用</strong>，不会拿去解析别的包 —— 防止 PyTorch 镜像里那几个同名包污染正常的依赖解析。</li>
+<li><code>[tool.uv.sources]</code>：把 <code>torch</code> 钉到 <code>pytorch-cpu</code> 这条索引上。</li>
+</ul>
+<p><strong>⚠️ 订正</strong>：视频 README 里给的示例是两段同名的 <code>[tool.uv.index]</code> 表头。TOML 不允许同名表重复定义，照抄会得到 <code>Cannot declare (&#39;tool&#39;, &#39;uv&#39;, &#39;index&#39;) twice</code>，整个 <code>pyproject.toml</code> 直接解析失败（我用 Python 的 <code>tomllib</code> 验证过；<code>uv</code> 自己生成的写法也是数组表 <code>[[tool.uv.index]]</code>）。多个索引必须写成数组表。视频里实际的 <code>pyproject.toml</code> 只有一条镜像索引，所以当时没炸 —— 但 README 那段示例是错的。</p>
+<p>只想临时装一次、懒得改文件也行：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv add torch <span class="hljs-literal">--default-index</span> https://download.pytorch.org/whl/cpu<br></code></pre></td></tr></table></figure>
+<p>（<code>--default-index</code> 也可以换成 <code>UV_DEFAULT_INDEX</code> 环境变量，用完记得改回来。）</p>
+<h2 id="七、ruff：格式化-lint"><a href="#七、ruff：格式化-lint" class="headerlink" title="七、ruff：格式化 + lint"></a>七、ruff：格式化 + lint</h2><p>装进开发依赖：<code>uv add --dev ruff</code>（视频装的是 0.15.20，写作时最新 0.17.5）。</p>
+<p>VS Code 里搜 <code>ruff</code>，装 <strong>Astral 官方那个扩展</strong>（ID <code>charliermarsh.ruff</code>）。视频只用了两个动作，正好对应两条最常用的能力：</p>
+<ol>
+<li>编辑器里右键 → <strong>「格式化文档」</strong>：格式化代码，等价 <code>ruff format</code>。</li>
+<li><code>Ctrl+Shift+P</code> → <strong><code>Ruff: Format imports</code></strong>：整理 import（等价 isort），标准库自动排到最前面。</li>
+</ol>
+<p>命令行版本：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv run ruff check <span class="hljs-literal">--fix</span> .   <span class="hljs-comment"># lint 并自动修可修的问题</span><br>uv run ruff format .        <span class="hljs-comment"># 格式化（对标 black，官方称高度兼容）</span><br>uv run ruff check <span class="hljs-literal">--diff</span> .  <span class="hljs-comment"># 只看要改什么，不动文件</span><br></code></pre></td></tr></table></figure>
+<p>视频里 <code>uv run ruff check --fix</code> 的两次输出很典型：一次 <code>All checks passed!</code>，一次 <code>Found 1 error (1 fixed, 0 remaining).</code>。</p>
+<p>一个坑：ruff 默认只启用 <code>E4 / E7 / E9 / F</code> 这几族规则（基本就是 pyflakes 那套）。想要更严格，得显式开规则集：</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs toml"><span class="hljs-section">[tool.ruff]</span><br><span class="hljs-attr">line-length</span> = <span class="hljs-number">100</span><br><span class="hljs-attr">target-version</span> = <span class="hljs-string">&quot;py313&quot;</span><br><br><span class="hljs-section">[tool.ruff.lint]</span><br><span class="hljs-attr">select</span> = [<span class="hljs-string">&quot;E&quot;</span>, <span class="hljs-string">&quot;F&quot;</span>, <span class="hljs-string">&quot;I&quot;</span>, <span class="hljs-string">&quot;UP&quot;</span>, <span class="hljs-string">&quot;B&quot;</span>, <span class="hljs-string">&quot;SIM&quot;</span>]<br></code></pre></td></tr></table></figure>
+<p>建议顺手开「保存即修」，之后就不用记命令了：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;[python]&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;editor.defaultFormatter&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;charliermarsh.ruff&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;editor.formatOnSave&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;editor.codeActionsOnSave&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;source.fixAll.ruff&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;explicit&quot;</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;source.organizeImports.ruff&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;explicit&quot;</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<h2 id="八、ty：类型检查"><a href="#八、ty：类型检查" class="headerlink" title="八、ty：类型检查"></a>八、ty：类型检查</h2><p>装法一样：<code>uv add --dev ty</code>（视频装到 0.0.5，扩展内置的 ty 版本随扩展更新）。VS Code 里搜 <code>ty</code>，装发布者是 Astral 的扩展（ID <code>astral-sh.ty</code>）。</p>
+<p>命令行：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv run ty check<br></code></pre></td></tr></table></figure>
+<p>视频里的演示代码是这样的：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">main</span>(<span class="hljs-params">name: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">str</span>:<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Hello from uv-ruff-ty&quot;</span>)<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    main()<br></code></pre></td></tr></table></figure>
+<p>ty 立刻在编辑器里标红，报错原文：</p>
+<blockquote>
+<p><code>Function always implicitly returns None, which is not assignable to return type str</code></p>
+<p>info: <code>Consider changing the return annotation to -&gt; None or adding a return statement</code></p>
+</blockquote>
+<p>这段其实藏了两个错误：函数声明返回 <code>str</code> 但实际没有 <code>return</code>（永远返回 <code>None</code>）；调用 <code>main()</code> 时又漏传了 <code>name</code> 参数。ty 两个都会指出。</p>
+<p><strong>一个必须知道的副作用</strong>：装 ty 扩展后，它会默认把 <code>python.languageServer</code> 设为 <code>&quot;None&quot;</code>，也就是主动接管 Pylance 的位置（避免两个语言服务器打架）。如果你还想留着 Pylance 的补全和悬停提示、只用 ty 做检查，得手动把这个设置改回去。</p>
+<p>ty 是 Astral 对标 mypy / Pyright / Pylance 的产品，但仍在 Beta。稳妥的过渡方式：CI 里先只对新增代码卡 <code>ty check</code>，和 <code>mypy</code> 并行跑一两个月再决定要不要完全替换。</p>
+<h2 id="九、拼起来：一个-pyproject-toml-和一个-CI"><a href="#九、拼起来：一个-pyproject-toml-和一个-CI" class="headerlink" title="九、拼起来：一个 pyproject.toml 和一个 CI"></a>九、拼起来：一个 <code>pyproject.toml</code> 和一个 CI</h2><p>一个项目的 <code>pyproject.toml</code> 大概长这样（把上面几节合成一份）：</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs toml"><span class="hljs-section">[project]</span><br><span class="hljs-attr">name</span> = <span class="hljs-string">&quot;myproj&quot;</span><br><span class="hljs-attr">version</span> = <span class="hljs-string">&quot;0.1.0&quot;</span><br><span class="hljs-attr">requires-python</span> = <span class="hljs-string">&quot;&gt;=3.13&quot;</span><br><span class="hljs-attr">dependencies</span> = [<span class="hljs-string">&quot;numpy&gt;=2.5.0&quot;</span>]<br><br><span class="hljs-section">[dependency-groups]</span><br><span class="hljs-attr">dev</span> = [<span class="hljs-string">&quot;ruff&gt;=0.17.5&quot;</span>, <span class="hljs-string">&quot;ty&gt;=0.0.5&quot;</span>]<br><br><span class="hljs-section">[[tool.uv.index]]</span><br><span class="hljs-attr">url</span> = <span class="hljs-string">&quot;https://mirrors.aliyun.com/pypi/simple&quot;</span><br><span class="hljs-attr">default</span> = <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+<p>GitHub Actions 上一条流水线把三件事都跑了：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">name:</span> <span class="hljs-string">ci</span><br><span class="hljs-attr">on:</span> [<span class="hljs-string">push</span>, <span class="hljs-string">pull_request</span>]<br><span class="hljs-attr">jobs:</span><br>  <span class="hljs-attr">check:</span><br>    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-latest</span><br>    <span class="hljs-attr">steps:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v4</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">uses:</span> <span class="hljs-string">astral-sh/setup-uv@v6</span><br>        <span class="hljs-attr">with:</span> &#123; <span class="hljs-attr">enable-cache:</span> <span class="hljs-literal">true</span> &#125;<br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">run:</span> <span class="hljs-string">uv</span> <span class="hljs-string">sync</span> <span class="hljs-string">--frozen</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">run:</span> <span class="hljs-string">uv</span> <span class="hljs-string">run</span> <span class="hljs-string">ruff</span> <span class="hljs-string">check</span> <span class="hljs-string">.</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">run:</span> <span class="hljs-string">uv</span> <span class="hljs-string">run</span> <span class="hljs-string">ruff</span> <span class="hljs-string">format</span> <span class="hljs-string">--check</span> <span class="hljs-string">.</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">run:</span> <span class="hljs-string">uv</span> <span class="hljs-string">run</span> <span class="hljs-string">ty</span> <span class="hljs-string">check</span><br></code></pre></td></tr></table></figure>
+<p>这一步其实比「装什么工具」更重要：视频结尾说这三个工具「有极快的错误检查和严谨的版本管理，也许可作为 AI 开发的代码质量把关工具」—— 落到实处就是<strong>让 AI 生成的代码必须过 lint、格式化、类型检查三道关</strong>，而且跑得足够快，快到你愿意在每一轮对话后都跑一遍。</p>
+<h2 id="十、订正清单"><a href="#十、订正清单" class="headerlink" title="十、订正清单"></a>十、订正清单</h2><p>把这次核对过的错误集中列出来，方便对照原视频：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>出处</th>
+<th>原来（字幕/口播/文档）</th>
+<th>正确写法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>口播 00:05</td>
+<td>「使用 P 安装它」</td>
+<td><code>pip install uv</code></td>
+</tr>
+<tr>
+<td>口播 01:28</td>
+<td>「使用 UVI 装包」</td>
+<td><code>uv add</code>（不是 <code>uv install</code>，也不是 <code>pip install</code>）</td>
+</tr>
+<tr>
+<td>口播 02:46</td>
+<td>「uv think 同步依赖」</td>
+<td><code>uv sync</code></td>
+</tr>
+<tr>
+<td>口播 02:30</td>
+<td>「默认安装<strong>扩大</strong>版本」</td>
+<td>默认安装 <strong>CUDA</strong> 版本</td>
+</tr>
+<tr>
+<td>口播 03:22 / 04:33</td>
+<td>「RF / rs / rough」</td>
+<td><strong>ruff</strong></td>
+</tr>
+<tr>
+<td>口播 04:20 / 05:03</td>
+<td>「format impulse」</td>
+<td><strong><code>Ruff: Format imports</code></strong></td>
+</tr>
+<tr>
+<td>口播 06:10 / 06:17</td>
+<td>「tie / TAI」</td>
+<td><strong>ty</strong></td>
+</tr>
+<tr>
+<td>口播 06:20</td>
+<td>「可用于替代 <strong>palace</strong>」</td>
+<td>替代 <strong>Pylance</strong>（官方定位同时对标 mypy、Pyright）</td>
+</tr>
+<tr>
+<td>口播 07:16</td>
+<td>「函数与其返回字符串类型」</td>
+<td>函数<strong>声明</strong>返回 <code>str</code></td>
+</tr>
+<tr>
+<td>口播 07:19</td>
+<td>「实际总是返回 <strong>NN</strong>」</td>
+<td>实际总是返回 <strong><code>None</code></strong></td>
+</tr>
+<tr>
+<td>口播 01:16</td>
+<td>「初始化后还需要创建虚拟环境」</td>
+<td><code>uv add</code> / <code>uv run</code> / <code>uv sync</code> 会自动建 <code>.venv</code></td>
+</tr>
+<tr>
+<td>README 示例</td>
+<td>两段 <code>[tool.uv.index]</code> 表头</td>
+<td><code>[[tool.uv.index]]</code> 数组表（TOML 不允许同名表重复）</td>
+</tr>
+<tr>
+<td>README 的 <code>## ty</code> 小节</td>
+<td>「在开发环境安装ruff: <code>uv add --dev ty</code>」</td>
+<td>应为「安装 <strong>ty</strong>」（正文笔误）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>uv 文档：<a target="_blank" rel="noopener" href="https://docs.astral.sh/uv/">https://docs.astral.sh/uv/</a></li>
+<li>uv 的索引配置（<code>[[tool.uv.index]]</code> / <code>explicit</code> / <code>default</code>）：<a target="_blank" rel="noopener" href="https://docs.astral.sh/uv/concepts/indexes/">https://docs.astral.sh/uv/concepts/indexes/</a></li>
+<li>ruff 文档：<a target="_blank" rel="noopener" href="https://docs.astral.sh/ruff/">https://docs.astral.sh/ruff/</a></li>
+<li>ty 发布公告（Beta）与编辑器集成：<a target="_blank" rel="noopener" href="https://astral.sh/blog/ty">https://astral.sh/blog/ty</a> 、<a target="_blank" rel="noopener" href="https://docs.astral.sh/ty/editors/">https://docs.astral.sh/ty/editors/</a></li>
+<li>原视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1De7p6FEfs/">https://www.bilibili.com/video/BV1De7p6FEfs/</a></li>
+<li>OpenAI 收购 Astral 的公告：<a target="_blank" rel="noopener" href="https://openai.com/zh-Hans-CN/index/openai-to-acquire-astral/">https://openai.com/zh-Hans-CN/index/openai-to-acquire-astral/</a></li>
+</ul>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/hello-world/">Hello World 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>记录学习、技术与日常</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%B8%89%E4%B8%AA%E5%B7%A5%E5%85%B7%EF%BC%8C%E5%90%84%E7%AE%A1%E4%B8%80%E6%AE%B5"><span class="toc-number">1.</span> <span class="toc-text">一、三个工具，各管一段</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%A3%85-uv%EF%BC%8C%E5%85%88%E6%8A%8A%E9%95%9C%E5%83%8F%E9%85%8D%E5%A5%BD"><span class="toc-number">2.</span> <span class="toc-text">二、装 uv，先把镜像配好</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%88%9D%E5%A7%8B%E5%8C%96%E9%A1%B9%E7%9B%AE"><span class="toc-number">3.</span> <span class="toc-text">三、初始化项目</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83%EF%BC%9Auv-venv-%E5%85%B6%E5%AE%9E%E5%8F%AF%E4%BB%A5%E7%9C%81"><span class="toc-number">4.</span> <span class="toc-text">四、虚拟环境：uv venv 其实可以省</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E8%A3%85%E5%8C%85%E3%80%81%E9%94%81%E3%80%81%E5%90%8C%E6%AD%A5%E3%80%81%E8%BF%90%E8%A1%8C"><span class="toc-number">5.</span> <span class="toc-text">五、装包、锁、同步、运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81PyTorch-%E8%BF%99%E7%B1%BB%E8%A6%81%E4%B8%93%E7%94%A8%E7%B4%A2%E5%BC%95%E7%9A%84%E5%8C%85%EF%BC%88%E8%A7%86%E9%A2%91%E9%87%8D%E7%82%B9%EF%BC%8C%E4%B9%9F%E6%9C%80%E5%AE%B9%E6%98%93%E8%B8%A9%E5%9D%91%EF%BC%89"><span class="toc-number">6.</span> <span class="toc-text">六、PyTorch 这类要专用索引的包（视频重点，也最容易踩坑）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81ruff%EF%BC%9A%E6%A0%BC%E5%BC%8F%E5%8C%96-lint"><span class="toc-number">7.</span> <span class="toc-text">七、ruff：格式化 + lint</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81ty%EF%BC%9A%E7%B1%BB%E5%9E%8B%E6%A3%80%E6%9F%A5"><span class="toc-number">8.</span> <span class="toc-text">八、ty：类型检查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E6%8B%BC%E8%B5%B7%E6%9D%A5%EF%BC%9A%E4%B8%80%E4%B8%AA-pyproject-toml-%E5%92%8C%E4%B8%80%E4%B8%AA-CI"><span class="toc-number">9.</span> <span class="toc-text">九、拼起来：一个 pyproject.toml 和一个 CI</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E8%AE%A2%E6%AD%A3%E6%B8%85%E5%8D%95"><span class="toc-number">10.</span> <span class="toc-text">十、订正清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">11.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>
