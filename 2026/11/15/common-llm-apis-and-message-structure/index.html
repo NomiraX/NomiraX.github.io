@@ -1,0 +1,406 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>常用大模型 API 与消息结构 | NomiraX 的博客</title><meta name="keywords" content="LLM,API,Agent"><meta name="description" content="一句话：agent 调模型不是一次「请求—响应」，而是一个带状态的循环。Anthropic Messages、Chat Completions、Responses 三种 API 的差别，本质上是在回答同一个问题——这段对话的状态由谁来存。  这是跟着一期 Agent 开发课程（第四课）整理的笔记。原文按「Anthropic → Chat Completions → Responses」的顺序讲，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="常用大模型 API 与消息结构">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/15/common-llm-apis-and-message-structure/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="一句话：agent 调模型不是一次「请求—响应」，而是一个带状态的循环。Anthropic Messages、Chat Completions、Responses 三种 API 的差别，本质上是在回答同一个问题——这段对话的状态由谁来存。  这是跟着一期 Agent 开发课程（第四课）整理的笔记。原文按「Anthropic → Chat Completions → Responses」的顺序讲，">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-11-14T21:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-14T19:58:01.805Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="API">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/common-llm-apis-and-message-structure/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
+lightGallery(document.getElementById('post-bg'), {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>常用大模型 API 与消息结构</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T21:30:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>一句话：agent 调模型不是一次「请求—响应」，而是一个带状态的循环。Anthropic Messages、Chat Completions、Responses 三种 API 的差别，本质上是在回答同一个问题——<strong>这段对话的状态由谁来存</strong>。</p>
+</blockquote>
+<p>这是跟着一期 Agent 开发课程（第四课）整理的笔记。原文按「Anthropic → Chat Completions → Responses」的顺序讲，我按同样的顺序写，但把每家的字段含义、结束状态的判断方式、以及多轮对话到底该传什么补齐了。</p>
+<h2 id="为什么这块要单独学"><a href="#为什么这块要单独学" class="headerlink" title="为什么这块要单独学"></a>为什么这块要单独学</h2><p>普通的「调个 API 问一句话」，看两眼文档就能跑。但 agent 不一样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">用户指令 → 模型思考 → 要么直接回答，要么要求调工具<br>                              ↓<br>                       你的代码执行工具<br>                              ↓<br>                   结果拼回消息 → 再调模型 → ……<br></code></pre></td></tr></table></figure>
+<p>这个循环里，API 必须能把四件事表达清楚：</p>
+<ol>
+<li><strong>谁在说话</strong>：系统、用户、模型、还是工具返回的结果；</li>
+<li><strong>内容是什么形态</strong>：纯文本、图片、结构化数据、函数调用、推理过程；</li>
+<li><strong>下一步要做什么</strong>：正常结束、被截断、要调工具、还是中途出错；</li>
+<li><strong>上一轮发生了什么</strong>：要么你把历史全带上，要么告诉服务端一个 id 让它自己找。</li>
+</ol>
+<p>前三条决定了消息结构，第四条决定了 API 的形态差异——这正是三种 API 最本质的分界。</p>
+<p>好在这个领域没有真的分裂：OpenAI 和 Anthropic 的先发优势太大，绝大多数厂商都提供<strong>兼容这两家</strong>的端点。把这两家的消息结构学明白，市面上大部分模型都能直接调；剩下的差异通常只是模型名和 base_url。</p>
+<h2 id="调用前只有两个配置"><a href="#调用前只有两个配置" class="headerlink" title="调用前只有两个配置"></a>调用前只有两个配置</h2><p>任何 SDK 初始化之前，都要先解决两件事：</p>
+<ul>
+<li><strong>API Key</strong>：身份凭证。</li>
+<li><strong>base_url</strong>：服务地址。SDK 会在它后面拼 <code>/v1/messages</code>、<code>/v1/chat/completions</code> 这类路径。</li>
+</ul>
+<p>两种配置方式，选一种即可。</p>
+<p><strong>项目级：<code>.env</code> 文件</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># .env</span><br>OPENAI_API_KEY=sk-xxxx<br>OPENAI_BASE_URL=https://api.deepseek.com<br><br>ANTHROPIC_API_KEY=sk-yyyy<br>ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic<br></code></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> dotenv <span class="hljs-keyword">import</span> load_dotenv<br>load_dotenv()   <span class="hljs-comment"># 之后的 SDK 初始化会自动读到</span><br></code></pre></td></tr></table></figure>
+<p>SDK 认的变量名是固定的：OpenAI 系读 <code>OPENAI_API_KEY</code> / <code>OPENAI_BASE_URL</code>，Anthropic 读 <code>ANTHROPIC_API_KEY</code> / <code>ANTHROPIC_BASE_URL</code>。</p>
+<p><strong>全局级：写进 shell 配置</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># ~/.zshrc 或 ~/.bashrc</span><br><span class="hljs-built_in">export</span> OPENAI_API_KEY=sk-xxxx<br><span class="hljs-built_in">export</span> OPENAI_BASE_URL=https://api.deepseek.com<br></code></pre></td></tr></table></figure>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-comment"># Windows，setx 之后要重开终端</span><br>setx OPENAI_API_KEY <span class="hljs-string">&quot;sk-xxxx&quot;</span><br>setx OPENAI_BASE_URL <span class="hljs-string">&quot;https://api.deepseek.com&quot;</span><br></code></pre></td></tr></table></figure>
+<p>全局配好之后，所有项目都不用再写 <code>.env</code>，也不用 <code>load_dotenv()</code>。</p>
+<p><strong>两者同时存在时，全局优先。</strong> 原因是 <code>python-dotenv</code> 的 <code>load_dotenv()</code> 默认 <code>override=False</code>——已经存在的环境变量不会被 <code>.env</code> 覆盖。想让某个项目的 <code>.env</code> 反过来压过全局，得显式写：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">load_dotenv(override=<span class="hljs-literal">True</span>)<br></code></pre></td></tr></table></figure>
+<p>这个坑很隐蔽：明明在 <code>.env</code> 里改了 key，跑起来却还是旧的行为，十有八九就是这里。用第三方兼容服务时也是同理——把 <code>base_url</code> 指向对方的兼容端点、key 用对方的，SDK 侧不用改任何代码。</p>
+<h2 id="Anthropic-Messages"><a href="#Anthropic-Messages" class="headerlink" title="Anthropic Messages"></a>Anthropic Messages</h2><p>所有交互都走 <code>messages.create</code> 一个入口，结构非常规整。</p>
+<h3 id="请求"><a href="#请求" class="headerlink" title="请求"></a>请求</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">client = anthropic.Anthropic()   <span class="hljs-comment"># 读 ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL</span><br><br>resp = client.messages.create(<br>    model=<span class="hljs-string">&quot;claude-sonnet-4-5&quot;</span>,<br>    max_tokens=<span class="hljs-number">1024</span>,             <span class="hljs-comment"># 必填</span><br>    system=<span class="hljs-string">&quot;你是一个专业的商品导购助手。&quot;</span>,<br>    messages=[<br>        &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;我想买一个露营灯，预算 200，优先考虑续航。&quot;</span>&#125;<br>    ],<br>)<br></code></pre></td></tr></table></figure>
+<p>四个必须记住的点：</p>
+<ul>
+<li><strong><code>max_tokens</code> 是必填的</strong>，没有默认值。它限制的是「最多生成多少 token」，不是「一定生成多少」。</li>
+<li><strong><code>system</code> 在消息数组外面</strong>，是独立参数。这是 Anthropic 和 OpenAI 最直观的结构差异。</li>
+<li><strong><code>messages</code> 必须以 <code>user</code> 开头，且 user / assistant 交替出现。</strong> 连续两条同角色的消息会被服务端合并成一条，不会报错，但历史语义就变了。</li>
+<li><strong><code>content</code> 可以是字符串，也可以是 block 数组。</strong> 需要图文混排、工具调用、推理过程时都要写成数组，每块带自己的 <code>type</code>（<code>text</code>、<code>image</code>、<code>tool_use</code>、<code>tool_result</code>、<code>thinking</code>）。</li>
+</ul>
+<h3 id="响应"><a href="#响应" class="headerlink" title="响应"></a>响应</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python">resp.<span class="hljs-built_in">id</span>          <span class="hljs-comment"># msg_xxx</span><br>resp.<span class="hljs-built_in">type</span>        <span class="hljs-comment"># &quot;message&quot;</span><br>resp.role        <span class="hljs-comment"># &quot;assistant&quot;</span><br>resp.content     <span class="hljs-comment"># [ &#123;type: &quot;thinking&quot;, ...&#125;, &#123;type: &quot;text&quot;, text: &quot;...&quot;&#125; ]</span><br>resp.stop_reason <span class="hljs-comment"># &quot;end_turn&quot;</span><br>resp.usage       <span class="hljs-comment"># input_tokens / output_tokens</span><br></code></pre></td></tr></table></figure>
+<p><code>content</code> 是个数组，这点和 Chat Completions 不同——一轮回复可能是「一段思考 + 一段正文」，甚至「一段正文 + 一次工具调用」。打印正文时不能直接 <code>resp.content</code>，要按 block 的 <code>type</code> 过滤：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> block <span class="hljs-keyword">in</span> resp.content:<br>    <span class="hljs-keyword">if</span> block.<span class="hljs-built_in">type</span> == <span class="hljs-string">&quot;text&quot;</span>:<br>        <span class="hljs-built_in">print</span>(block.text)<br></code></pre></td></tr></table></figure>
+<p><code>stop_reason</code> 是判断「这一轮算不算正常结束」的唯一依据：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>end_turn</code></td>
+<td>正常说完，可以展示给用户</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>撞到 <code>max_tokens</code> 上限，输出被截断</td>
+</tr>
+<tr>
+<td><code>stop_sequence</code></td>
+<td>命中了你传入的自定义停止序列</td>
+</tr>
+<tr>
+<td><code>tool_use</code></td>
+<td>模型要求调用工具，该执行了</td>
+</tr>
+<tr>
+<td><code>model_context_window_exceeded</code></td>
+<td>上下文窗口先用完了（和 <code>max_tokens</code> 要分开处理）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>最后一个是较新的状态：它和 <code>max_tokens</code> 都会导致截断，但原因不同——前者是你把预算给少了，后者是输入本身就快把窗口塞满了，处理方式也不同。</p>
+<p><code>usage</code> 里除了输入输出 token，开了 prompt caching 还会有 <code>cache_creation_input_tokens</code> / <code>cache_read_input_tokens</code>，两者计费不同，做成本统计时要一起算。</p>
+<h3 id="多轮对话"><a href="#多轮对话" class="headerlink" title="多轮对话"></a>多轮对话</h3><p>模型没有记忆，上一轮的全部内容都要自己带回去——包括你问的，和它答的。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python">messages.append(&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;帮我推荐一个合适的露营灯&quot;</span>&#125;)<br>resp = client.messages.create(...)<br>messages.append(&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;assistant&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: resp.content&#125;)   <span class="hljs-comment"># 整块回传</span><br>messages.append(&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;刚才我的预算是多少？&quot;</span>&#125;)<br></code></pre></td></tr></table></figure>
+<p>注意 <code>content</code> 回传的是<strong>整个 block 数组</strong>，不是提取出来的纯文本。开了 extended thinking 之后尤其重要：<code>thinking</code> block 里带的 <code>signature</code> 是校验用的，漏掉或者改写成纯文本，下一轮可能直接报错。</p>
+<h2 id="OpenAI-Chat-Completions"><a href="#OpenAI-Chat-Completions" class="headerlink" title="OpenAI Chat Completions"></a>OpenAI Chat Completions</h2><p>最早、也是被兼容得最广的一套。和 Messages 高度相似，差异集中在「system 放在哪」。</p>
+<h3 id="请求-1"><a href="#请求-1" class="headerlink" title="请求"></a>请求</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">client = openai.OpenAI()<br><br>resp = client.chat.completions.create(<br>    model=<span class="hljs-string">&quot;gpt-5-mini&quot;</span>,<br>    messages=[<br>        &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;system&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;你是一个专业的商品导购助手。&quot;</span>&#125;,<br>        &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;我想买一个露营灯，预算 200。&quot;</span>&#125;,<br>    ],<br>    max_completion_tokens=<span class="hljs-number">1024</span>,   <span class="hljs-comment"># 新模型用这个；老模型可用 max_tokens</span><br>)<br></code></pre></td></tr></table></figure>
+<p><code>system</code> 不再是独立参数，而是 <code>messages</code> 里的第一条。角色一共五种：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>role</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>system</code></td>
+<td>整个会话的全局约束</td>
+</tr>
+<tr>
+<td><code>developer</code></td>
+<td>开发者指令，优先级高于 user、语义更偏「产品规则」</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>用户输入</td>
+</tr>
+<tr>
+<td><code>assistant</code></td>
+<td>模型回复（回传历史时用）</td>
+</tr>
+<tr>
+<td><code>tool</code></td>
+<td>工具执行结果，需要配 <code>tool_call_id</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>system</code> 和 <code>developer</code> 不是重复概念：前者偏「你是谁」，后者偏「这个产品要求你怎么做」。多数场景用 <code>system</code> 就够了。</p>
+<h3 id="响应-1"><a href="#响应-1" class="headerlink" title="响应"></a>响应</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">choice = resp.choices[<span class="hljs-number">0</span>]<br>choice.message.content      <span class="hljs-comment"># 正文，可能为 None（纯工具调用时）</span><br>choice.message.tool_calls   <span class="hljs-comment"># 工具调用列表</span><br>choice.finish_reason        <span class="hljs-comment"># &quot;stop&quot; / &quot;length&quot; / &quot;tool_calls&quot; / &quot;content_filter&quot;</span><br>resp.usage<br></code></pre></td></tr></table></figure>
+<p><code>choices</code> 是数组（支持 n&gt;1 一次生成多个候选），日常只取 <code>[0]</code>。<code>finish_reason</code> 与 Anthropic 的 <code>stop_reason</code> 一一对应：<code>stop</code> ≈ <code>end_turn</code>，<code>length</code> ≈ <code>max_tokens</code>，<code>tool_calls</code> ≈ <code>tool_use</code>。</p>
+<p><strong>推理模型这里有个结构差异。</strong> Chat Completions 只有一个 <code>content</code> 字段，推理内容没地方放，各家补丁不一样：</p>
+<ul>
+<li>DeepSeek 这类实现会在 <code>message</code> 里并列一个 <code>reasoning_content</code> 字段，和 <code>content</code> 同级；</li>
+<li>OpenAI 自己的推理模型不返回推理文本，只在 <code>usage.completion_tokens_details.reasoning_tokens</code> 里给出计数。</li>
+</ul>
+<p>所以「怎么拿到思考过程」这件事，在 Chat Completions 里取决于厂商实现，不能假设统一的字段。做多轮时，把 <code>reasoning_content</code> 一并回传通常更稳（有些模型需要它来保持推理连续性），但它不属于标准字段，跨厂商时要做好兼容判断。</p>
+<h3 id="三个容易踩的点"><a href="#三个容易踩的点" class="headerlink" title="三个容易踩的点"></a>三个容易踩的点</h3><ul>
+<li><strong><code>max_tokens</code> 正在被 <code>max_completion_tokens</code> 取代。</strong> 新一代推理模型的思维链也算输出 token，老的 <code>max_tokens</code> 语义不够用；给新模型传 <code>max_tokens</code> 会被拒绝或忽略。写代码时两个都留个开关，比硬编码更耐用。</li>
+<li><strong><code>content</code> 可能是 <code>None</code>。</strong> 模型决定调工具时，正文是空的，别直接 <code>print(choice.message.content)</code>。</li>
+<li><strong><code>developer</code> 角色不是所有兼容实现都支持。</strong> 一些小厂商的兼容层只认 <code>system</code>，传 <code>developer</code> 可能被静默忽略。</li>
+</ul>
+<h2 id="OpenAI-Responses"><a href="#OpenAI-Responses" class="headerlink" title="OpenAI Responses"></a>OpenAI Responses</h2><p>同一家的升级版。推出它的理由很直接：Chat Completions 把文本、推理、工具调用全塞进一个 <code>message</code> 里，字段越加越多，复杂的多轮 + 工具循环就越来越别扭，而且<strong>历史必须你自己维护</strong>。</p>
+<p>Responses 做了两件关键的事。</p>
+<h3 id="第一件：把输出拆成不同类型的-item"><a href="#第一件：把输出拆成不同类型的-item" class="headerlink" title="第一件：把输出拆成不同类型的 item"></a>第一件：把输出拆成不同类型的 item</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python">resp = client.responses.create(<br>    model=<span class="hljs-string">&quot;gpt-5&quot;</span>,<br>    instructions=<span class="hljs-string">&quot;你是一个专业的行程助手。&quot;</span>,   <span class="hljs-comment"># 相当于 system</span><br>    <span class="hljs-built_in">input</span>=<span class="hljs-string">&quot;我的行程代号是 CN-2026，目的地杭州，露营灯预算 200。&quot;</span>,<br>    store=<span class="hljs-literal">True</span>,<br>    reasoning=&#123;<span class="hljs-string">&quot;summary&quot;</span>: <span class="hljs-string">&quot;auto&quot;</span>&#125;,<br>)<br><br>resp.<span class="hljs-built_in">id</span>                  <span class="hljs-comment"># resp_xxx，后面续接要用</span><br>resp.status              <span class="hljs-comment"># &quot;completed&quot;</span><br>resp.output              <span class="hljs-comment"># [ reasoning item, message item, function_call item, … ]</span><br>resp.output_text         <span class="hljs-comment"># SDK 快捷方式：把所有 output_text 拼起来</span><br></code></pre></td></tr></table></figure>
+<p><code>output</code> 是数组。第一个 item 是推理：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">&#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;reasoning&quot;</span>, <span class="hljs-string">&quot;summary&quot;</span>: [&#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;summary_text&quot;</span>, <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;...&quot;</span>&#125;]&#125;<br></code></pre></td></tr></table></figure>
+<p>第二个是正文：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">&#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;message&quot;</span>, <span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;assistant&quot;</span>,<br> <span class="hljs-string">&quot;content&quot;</span>: [&#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;output_text&quot;</span>, <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;...&quot;</span>&#125;]&#125;<br></code></pre></td></tr></table></figure>
+<p>第三个可能是工具调用：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">&#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;function_call&quot;</span>, <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;get_budget&quot;</span>, <span class="hljs-string">&quot;arguments&quot;</span>: <span class="hljs-string">&quot;&#123;...&#125;&quot;</span>, <span class="hljs-string">&quot;call_id&quot;</span>: <span class="hljs-string">&quot;call_xxx&quot;</span>&#125;<br></code></pre></td></tr></table></figure>
+<p>文本、推理、工具调用各占一个 item，类型清清楚楚。<code>resp.output_text</code> 是 SDK 提供的便捷属性，直接把所有 <code>output_text</code> 拼成一个字符串，省掉前面那种按 type 过滤的循环。</p>
+<p><code>status</code> 的取值和 <code>incomplete</code> 的原因也要检查：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>status</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>completed</code></td>
+<td>正常完成</td>
+</tr>
+<tr>
+<td><code>incomplete</code></td>
+<td>完成但被截断，看 <code>incomplete_details.reason</code>（<code>max_output_tokens</code> / <code>content_filter</code>）</td>
+</tr>
+<tr>
+<td><code>failed</code></td>
+<td>服务端失败</td>
+</tr>
+<tr>
+<td><code>in_progress</code></td>
+<td>后台任务还没跑完</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="第二件：服务端帮你存历史"><a href="#第二件：服务端帮你存历史" class="headerlink" title="第二件：服务端帮你存历史"></a>第二件：服务端帮你存历史</h3><p>这是 Responses 最有价值的设计，也是它和前两者最根本的区别。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 第二轮：只传新问题 + 上一轮的 id</span><br>resp2 = client.responses.create(<br>    model=<span class="hljs-string">&quot;gpt-5&quot;</span>,<br>    instructions=<span class="hljs-string">&quot;你是一个专业的行程助手。&quot;</span>,   <span class="hljs-comment"># 每轮都要传</span><br>    <span class="hljs-built_in">input</span>=<span class="hljs-string">&quot;刚才我的行程代号、目的地、预算分别是什么？&quot;</span>,<br>    previous_response_id=resp.<span class="hljs-built_in">id</span>,<br>)<br></code></pre></td></tr></table></figure>
+<p>你在 <code>input</code> 里只放了这一句新问题，历史一句都没传——服务端拿到 <code>previous_response_id</code> 之后自己去翻。第三轮继续追问「把预算提高 50」，同样只需要新的 id。</p>
+<p>几个必须知道的细节：</p>
+<ul>
+<li><strong><code>instructions</code> 不会被存储续接</strong>，每一轮都得重新传。它不参与 <code>previous_response_id</code> 的历史。</li>
+<li><strong><code>store</code> 默认为 <code>true</code>。</strong> 也就是说你不显式关掉，服务端就会保存这次响应（OpenAI 侧保留约 30 天）。这在隐私敏感场景里是个真问题：想不留痕就得 <code>store=False</code>，但 <code>store=False</code> 的响应也<strong>不能用 <code>previous_response_id</code> 续接</strong>，历史还是得自己拼。</li>
+<li><strong>零数据保留（ZDR）的组织里，<code>store</code> 会被强制当作 <code>false</code></strong>，无论你传什么。所以不能把「服务端存历史」当成默认可用的能力，代码里要有降级路径。</li>
+</ul>
+<h3 id="兼容实现的差异，比字段差异更麻烦"><a href="#兼容实现的差异，比字段差异更麻烦" class="headerlink" title="兼容实现的差异，比字段差异更麻烦"></a>兼容实现的差异，比字段差异更麻烦</h3><p>三种 API 里，Responses 是兼容得最不彻底的一个。很多厂商号称「支持 Responses API」，实际支持程度差别很大：</p>
+<ul>
+<li>有的只实现了请求/响应的<strong>形状</strong>，<code>store</code> 被静默忽略；</li>
+<li>有的支持 <code>store</code> 但保留期不同（官方约 30 天，有的平台只给 7 天，过期后续接直接失败）；</li>
+<li>有的完全不支持 <code>previous_response_id</code>，必须自己把历史拼进 <code>input</code>。</li>
+</ul>
+<p>所以写代码时别假设「既然格式对上了，续接就一定能用」。一个实用的做法是先探测：传 <code>store=True</code> 发一次请求，看返回里有没有可用的 <code>id</code> 和后续 <code>previous_response_id</code> 是否报错，再决定走服务端续接还是本地拼历史。</p>
+<h2 id="三种-API-对照"><a href="#三种-API-对照" class="headerlink" title="三种 API 对照"></a>三种 API 对照</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Anthropic Messages</th>
+<th>Chat Completions</th>
+<th>Responses</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>system 位置</td>
+<td>顶层独立参数</td>
+<td><code>messages[0]</code></td>
+<td><code>instructions</code></td>
+</tr>
+<tr>
+<td>必填参数</td>
+<td><code>model</code>、<code>max_tokens</code>、<code>messages</code></td>
+<td><code>model</code>、<code>messages</code></td>
+<td><code>model</code>、<code>input</code></td>
+</tr>
+<tr>
+<td>响应主体</td>
+<td><code>content</code> block 数组</td>
+<td><code>choices[0].message</code></td>
+<td><code>output</code> item 数组</td>
+</tr>
+<tr>
+<td>正常结束</td>
+<td><code>stop_reason == &quot;end_turn&quot;</code></td>
+<td><code>finish_reason == &quot;stop&quot;</code></td>
+<td><code>status == &quot;completed&quot;</code></td>
+</tr>
+<tr>
+<td>截断</td>
+<td><code>max_tokens</code> / <code>model_context_window_exceeded</code></td>
+<td><code>length</code></td>
+<td><code>status == &quot;incomplete&quot;</code></td>
+</tr>
+<tr>
+<td>工具调用</td>
+<td><code>content</code> 里的 <code>tool_use</code> block</td>
+<td><code>message.tool_calls</code></td>
+<td>独立的 <code>function_call</code> item</td>
+</tr>
+<tr>
+<td>多轮方式</td>
+<td>自己拼 <code>messages</code></td>
+<td>自己拼 <code>messages</code></td>
+<td><code>previous_response_id</code> 或自己拼</td>
+</tr>
+<tr>
+<td>推理内容</td>
+<td>独立 <code>thinking</code> block（带 signature）</td>
+<td>厂商自定义字段或只给计数</td>
+<td>独立的 <code>reasoning</code> item</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一句话选型：</p>
+<ul>
+<li><strong>单轮文本、要最大兼容面</strong> → Chat Completions；</li>
+<li><strong>要工具循环、多轮、不想自己维护历史</strong> → Responses；</li>
+<li><strong>Claude 生态、需要 thinking block 或 prompt caching</strong> → Messages。</li>
+</ul>
+<h2 id="不想写-if-else：用兼容层"><a href="#不想写-if-else：用兼容层" class="headerlink" title="不想写 if/else：用兼容层"></a>不想写 if/else：用兼容层</h2><p>真实项目里经常要同时支持几家。手写 <code>if provider == ...</code> 分支很快就会失控，社区因此有了统一封装：</p>
+<p><strong>Python：LiteLLM</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> litellm <span class="hljs-keyword">import</span> completion<br><br>resp = completion(<br>    model=<span class="hljs-string">&quot;anthropic/claude-sonnet-4-5&quot;</span>,     <span class="hljs-comment"># 前缀决定走哪家</span><br>    messages=[&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;你好&quot;</span>&#125;],<br>)<br><span class="hljs-built_in">print</span>(resp.choices[<span class="hljs-number">0</span>].message.content)<br></code></pre></td></tr></table></figure>
+<p>统一用 OpenAI 的消息格式，靠 <code>provider/model</code> 前缀路由到对应后端，顺带做了重试、fallback、成本统计。</p>
+<p><strong>TypeScript：Vercel AI SDK</strong></p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs ts"><span class="hljs-keyword">import</span> &#123; generateText &#125; <span class="hljs-keyword">from</span> <span class="hljs-string">&quot;ai&quot;</span>;<br><span class="hljs-keyword">import</span> &#123; openai &#125; <span class="hljs-keyword">from</span> <span class="hljs-string">&quot;@ai-sdk/openai&quot;</span>;<br><br><span class="hljs-keyword">const</span> &#123; text, finishReason, usage &#125; = <span class="hljs-keyword">await</span> <span class="hljs-title function_">generateText</span>(&#123;<br>  <span class="hljs-attr">model</span>: <span class="hljs-title function_">openai</span>(<span class="hljs-string">&quot;gpt-5-mini&quot;</span>),<br>  <span class="hljs-attr">system</span>: <span class="hljs-string">&quot;你是一个助手&quot;</span>,<br>  <span class="hljs-attr">messages</span>: [&#123; <span class="hljs-attr">role</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-attr">content</span>: <span class="hljs-string">&quot;你好&quot;</span> &#125;],<br>&#125;);<br></code></pre></td></tr></table></figure>
+<p>同样是「换 provider 包、模型名不变」的思路。</p>
+<p><strong>什么时候不该用兼容层</strong>：需要原生能力的时候。thinking 的 signature、Responses 的 item 结构、prompt caching 的 cache_control，这些在兼容层里经常被抹平或者丢失。快速做一个支持多家的产品用兼容层，做 agent 深度集成就直接用官方 SDK。</p>
+<h2 id="几个容易踩的坑"><a href="#几个容易踩的坑" class="headerlink" title="几个容易踩的坑"></a>几个容易踩的坑</h2><ol>
+<li><strong>上下文永远得有人维护。</strong> 模型没有记忆，除了 <code>previous_response_id</code> 那一种情况，历史都要你自己带上，并且顺序不能乱。</li>
+<li><strong>截断要单独判断。</strong> 三个 API 各有各的字段，漏判的结果是「输出莫名其妙少了一半」还以为是模型不行。</li>
+<li><strong>工具调用的原理三家一致：模型只给出调用意图，执行永远是你的代码。</strong> 不同的是「意图」放在哪个字段里——<code>tool_use</code> block、<code>tool_calls</code>、<code>function_call</code> item。</li>
+<li><strong><code>store</code> 是隐私开关，不只是功能开关。</strong> 默认开启意味着数据落在服务端；关掉它就得自己拼历史。</li>
+<li><strong>base_url 的路径尾缀要看文档。</strong> 有的服务要写 <code>.../v1</code>，有的 SDK 会自己拼 <code>/v1</code>，写重了就 404。</li>
+<li><strong>环境变量的优先级</strong>：全局 &gt; <code>.env</code>，除非显式 <code>override=True</code>。</li>
+<li><strong>计费口径不同。</strong> 输入、输出、缓存读、缓存写是四个价，<code>usage</code> 里的字段要分开累计。</li>
+</ol>
+<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>把三种 API 并排看，会发现它们解决的是同一个问题：<strong>如何在无状态的 HTTP 请求上，表达一个有状态的对话循环</strong>。</p>
+<p>Chat Completions 的答案是「你全带上」，Messages 的答案是「你全带上，但内容分块」，Responses 的答案是「我帮你存，你只给 id」。前两者把复杂度推给调用方，后者把复杂度推给服务端（以及账单和隐私条款）。</p>
+<p>理解了这条主线，字段名就不用背了——看到任何一家新出的兼容 API，先找三样东西：system 在哪、结束状态叫什么、历史怎么带。</p>
+<p>参考资料：</p>
+<ul>
+<li>Anthropic Messages API：<a target="_blank" rel="noopener" href="https://docs.claude.com/en/api/messages">https://docs.claude.com/en/api/messages</a></li>
+<li>Anthropic stop reasons：<a target="_blank" rel="noopener" href="https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons">https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons</a></li>
+<li>OpenAI Chat Completions：<a target="_blank" rel="noopener" href="https://platform.openai.com/docs/api-reference/chat">https://platform.openai.com/docs/api-reference/chat</a></li>
+<li>OpenAI Responses：<a target="_blank" rel="noopener" href="https://platform.openai.com/docs/api-reference/responses">https://platform.openai.com/docs/api-reference/responses</a></li>
+<li>LiteLLM 文档：<a target="_blank" rel="noopener" href="https://docs.litellm.ai/">https://docs.litellm.ai/</a></li>
+<li>Vercel AI SDK：<a target="_blank" rel="noopener" href="https://ai-sdk.dev/docs">https://ai-sdk.dev/docs</a></li>
+<li>原视频：<code>BV1Wnxq6yE9R</code>《常用大模型 API 与消息结构》（Agent 开发系列课程 第四课）</li>
+</ul>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/modern-python-toolchain-uv-ruff/">现代python工具链：uv&amp;ruff 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>记录学习、技术与日常</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E5%9D%97%E8%A6%81%E5%8D%95%E7%8B%AC%E5%AD%A6"><span class="toc-number">1.</span> <span class="toc-text">为什么这块要单独学</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E7%94%A8%E5%89%8D%E5%8F%AA%E6%9C%89%E4%B8%A4%E4%B8%AA%E9%85%8D%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">调用前只有两个配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Anthropic-Messages"><span class="toc-number">3.</span> <span class="toc-text">Anthropic Messages</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%B7%E6%B1%82"><span class="toc-number">3.1.</span> <span class="toc-text">请求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%93%8D%E5%BA%94"><span class="toc-number">3.2.</span> <span class="toc-text">响应</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D"><span class="toc-number">3.3.</span> <span class="toc-text">多轮对话</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenAI-Chat-Completions"><span class="toc-number">4.</span> <span class="toc-text">OpenAI Chat Completions</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%B7%E6%B1%82-1"><span class="toc-number">4.1.</span> <span class="toc-text">请求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%93%8D%E5%BA%94-1"><span class="toc-number">4.2.</span> <span class="toc-text">响应</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E4%B8%AA%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E7%82%B9"><span class="toc-number">4.3.</span> <span class="toc-text">三个容易踩的点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenAI-Responses"><span class="toc-number">5.</span> <span class="toc-text">OpenAI Responses</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E4%BB%B6%EF%BC%9A%E6%8A%8A%E8%BE%93%E5%87%BA%E6%8B%86%E6%88%90%E4%B8%8D%E5%90%8C%E7%B1%BB%E5%9E%8B%E7%9A%84-item"><span class="toc-number">5.1.</span> <span class="toc-text">第一件：把输出拆成不同类型的 item</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E4%BB%B6%EF%BC%9A%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%B8%AE%E4%BD%A0%E5%AD%98%E5%8E%86%E5%8F%B2"><span class="toc-number">5.2.</span> <span class="toc-text">第二件：服务端帮你存历史</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%BC%E5%AE%B9%E5%AE%9E%E7%8E%B0%E7%9A%84%E5%B7%AE%E5%BC%82%EF%BC%8C%E6%AF%94%E5%AD%97%E6%AE%B5%E5%B7%AE%E5%BC%82%E6%9B%B4%E9%BA%BB%E7%83%A6"><span class="toc-number">5.3.</span> <span class="toc-text">兼容实现的差异，比字段差异更麻烦</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E7%A7%8D-API-%E5%AF%B9%E7%85%A7"><span class="toc-number">6.</span> <span class="toc-text">三种 API 对照</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E6%83%B3%E5%86%99-if-else%EF%BC%9A%E7%94%A8%E5%85%BC%E5%AE%B9%E5%B1%82"><span class="toc-number">7.</span> <span class="toc-text">不想写 if&#x2F;else：用兼容层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%A0%E4%B8%AA%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E5%9D%91"><span class="toc-number">8.</span> <span class="toc-text">几个容易踩的坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E5%90%8E"><span class="toc-number">9.</span> <span class="toc-text">最后</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>
