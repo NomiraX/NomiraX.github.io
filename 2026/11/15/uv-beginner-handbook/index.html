@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>uv 入门：装好、配源、建项目、管依赖、把项目交出去 | NomiraX 的博客</title><meta name="keywords" content="uv,Python,包管理,虚拟环境,依赖管理"><meta name="description" content="参考：B 站《新手必看！Python 包管理神器 UV》（UP：井水）。这篇按「从零开始」的真实顺序整理：装 uv → 配国内镜像 → 初始化项目 → 建虚拟环境 → 装第一个依赖 → 看文件怎么变 → 运行 → 打包交给别人 → 其余常用命令。 1. 概述uv 是一个用 Rust 写的 Python 环境与包管理工具。它想做的事其实很朴素：把过去分散在 pip、virtualenv、pyenv、">
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>uv 入门：装好、配源、建项目、管依赖、把项目交出去 | NomiraX 的博客</title><meta name="keywords" content="Python,uv,包管理,虚拟环境,依赖管理"><meta name="description" content="参考：B 站《新手必看！Python 包管理神器 UV》（UP：井水）。这篇按「从零开始」的真实顺序整理：装 uv → 配国内镜像 → 初始化项目 → 建虚拟环境 → 装第一个依赖 → 看文件怎么变 → 运行 → 打包交给别人 → 其余常用命令。 1. 概述uv 是一个用 Rust 写的 Python 环境与包管理工具。它想做的事其实很朴素：把过去分散在 pip、virtualenv、pyenv、">
 <meta property="og:type" content="article">
 <meta property="og:title" content="uv 入门：装好、配源、建项目、管依赖、把项目交出去">
 <meta property="og:url" content="https://nomirax.github.io/2026/11/15/uv-beginner-handbook/index.html">
@@ -6,7 +6,7 @@
 <meta property="og:description" content="参考：B 站《新手必看！Python 包管理神器 UV》（UP：井水）。这篇按「从零开始」的真实顺序整理：装 uv → 配国内镜像 → 初始化项目 → 建虚拟环境 → 装第一个依赖 → 看文件怎么变 → 运行 → 打包交给别人 → 其余常用命令。 1. 概述uv 是一个用 Rust 写的 Python 环境与包管理工具。它想做的事其实很朴素：把过去分散在 pip、virtualenv、pyenv、">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-11-14T19:40:00.000Z">
-<meta property="article:modified_time" content="2026-11-14T19:16:33.021Z">
+<meta property="article:modified_time" content="2026-11-14T19:18:13.307Z">
 <meta property="article:author" content="NomiraX">
 <meta property="article:tag" content="Python">
 <meta property="article:tag" content="uv">
@@ -339,7 +339,7 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 </blockquote>
 <p>这句话定下了 uv 的定位：不是 pip 的补丁，而是把「环境」和「包」放在一起管的新一层。</p>
 <blockquote>
-<p>「这个依赖计算是 UV……非常明显的比这个 PIP 要快的地方。」——01:03–01:06</p>
+<p>「这个依赖计算是 UV……非常明显地比这个 PIP 要快的地方。」——01:03–01:06</p>
 </blockquote>
 <p>快的第一个来源是解析器。装一个包要先算清整张依赖图取哪些版本，pip 在这里历史包袱最重。</p>
 <blockquote>
@@ -355,11 +355,11 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 </blockquote>
 <p>这是「把 <code>.venv</code> 排除在交付物之外」的理由：那个目录里没有一行你自己的代码，全是能从 lock 文件重装出来的第三方包。</p>
 <blockquote>
-<p>「所以说从效率的角度来说呢……我们应该只把我们自己写的这个代码……传给需要我们代码的人。」——18:38–18:40</p>
+<p>「所以说从效率的角度来说呢……我们应该只把我们自己写的这个代码……传给需要我们代码的人。」——18:38–18:44</p>
 </blockquote>
 <p>交付的边界由此确定：代码 + <code>pyproject.toml</code> + <code>uv.lock</code> 就够，环境靠 <code>uv sync</code> 现场重建。</p>
 <blockquote>
-<p>「因为透彻，所以简单。」——23:44–23:45</p>
+<p>「因为透彻，所以简单。」——23:44–23:46</p>
 </blockquote>
 <p>作者自己的总结，也可以当作 uv 这类工具的设计取向：把复杂度留在工具内部，把命令表面压到最短。</p>
 <h2 id="5-批判性分析"><a href="#5-批判性分析" class="headerlink" title="5. 批判性分析"></a>5. 批判性分析</h2><p><strong>它真正解决的问题被低估了。</strong> 表面看 uv 是「更快的 pip」，但真正的收益是<strong>可复现</strong>：<code>uv.lock</code> 把子依赖的精确版本和哈希都钉死，换机器、进 CI、回滚线上版本时，装出来的东西是一致的。pip 用户要额外配 <code>pip-tools</code> 或 <code>requirements.txt --hash</code> 才能达到同一水平。</p>
