@@ -1,12 +1,12 @@
-<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>常用大模型 API 与消息结构 | NomiraX 的博客</title><meta name="keywords" content="LLM,API,Agent"><meta name="description" content="一句话：agent 调模型不是一次「请求—响应」，而是一个带状态的循环。Anthropic Messages、Chat Completions、Responses 三种 API 的差别，本质上是在回答同一个问题——这段对话的状态由谁来存。  这是跟着一期 Agent 开发课程（第四课）整理的笔记。原文按「Anthropic → Chat Completions → Responses」的顺序讲，">
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>常用大模型 API 与消息结构 | NomiraX 的博客</title><meta name="keywords" content="LLM,API,Agent"><meta name="description" content="一句话：agent 调模型不是一次「请求—响应」，而是一个带状态的循环。Anthropic Messages、Chat Completions、Responses 三种 API 的差别，本质上是在回答同一个问题——这段对话的状态由谁来存。 整理自 B 站视频：《常用大模型 API 与消息结构》（Agent 开发系列课程 第四课）。  原文按「Anthropic → Chat Completion">
 <meta property="og:type" content="article">
 <meta property="og:title" content="常用大模型 API 与消息结构">
 <meta property="og:url" content="https://nomirax.github.io/2026/11/15/common-llm-apis-and-message-structure/index.html">
 <meta property="og:site_name" content="NomiraX 的博客">
-<meta property="og:description" content="一句话：agent 调模型不是一次「请求—响应」，而是一个带状态的循环。Anthropic Messages、Chat Completions、Responses 三种 API 的差别，本质上是在回答同一个问题——这段对话的状态由谁来存。  这是跟着一期 Agent 开发课程（第四课）整理的笔记。原文按「Anthropic → Chat Completions → Responses」的顺序讲，">
+<meta property="og:description" content="一句话：agent 调模型不是一次「请求—响应」，而是一个带状态的循环。Anthropic Messages、Chat Completions、Responses 三种 API 的差别，本质上是在回答同一个问题——这段对话的状态由谁来存。 整理自 B 站视频：《常用大模型 API 与消息结构》（Agent 开发系列课程 第四课）。  原文按「Anthropic → Chat Completion">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-11-14T21:30:00.000Z">
-<meta property="article:modified_time" content="2026-11-14T19:58:01.805Z">
+<meta property="article:modified_time" content="2026-11-14T20:00:21.919Z">
 <meta property="article:author" content="NomiraX">
 <meta property="article:tag" content="API">
 <meta property="article:tag" content="Agent">
@@ -121,8 +121,9 @@ if (postBg) lightGallery(postBg, {
 });
 document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>常用大模型 API 与消息结构</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T21:30:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><blockquote>
 <p>一句话：agent 调模型不是一次「请求—响应」，而是一个带状态的循环。Anthropic Messages、Chat Completions、Responses 三种 API 的差别，本质上是在回答同一个问题——<strong>这段对话的状态由谁来存</strong>。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Wnxq6yE9R">《常用大模型 API 与消息结构》</a>（Agent 开发系列课程 第四课）。</p>
 </blockquote>
-<p>这是跟着一期 Agent 开发课程（第四课）整理的笔记。原文按「Anthropic → Chat Completions → Responses」的顺序讲，我按同样的顺序写，但把每家的字段含义、结束状态的判断方式、以及多轮对话到底该传什么补齐了。</p>
+<p>原文按「Anthropic → Chat Completions → Responses」的顺序讲，我按同样的顺序写，但把每家的字段含义、结束状态的判断方式、以及多轮对话到底该传什么补齐了。</p>
 <h2 id="为什么这块要单独学"><a href="#为什么这块要单独学" class="headerlink" title="为什么这块要单独学"></a>为什么这块要单独学</h2><p>普通的「调个 API 问一句话」，看两眼文档就能跑。但 agent 不一样：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">用户指令 → 模型思考 → 要么直接回答，要么要求调工具<br>                              ↓<br>                       你的代码执行工具<br>                              ↓<br>                   结果拼回消息 → 再调模型 → ……<br></code></pre></td></tr></table></figure>
 <p>这个循环里，API 必须能把四件事表达清楚：</p>

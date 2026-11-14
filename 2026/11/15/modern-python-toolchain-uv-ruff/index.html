@@ -1,12 +1,12 @@
-<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>现代python工具链：uv&amp;ruff | NomiraX 的博客</title><meta name="keywords" content="Python,uv,ruff"><meta name="description" content="一个 Python 项目在根部其实只有两件事要管：跑得起来（哪个解释器、装哪些包、锁成什么版本）和写得像样（导入顺序、无用变量、风格统一）。前者是 uv，后者是 ruff。两个工具同出自 Astral、都用 Rust 写成单个可执行文件、都从同一份 pyproject.toml 读配置，所以它们天然是一套，而不是两个孤立的选择。  以前维护一个 Python 项目，根部要摆四套东西：  requ">
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>现代python工具链：uv&amp;ruff | NomiraX 的博客</title><meta name="keywords" content="Python,uv,ruff"><meta name="description" content="一个 Python 项目在根部其实只有两件事要管：跑得起来（哪个解释器、装哪些包、锁成什么版本）和写得像样（导入顺序、无用变量、风格统一）。前者是 uv，后者是 ruff。两个工具同出自 Astral、都用 Rust 写成单个可执行文件、都从同一份 pyproject.toml 读配置，所以它们天然是一套，而不是两个孤立的选择。 整理自两期 B 站视频：《我为什么弃用 Conda，改用 uv 来">
 <meta property="og:type" content="article">
 <meta property="og:title" content="现代python工具链：uv&amp;ruff">
 <meta property="og:url" content="https://nomirax.github.io/2026/11/15/modern-python-toolchain-uv-ruff/index.html">
 <meta property="og:site_name" content="NomiraX 的博客">
-<meta property="og:description" content="一个 Python 项目在根部其实只有两件事要管：跑得起来（哪个解释器、装哪些包、锁成什么版本）和写得像样（导入顺序、无用变量、风格统一）。前者是 uv，后者是 ruff。两个工具同出自 Astral、都用 Rust 写成单个可执行文件、都从同一份 pyproject.toml 读配置，所以它们天然是一套，而不是两个孤立的选择。  以前维护一个 Python 项目，根部要摆四套东西：  requ">
+<meta property="og:description" content="一个 Python 项目在根部其实只有两件事要管：跑得起来（哪个解释器、装哪些包、锁成什么版本）和写得像样（导入顺序、无用变量、风格统一）。前者是 uv，后者是 ruff。两个工具同出自 Astral、都用 Rust 写成单个可执行文件、都从同一份 pyproject.toml 读配置，所以它们天然是一套，而不是两个孤立的选择。 整理自两期 B 站视频：《我为什么弃用 Conda，改用 uv 来">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-11-14T20:10:00.000Z">
-<meta property="article:modified_time" content="2026-11-14T19:53:42.430Z">
+<meta property="article:modified_time" content="2026-11-14T20:00:21.931Z">
 <meta property="article:author" content="NomiraX">
 <meta property="article:tag" content="Python">
 <meta property="article:tag" content="ruff">
@@ -121,6 +121,7 @@ if (postBg) lightGallery(postBg, {
 });
 document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>现代python工具链：uv&amp;ruff</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T20:10:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><blockquote>
 <p>一个 Python 项目在根部其实只有两件事要管：<strong>跑得起来</strong>（哪个解释器、装哪些包、锁成什么版本）和<strong>写得像样</strong>（导入顺序、无用变量、风格统一）。前者是 uv，后者是 ruff。两个工具同出自 Astral、都用 Rust 写成单个可执行文件、都从同一份 <code>pyproject.toml</code> 读配置，所以它们天然是一套，而不是两个孤立的选择。</p>
+<p>整理自两期 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV19Nbq6vEq9/">《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》</a> 与 <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1XPj4zpE1a/">《Ruff 使用指南：最新的超快速代码格式化工具》</a>。</p>
 </blockquote>
 <p>以前维护一个 Python 项目，根部要摆四套东西：</p>
 <ul>
