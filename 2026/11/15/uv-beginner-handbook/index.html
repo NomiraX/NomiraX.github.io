@@ -1,18 +1,17 @@
-<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>uv 入门：从装好到把项目交出去 | NomiraX 的博客</title><meta name="keywords" content="uv,Python,包管理,虚拟环境,依赖管理,conda"><meta name="description" content="参考：B 站《新手必看！Python 包管理神器 UV》（井水）与《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》。文中命令与输出均在 uv 0.13.8 &#x2F; Windows 上复核过，与早期版本有出入的地方单独标出。 1. 概述uv 是一个用 Rust 写的 Python 工具，把三件事收进同一套命令：管 Python 版本、建虚拟环境、管项目依赖。官方给的说法是安装速度">
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>从 conda 换到 uv：让环境跟着项目走 | NomiraX 的博客</title><meta name="keywords" content="uv,Python,conda,虚拟环境,依赖管理"><meta name="description" content="参考：B 站《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》（主）与《新手必看！Python 包管理神器 UV》（补）。命令与输出在 uv 0.13.8 &#x2F; Windows 复核过，与早期版本有出入的地方单独标注。 1. 概述先摆问题。用 conda 管 Python 环境，几年下来大概会攒出这么几件烦心事：  环境要起名，而名字会忘。 机器上几十个项目就有几十个环境，看到">
 <meta property="og:type" content="article">
-<meta property="og:title" content="uv 入门：从装好到把项目交出去">
+<meta property="og:title" content="从 conda 换到 uv：让环境跟着项目走">
 <meta property="og:url" content="https://nomirax.github.io/2026/11/15/uv-beginner-handbook/index.html">
 <meta property="og:site_name" content="NomiraX 的博客">
-<meta property="og:description" content="参考：B 站《新手必看！Python 包管理神器 UV》（井水）与《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》。文中命令与输出均在 uv 0.13.8 &#x2F; Windows 上复核过，与早期版本有出入的地方单独标出。 1. 概述uv 是一个用 Rust 写的 Python 工具，把三件事收进同一套命令：管 Python 版本、建虚拟环境、管项目依赖。官方给的说法是安装速度">
+<meta property="og:description" content="参考：B 站《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》（主）与《新手必看！Python 包管理神器 UV》（补）。命令与输出在 uv 0.13.8 &#x2F; Windows 复核过，与早期版本有出入的地方单独标注。 1. 概述先摆问题。用 conda 管 Python 环境，几年下来大概会攒出这么几件烦心事：  环境要起名，而名字会忘。 机器上几十个项目就有几十个环境，看到">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2026-11-14T20:05:00.000Z">
-<meta property="article:modified_time" content="2026-11-14T19:29:29.560Z">
+<meta property="article:published_time" content="2026-11-14T20:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-14T19:33:29.961Z">
 <meta property="article:author" content="NomiraX">
 <meta property="article:tag" content="Python">
 <meta property="article:tag" content="conda">
 <meta property="article:tag" content="uv">
 <meta property="article:tag" content="依赖管理">
-<meta property="article:tag" content="包管理">
 <meta property="article:tag" content="虚拟环境">
 <meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/uv-beginner-handbook/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
   font-family: Bender;
@@ -122,119 +121,104 @@ if (postBg) lightGallery(postBg, {
    }
  }
 });
-document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>uv 入门：从装好到把项目交出去</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T20:05:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><p>参考：B 站《新手必看！Python 包管理神器 UV》（井水）与《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》。文中命令与输出均在 uv 0.13.8 / Windows 上复核过，与早期版本有出入的地方单独标出。</p>
-<h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>uv 是一个用 Rust 写的 Python 工具，把三件事收进同一套命令：<strong>管 Python 版本、建虚拟环境、管项目依赖</strong>。官方给的说法是安装速度比 pip 快 10~100 倍；实测里「快」主要发生在缓存命中和依赖解析上，第一次下载并不夸张。</p>
-<p>它解决的真正痛点，用过 conda 的人最清楚：</p>
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>从 conda 换到 uv：让环境跟着项目走</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-14T20:30:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><p>参考：B 站《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》（主）与《新手必看！Python 包管理神器 UV》（补）。命令与输出在 uv 0.13.8 / Windows 复核过，与早期版本有出入的地方单独标注。</p>
+<h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>先摆问题。用 conda 管 Python 环境，几年下来大概会攒出这么几件烦心事：</p>
 <ul>
-<li>每建一个环境都要起名，机器上堆到几十个环境后，看到 <code>myenv-2</code> 根本想不起它属于哪个项目；</li>
-<li>新环境要重新装一遍包，哪怕隔壁环境昨天刚装过；</li>
-<li>每次都要 <code>conda activate</code>，还容易激活错；</li>
-<li><code>requirements.txt</code> 里只写 <code>&gt;=</code>，别人装出来的版本和你不一致，出问题难复现；</li>
-<li>越来越多开源项目（例如 index-tts 2）直接用 uv 管理，不会读它的项目，连环境都搭不起来。</li>
+<li><strong>环境要起名，而名字会忘。</strong> 机器上几十个项目就有几十个环境，看到 <code>myenv</code>、<code>py311</code>、<code>test2</code>，确实想不起它属于谁；</li>
+<li><strong>新环境要从头装一遍包。</strong> 隔壁环境昨天刚装过 requests，这里还得再下一遍；</li>
+<li><strong>每次进项目都要 <code>conda activate</code></strong>，还常常激活错；</li>
+<li><strong><code>requirements.txt</code> 只写 <code>&gt;=</code></strong>，别人装出来的版本和你不一样，出错时很难对齐；</li>
+<li><strong>开源项目越来越多用 uv</strong>（例如 index-tts 2），不会读它的项目，连环境都搭不起来。</li>
 </ul>
-<p>uv 的答案是把环境绑回项目：<code>.venv</code> 就在项目目录里，环境名就是项目名；所有包版本进全局缓存，新环境直接硬链接复用；<code>uv.lock</code> 把精确版本和哈希钉死；<code>uv run</code> 免激活。快只是副产品，核心是<strong>环境跟着代码走</strong>。</p>
-<p>快的原因拆开是三件事：依赖解析一次算完整张图（pip 的解析器重复计算多）、下载并行（pip 是一个装完再下一个）、缓存与硬链接（同一份 wheel 不重复落盘）。uv 没有发明新格式，<code>pyproject.toml</code>、wheel、<code>venv</code> 目录结构都还是标准那套，它改变的是工作流。</p>
-<p>需要划清的边界：uv 只管 Python 侧。项目里一旦混进 CUDA、编译工具链、R 或系统库这类<strong>非 Python 依赖</strong>，conda 仍然是更省心的选择——它本来就是多语言的包管理器。</p>
-<h2 id="2-结构拆解"><a href="#2-结构拆解" class="headerlink" title="2. 结构拆解"></a>2. 结构拆解</h2><h3 id="2-1-一个项目里有什么"><a href="#2-1-一个项目里有什么" class="headerlink" title="2.1 一个项目里有什么"></a>2.1 一个项目里有什么</h3><p><code>uv init --no-package --python 3.13</code> 之后，真正要认识的文件是这些：</p>
-<div class="table-container">
+<p>把这几条翻译成需求，其实就五句话：环境放在项目里、别起名、装得快且能跨环境复用、版本能精确复现、别手动 activate。</p>
+<p>uv 正好对着这五条设计。它是 Rust 写的包与项目管理工具，用一套命令替代了 pip、virtualenv、pyenv、pip-tools 的一部分工作，把「Python 版本、虚拟环境、项目依赖」三块统一管起来。官方说法是安装速度比 pip 快 10~100 倍；实际感受取决于缓存与网络，第一次装并不会快一个数量级，但解析和第二次安装快得非常明显。</p>
+<p>一句话概括它和 conda 的区别：<strong>conda 把环境放在全局命名空间里按名字管，uv 把环境放回项目目录里按路径管。</strong> 名字要人记，路径不用。</p>
+<p>边界也要先说清：uv 只管 Python 这一侧。项目里一旦混进 CUDA、系统库、其他语言的工具链这类<strong>非 Python 依赖</strong>，conda 仍然是更合适的选择——那本来就是它的主场。</p>
+<h2 id="2-结构拆解"><a href="#2-结构拆解" class="headerlink" title="2. 结构拆解"></a>2. 结构拆解</h2><h3 id="2-1-两种环境的形态"><a href="#2-1-两种环境的形态" class="headerlink" title="2.1 两种环境的形态"></a>2.1 两种环境的形态</h3><p>conda 的环境住在 <code>~/miniconda3/envs/&lt;名字&gt;</code> 或 <code>C:\Users\&lt;你&gt;\miniconda3\envs\&lt;名字&gt;</code>，跟项目目录没有关系。项目在哪、环境在哪，全靠你脑子里的一张对照表，外加每次 <code>conda activate</code>。</p>
+<p>uv 的环境住在项目里：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">my-project/<br>├── .venv/              ← 环境在这里，名字就是项目名<br>├── pyproject.toml<br>├── uv.lock<br>├── .python-version<br>└── main.py<br></code></pre></td></tr></table></figure>
+<p>进目录就看见环境，删目录就等于连同环境一起清理，不存在「忘了哪个环境对哪个项目」。</p>
+<h3 id="2-2-五条需求分别由什么实现"><a href="#2-2-五条需求分别由什么实现" class="headerlink" title="2.2 五条需求分别由什么实现"></a>2.2 五条需求分别由什么实现</h3><div class="table-container">
 <table>
 <thead>
 <tr>
-<th>文件</th>
-<th>作用</th>
-<th>提交到 Git</th>
+<th>想要</th>
+<th>uv 的做法</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>pyproject.toml</code></td>
-<td>项目元数据 + 你直接声明的依赖</td>
-<td>要</td>
+<td>环境跟着项目走</td>
+<td><code>.venv</code> 建在项目目录内，路径即身份</td>
 </tr>
 <tr>
-<td><code>uv.lock</code></td>
-<td>完整依赖图：子依赖、精确版本、下载源、sha256</td>
-<td>要</td>
+<td>不给环境起名</td>
+<td>不需要名字，uv 认目录</td>
 </tr>
 <tr>
-<td><code>.python-version</code></td>
-<td>项目用的 Python 版本，内容一行，如 <code>3.13</code></td>
-<td>要</td>
+<td>装包快、跨环境复用</td>
+<td>全局缓存 + 硬链接，同一个 wheel 只存一份</td>
 </tr>
 <tr>
-<td><code>main.py</code></td>
-<td>入口脚本，<code>uv init</code> 生成，可改可删</td>
-<td>要</td>
+<td>版本可精确复现</td>
+<td><code>uv.lock</code> 锁死精确版本、下载源与哈希</td>
 </tr>
 <tr>
-<td><code>README.md</code></td>
-<td>项目说明</td>
-<td>要</td>
-</tr>
-<tr>
-<td><code>.venv/</code></td>
-<td>虚拟环境本体，装好的包都在这里</td>
-<td><strong>不要</strong></td>
-</tr>
-<tr>
-<td><code>.gitignore</code></td>
-<td>哪些文件不进版本库</td>
-<td>要（若生成）</td>
+<td>不用手动激活</td>
+<td><code>uv run &lt;命令&gt;</code> 直接用项目解释器执行</td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>三个文件的分工值得单独说清：</p>
-<ul>
-<li><code>pyproject.toml</code> 写的是<strong>宽泛要求</strong>：<code>dependencies = [&quot;httpx&gt;=0.28&quot;]</code>，意思是「至少 0.28，越多越好」；</li>
-<li><code>uv.lock</code> 写的是<strong>精确结论</strong>：每个包一行，带 <code>source</code>（从哪个索引站下）、<code>wheels</code>、<code>sha256</code>。它由工具生成，不手改；</li>
-<li><code>.python-version</code> 是解释器版本，<code>uv python pin 3.12</code> 改的就是它。</li>
-</ul>
-<p><code>uv init</code> 不带 <code>--no-package</code> 时生成可打包布局（多出 <code>src/&lt;项目名&gt;/</code> 与构建配置）；不带 <code>--python</code> 时 uv 会挑本机可用的最新解释器，可能直接给出 <code>requires-python = &quot;&gt;=3.15&quot;</code> 这种前沿版本。</p>
-<h3 id="2-2-命令地图"><a href="#2-2-命令地图" class="headerlink" title="2.2 命令地图"></a>2.2 命令地图</h3><div class="table-container">
+<h3 id="2-3-命令速查"><a href="#2-3-命令速查" class="headerlink" title="2.3 命令速查"></a>2.3 命令速查</h3><div class="table-container">
 <table>
 <thead>
 <tr>
 <th>阶段</th>
 <th>命令</th>
-<th>作用</th>
+<th>说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>装工具</td>
+<td>安装</td>
 <td><code>pip install uv</code></td>
-<td>用已有 Python 装 uv（Mac/Linux 也可用官方脚本）</td>
+<td>已有 Python 就这么装；Mac/Linux 也可用官方脚本</td>
 </tr>
 <tr>
-<td>配源</td>
-<td><code>UV_DEFAULT_INDEX</code> 或 <code>[[tool.uv.index]]</code></td>
-<td>指定国内镜像</td>
+<td>配镜像</td>
+<td>环境变量 <code>UV_DEFAULT_INDEX</code></td>
+<td>值如 <code>https://pypi.tuna.tsinghua.edu.cn/simple</code>，不带引号</td>
 </tr>
 <tr>
 <td>装 Python</td>
-<td><code>uv python install 3.12</code> / <code>uv python list</code></td>
-<td>下载并管理解释器</td>
+<td><code>uv python install 3.12</code></td>
+<td>不写版本则装最新的；<code>uv python list</code> 看已装与可装</td>
 </tr>
 <tr>
 <td>建项目</td>
-<td><code>uv init --no-package</code></td>
-<td>生成项目骨架</td>
+<td><code>uv init</code></td>
+<td>不带参数会生成 <code>main.py</code> 入口；<code>--no-package</code> 只生成必要文件</td>
 </tr>
 <tr>
 <td>钉版本</td>
 <td><code>uv python pin 3.12</code></td>
-<td>写 <code>.python-version</code>，随时可升可降</td>
+<td>写进 <code>.python-version</code>，随时可升可降</td>
 </tr>
 <tr>
 <td>建环境</td>
 <td><code>uv venv</code></td>
-<td>建 <code>.venv</code>（新版 <code>uv add</code> 也会自动建）</td>
+<td>建 <code>.venv</code>；新版 <code>uv add</code> 发现没有会自己建</td>
 </tr>
 <tr>
 <td>装依赖</td>
 <td><code>uv add fastapi</code></td>
 <td>解析、下载、安装、写回清单、更新 lock</td>
+</tr>
+<tr>
+<td>删依赖</td>
+<td><code>uv remove fastapi</code></td>
+<td>卸载并从清单移除</td>
 </tr>
 <tr>
 <td>迁旧清单</td>
@@ -244,12 +228,17 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 <tr>
 <td>兼容安装</td>
 <td><code>uv pip install foo</code></td>
-<td>走 pip 语义装进当前环境（<strong>不进</strong> <code>pyproject.toml</code>/<code>uv.lock</code>）</td>
+<td>pip 语义装进环境，<strong>不改</strong>清单与 lock</td>
 </tr>
 <tr>
-<td>删依赖</td>
-<td><code>uv remove fastapi</code></td>
-<td>卸载并从清单移除</td>
+<td>同步</td>
+<td><code>uv sync</code></td>
+<td>按两份清单重建环境</td>
+</tr>
+<tr>
+<td>运行</td>
+<td><code>uv run main.py</code></td>
+<td>免激活，启动前还会校验环境</td>
 </tr>
 <tr>
 <td>看结构</td>
@@ -257,14 +246,9 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 <td>依赖树，区分直接依赖与子依赖</td>
 </tr>
 <tr>
-<td>运行</td>
-<td><code>uv run main.py</code></td>
-<td>用项目解释器执行，免 activate</td>
-</tr>
-<tr>
-<td>还原</td>
-<td><code>uv sync</code></td>
-<td>按 lock 重建环境</td>
+<td>自维护</td>
+<td><code>uv self update</code></td>
+<td>升级 uv 自身</td>
 </tr>
 <tr>
 <td>命令行工具</td>
@@ -274,24 +258,16 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 </tbody>
 </table>
 </div>
-<h3 id="2-3-五步走通"><a href="#2-3-五步走通" class="headerlink" title="2.3 五步走通"></a>2.3 五步走通</h3><p><strong>装 uv。</strong> 已有 Python 就 <code>pip install uv</code>，然后 <code>uv --version</code>。终端不认识命令就重开一个窗口——PATH 改动对已开进程无效。</p>
-<p><strong>配镜像。</strong> 设环境变量 <code>UV_DEFAULT_INDEX</code>，值填镜像地址（如 <code>https://pypi.tuna.tsinghua.edu.cn/simple</code>）。值的引号要去掉，改完重开终端。镜像只影响下载，但同步延迟会带来「锁的版本明天在源上没了」的偶发问题。</p>
-<p><strong>初始化并建环境。</strong> 进入空文件夹，地址栏敲 <code>cmd</code> 回车（工作目录即当前文件夹）：</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv init <span class="hljs-literal">--no-package</span><br>uv venv<br></code></pre></td></tr></table></figure>
-<p><code>uv venv</code> 打印：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">Using CPython 3.13.18<br>Creating virtual environment at: .venv<br>Activate with: .venv\Scripts\activate<br></code></pre></td></tr></table></figure>
-<p><code>.venv</code> 里两个要紧位置：<code>Scripts\python.exe</code>（Linux/macOS 是 <code>bin/python</code>）是之后实际被调用的解释器；<code>Lib\site-packages\</code> 是依赖落地的目录。删掉 <code>.venv</code> 等于清空环境，全局 Python 不受影响。</p>
-<p><strong>装依赖并看结构。</strong></p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv add requests<br>uv tree<br></code></pre></td></tr></table></figure>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">Resolved 6 packages in 312ms<br>Installed 5 packages in 184ms<br> + certifi==2026.10.23<br> + charset-normalizer==3.5.2<br> + idna==3.20<br> + requests==2.34.2<br> + urllib3==2.8.0<br><br>uvdemo3 v0.1.0<br>└── requests v2.34.2<br>    ├── certifi v2026.10.23<br>    ├── charset-normalizer v3.5.2<br>    ├── idna v3.20<br>    └── urllib3 v2.8.0<br></code></pre></td></tr></table></figure>
-<p>装一个进来五个：四个子依赖进 <code>uv.lock</code>，不进 <code>pyproject.toml</code> 的 <code>dependencies</code>。</p>
-<p><strong>运行。</strong></p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv run main.py<br></code></pre></td></tr></table></figure>
-<p>等价于「用 <code>.venv</code> 里的 Python 执行 <code>main.py</code>」，但不用先 activate；启动前还会核对环境与 lock 是否一致，缺什么补什么。</p>
-<h3 id="2-4-把项目交出去"><a href="#2-4-把项目交出去" class="headerlink" title="2.4 把项目交出去"></a>2.4 把项目交出去</h3><p>交付物只有三样：<strong>代码 + <code>pyproject.toml</code> + <code>uv.lock</code></strong>。</p>
-<p>环境占了体积的绝大部分——实测项目目录 1.88 MB，其中 <code>.venv</code> 1.84 MB，自己的代码 0.04 MB。而且 <code>.venv</code> 里是平台相关的二进制，换系统就不可用。对方装好 uv 后在项目目录执行：</p>
-<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv sync<br></code></pre></td></tr></table></figure>
-<p>它读两个清单，建好 <code>.venv</code>、补齐依赖（缓存命中时输出就是 <code>Installed 5 packages in 183ms</code>），接着 <code>uv run main.py</code> 照常跑。</p>
+<h3 id="2-4-三个文件"><a href="#2-4-三个文件" class="headerlink" title="2.4 三个文件"></a>2.4 三个文件</h3><p><strong><code>pyproject.toml</code>——项目的宽泛要求。</strong> 空项目里它长这样：</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs toml"><span class="hljs-section">[project]</span><br><span class="hljs-attr">name</span> = <span class="hljs-string">&quot;my-uv-demo&quot;</span>          <span class="hljs-comment"># 默认取文件夹名</span><br><span class="hljs-attr">version</span> = <span class="hljs-string">&quot;0.1.0&quot;</span><br><span class="hljs-attr">description</span> = <span class="hljs-string">&quot;Add your description here&quot;</span><br><span class="hljs-attr">readme</span> = <span class="hljs-string">&quot;README.md&quot;</span><br><span class="hljs-attr">requires-python</span> = <span class="hljs-string">&quot;&gt;=3.13&quot;</span><br><span class="hljs-attr">dependencies</span> = []             <span class="hljs-comment"># 装了包才会填</span><br></code></pre></td></tr></table></figure>
+<p><code>uv add fastapi</code> 之后，<code>dependencies</code> 里会多出 <code>&quot;fastapi&gt;=0.141.1&quot;</code> 这样的宽泛约束——只保证「不低于某个版本」。</p>
+<p><strong><code>uv.lock</code>——精确结论。</strong> pip 生态里没有对应物。它由工具生成，不手改，内容是每个包的精确版本、从哪个源下载、wheel 的哈希：</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs toml"><span class="hljs-section">[[package]]</span><br><span class="hljs-attr">name</span> = <span class="hljs-string">&quot;pydantic&quot;</span><br><span class="hljs-attr">version</span> = <span class="hljs-string">&quot;2.13.4&quot;</span><br><span class="hljs-attr">source</span> = &#123; registry = <span class="hljs-string">&quot;https://mirrors.aliyun.com/pypi/simple&quot;</span> &#125;<br></code></pre></td></tr></table></figure>
+<p>你在 <code>pyproject.toml</code> 里只声明了 fastapi，但 fastapi 依赖 pydantic、starlette、typing-extensions……这些子依赖全部落在 lock 里。这就是「换台机器也能装出同一套东西」的依据。</p>
+<p><strong><code>.python-version</code>——解释器版本。</strong> 内容就一行，例如 <code>3.13</code>。<code>uv python pin 3.12</code> 改的就是它。这一点和 conda 差别很大：conda 环境建好时定的 Python 版本，后面基本不能动，要换只能重建；uv 里随时可以改，<code>uv python pin</code> 一句就切换。</p>
+<h3 id="2-5-走一遍"><a href="#2-5-走一遍" class="headerlink" title="2.5 走一遍"></a>2.5 走一遍</h3><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv init <span class="hljs-literal">--no-package</span>      <span class="hljs-comment"># 生成 pyproject.toml / .python-version / main.py / README.md</span><br>uv venv                   <span class="hljs-comment"># Using CPython 3.13.18 → Creating virtual environment at: .venv</span><br>uv add requests           <span class="hljs-comment"># Resolved 6 packages → Installed 5 packages</span><br>uv tree                   <span class="hljs-comment"># 看 requests 下面挂了 certifi / charset-normalizer / idna / urllib3</span><br>uv run main.py            <span class="hljs-comment"># 用 .venv 的解释器执行，不用 activate</span><br></code></pre></td></tr></table></figure>
+<p><code>uv venv</code> 之后，<code>.venv</code> 里有两个要紧位置：<code>Scripts\python.exe</code>（Linux/macOS 为 <code>bin/python</code>）是之后真正被调用的解释器；<code>Lib\site-packages\</code> 是依赖落地的目录。删掉 <code>.venv</code> 等于清空环境，全局 Python 不受影响。</p>
+<p>把项目交给别人时，只交 <strong>代码 + <code>pyproject.toml</code> + <code>uv.lock</code></strong>。实测一个项目目录 1.88 MB，其中 <code>.venv</code> 占 1.84 MB，自己的代码只有 0.04 MB——环境里全是能从 lock 重装出来的第三方包，且是平台相关二进制，交出去既占地方又用不了。对方在项目目录执行 <code>uv sync</code>，环境就回来了。</p>
 <h2 id="3-关键概念与术语表"><a href="#3-关键概念与术语表" class="headerlink" title="3. 关键概念与术语表"></a>3. 关键概念与术语表</h2><div class="table-container">
 <table>
 <thead>
@@ -303,11 +279,19 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 <tbody>
 <tr>
 <td>uv</td>
-<td>Astral 出的 Rust 实现 Python 包/环境管理器，统一管解释器、虚拟环境、依赖</td>
+<td>Astral 出的 Rust 实现 Python 工具，统一管解释器、虚拟环境、项目依赖</td>
 </tr>
 <tr>
 <td>conda</td>
-<td>跨语言的包与环境管理器；强在非 Python 依赖（CUDA、系统库、其他语言链）</td>
+<td>跨语言的包与环境管理器，强在非 Python 依赖（CUDA、系统库、其他语言链）</td>
+</tr>
+<tr>
+<td>conda channel</td>
+<td>conda 的软件源（如 conda-forge、defaults），与 pip 的索引源是两套体系</td>
+</tr>
+<tr>
+<td><code>environment.yml</code></td>
+<td>conda 的环境导出文件，含 channel 与 conda 专有包，<strong>不能</strong>直接喂给 uv</td>
 </tr>
 <tr>
 <td><code>pyproject.toml</code></td>
@@ -350,50 +334,48 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 <td>pip 兼容通道，装进环境但不改清单，<strong>不可复现</strong></td>
 </tr>
 <tr>
-<td><code>uv sync</code></td>
-<td>按两个清单还原环境，Python 界的 <code>npm install</code></td>
-</tr>
-<tr>
-<td><code>uv run</code></td>
-<td>用项目解释器执行命令，替代「先 activate 再 python」</td>
+<td><code>uv sync</code> / <code>uv run</code></td>
+<td>按清单还原环境 / 用项目解释器执行命令</td>
 </tr>
 </tbody>
 </table>
 </div>
-<h2 id="4-关键引用"><a href="#4-关键引用" class="headerlink" title="4. 关键引用"></a>4. 关键引用</h2><p>A = 《新手必看！Python 包管理神器 UV》，B = 《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》。</p>
+<h2 id="4-关键引用"><a href="#4-关键引用" class="headerlink" title="4. 关键引用"></a>4. 关键引用</h2><p>B = 《我为什么弃用 Conda，改用 uv 来管理 Python 虚拟环境》，A = 《新手必看！Python 包管理神器 UV》。</p>
 <blockquote>
-<p>「它属于新一代的 Python 环境管理工具。」——A · 00:11</p>
-<p>「这个依赖计算是 UV……非常明显的比这个 PIP 要快的地方。」——A · 01:03–01:06</p>
-<p>「而我们的 UV 呢……它会同时去下载多个依赖。」——A · 01:21</p>
-<p>「这个文件比较重要。」——A · 07:25 —— 指 <code>pyproject.toml</code>，后面所有命令都围着它转。</p>
-<p>「因为虚拟环境目录里边只是依赖。」——A · 19:37 —— <code>.venv</code> 里没有一行你的代码，全是可以从 lock 重装出来的包。</p>
-<p>「所以说从效率的角度来说呢……我们应该只把我们自己写的这个代码……传给需要我们代码的人。」——A · 18:38–18:44</p>
-<p>「因为透彻，所以简单。」——A · 23:44–23:46</p>
 <p>「最常用的肯定就是用康纳来管理。」——B · 00:17 ——「康纳」是字幕对 conda 的音译。</p>
 <p>「它安装的并不是一个精确的版本。」——B · 01:23 —— 说的是 <code>requirements.txt</code> 里的 <code>&gt;=</code>。</p>
-<p>「以项目为中心来管理。」——B · 02:10</p>
+<p>「以项目为中心来管理。」——B · 02:10 —— 这句是整篇文章的题眼：环境的位置由项目决定，而不是由名字决定。</p>
+<p>「第五个呢就是不用每次都手动激活环境。」——B · 02:56</p>
+<p>「官方显示它的速度是比 PEPE 要快 10~100 倍。」——B · 03:36 ——「PEPE」是字幕对 pip 的音译。</p>
+<p>「此外呢这个 Python 的版本是随时可变的。」——B · 04:55 —— 对应 conda 建好环境就不能换版本的痛点。</p>
 <p>「UV 不擅长的呢是非 Python 的依赖。」——B · 10:39</p>
+<p>「那康纳仍然是更强的。」——B · 10:52 —— 前提是项目要同时管 Python 之外的依赖。</p>
+<p>「它属于新一代的 Python 环境管理工具。」——A · 00:11</p>
+<p>「这个文件比较重要。」——A · 07:25 —— 指 <code>pyproject.toml</code>。</p>
+<p>「因为虚拟环境目录里边只是依赖。」——A · 19:37 —— 说明为什么 <code>.venv</code> 不进交付物。</p>
+<p>「因为透彻，所以简单。」——A · 23:44–23:46</p>
 </blockquote>
-<h2 id="5-批判性分析"><a href="#5-批判性分析" class="headerlink" title="5. 批判性分析"></a>5. 批判性分析</h2><p><strong>conda 的痛点不是「慢」，是「环境无主」。</strong> 起名、激活、忘记对应关系，本质是 conda 把环境放在全局命名空间里，而项目在另一个地方。uv 把 <code>.venv</code> 塞回项目目录，用「路径」替代「名字」，这类问题从根上消失。顺带解决了跨环境复用（全局缓存）与版本复现（lock）。</p>
-<p><strong>「快 10~100 倍」要加定语。</strong> 官方数字通常指解析与缓存命中的场景；首次下载受网络与镜像影响，快两倍就不错。Windows 上缓存与项目不在同一分区时，uv 会退化成完整复制并提示 <code>Failed to hardlink files; falling back to full copy</code>，设 <code>UV_LINK_MODE=copy</code> 只消警告，磁盘占用照样上去。</p>
-<p><strong><code>uv pip</code> 是逃生通道，不是正路。</strong> 它装包只进环境、不改 <code>pyproject.toml</code> 和 <code>uv.lock</code>，<code>uv tree</code> 里也看不到——换台机器就复现不出来。临时试一个包可以，正式依赖一律 <code>uv add</code>。</p>
-<p><strong>默认行为会改你的文件。</strong> 用环境变量设了默认源后，<code>uv add</code> 会把 <code>[[tool.uv.index]]</code> 写进 <code>pyproject.toml</code>；文件里若已有同名表头，TOML 解析直接报 <code>Cannot declare (&#39;tool&#39;, &#39;uv&#39;, &#39;index&#39;) twice</code>。要么只留一条，要么用具名索引配 <code>[tool.uv.sources]</code>。</p>
-<p><strong>边界清楚：非 Python 依赖它管不了。</strong> 带 CUDA、科学计算底层、多语言工具链的项目，conda 仍更省心；uv 只覆盖 Python 这半边。判断标准很简单——项目里有没有「pip/conda 之外的系统级依赖」。</p>
-<p><strong>版本差异自己核对。</strong> 老版本 <code>uv init</code> 会顺手 <code>git init</code> 并生成 <code>.gitignore</code>；0.13.8 的 <code>uv init --no-package</code> 只给四个文件。截图与本机结果不一致时先 <code>uv --version</code>。</p>
-<h2 id="6-个人思考与应用"><a href="#6-个人思考与应用" class="headerlink" title="6. 个人思考与应用"></a>6. 个人思考与应用</h2><p><strong>从 conda 迁移，分三步走，别一次搬完。</strong> 第一步，新项目全量用 uv，先建立手感；第二步，老项目保留 conda 环境，把 <code>uv pip</code> 当作 pip 的加速替代（同一环境里 <code>uv pip install -r requirements.txt</code> 跑通再谈别的）；第三步，确认无误后把依赖迁到 <code>pyproject.toml</code>，彻底脱离 conda。</p>
-<p><strong><code>environment.yml</code> 不能直接转。</strong> conda 的清单里混着 channel、conda 专有包和 pip 段，必须先拆：pip 段抽成 <code>requirements.txt</code> 交给 <code>uv add -r</code>，剩下的系统级依赖继续留在 conda。</p>
-<p><strong>GPU / 深度学习项目可以混住。</strong> 系统层（CUDA、cuDNN、编译工具链）交给 conda 或系统包管理器，Python 层用 uv 管项目依赖——前提是 uv 指向 conda 那个解释器（<code>uv venv --python &lt;conda 环境里的 python&gt;</code>），别让两套工具各自建一套环境。</p>
-<p><strong>CI 用 <code>uv sync --frozen</code>。</strong> <code>--frozen</code> 表示不许改 lock，lock 与 <code>pyproject.toml</code> 不一致时直接失败，正好把「本地随手加了依赖忘了锁」挡在流水线外。Docker 里先 <code>COPY pyproject.toml uv.lock ./</code> 再 <code>uv sync --frozen --no-dev</code>，最后 <code>COPY . .</code>，改业务代码不会让依赖层缓存失效。</p>
-<p><strong>镜像配在哪。</strong> 个人机器用 <code>UV_DEFAULT_INDEX</code> 最省事；团队项目写进 <code>[[tool.uv.index]]</code>，让源跟代码走、可 review，代价是项目文件里混进基础设施信息。</p>
-<p><strong>Python 版本也钉住。</strong> <code>uv python pin 3.12</code> 配合 <code>.python-version</code> 入库，「我这儿能跑、你那儿语法错」的问题能少一大半——解释器差异比依赖差异更难查。</p>
-<p><strong>什么时候先别换。</strong> 团队已经用 poetry 且流程成熟、CI 镜像里 pip 缓存调得很顺、项目依赖里有只能在特定环境编译的包时，迁移收益小于风险。可以先只换「装包」这一环，跑顺了再动 lock。</p>
+<h2 id="5-批判性分析"><a href="#5-批判性分析" class="headerlink" title="5. 批判性分析"></a>5. 批判性分析</h2><p><strong>换掉 conda 的真正理由不是「快」，是「环境无主」。</strong> 起名、激活、忘记对应关系，本质都是 conda 把环境放在全局命名空间，而项目在另一个地方，两者关系只能靠人脑维护。uv 用目录位置替代名字，这类问题从根上消失；顺带解决了跨环境复用（全局缓存）和版本复现（lock）。速度是这套结构带来的副产品，不是它唯一的价值。</p>
+<p><strong>「快 10~100 倍」有前提。</strong> 官方数字通常指解析与缓存命中的场景。首次下载受网络和镜像影响，快两倍就不错；Windows 上缓存与项目不在同一分区时，uv 会退化成完整复制并提示 <code>Failed to hardlink files; falling back to full copy</code>，设 <code>UV_LINK_MODE=copy</code> 只是消掉警告，磁盘占用照样上去。</p>
+<p><strong><code>uv pip</code> 是逃生通道，不是正路。</strong> 它装包只进环境、不改 <code>pyproject.toml</code> 与 <code>uv.lock</code>，<code>uv tree</code> 里也看不到（实测装完 <code>rich</code>，树里只有原有依赖）。临时试一个包可以，正式依赖一律 <code>uv add</code>，否则「换台机器就复现不出来」的坑照旧。</p>
+<p><strong>默认行为会改你的文件。</strong> 用环境变量设了默认源之后，<code>uv add</code> 会把 <code>[[tool.uv.index]]</code> 写进 <code>pyproject.toml</code>；文件里若已有同名表头，TOML 解析直接报 <code>Cannot declare (&#39;tool&#39;, &#39;uv&#39;, &#39;index&#39;) twice</code>。要么只留一条，要么用具名索引配 <code>[tool.uv.sources]</code>。</p>
+<p><strong>它明确不管的那半边，别指望它。</strong> CUDA、cuDNN、编译器工具链、R/Julia 这类非 Python 依赖，uv 没有对应机制；conda 的价值恰在于把多语言、二进制分发（conda-forge）、企业内网镜像一并解决。深度学习项目里这一条经常是决定性的。</p>
+<p><strong>迁移不是零成本。</strong> <code>environment.yml</code> 里混着 channel 与 conda 专有包，不能直接转；团队里有人还在用 pip + virtualenv，lock 文件的行为需要先对齐；CI 缓存策略也要跟着改。这些成本要算，但一次性付出、长期收益，和 conda 的环境重建成本不是一个量级。</p>
+<p><strong>版本差异自己核对。</strong> 老版本 <code>uv init</code> 会顺手 <code>git init</code> 并生成 <code>.gitignore</code>；0.13.8 的 <code>uv init --no-package</code> 只给四个文件。截图与本机结果不一致时，先 <code>uv --version</code> 再对照文档。</p>
+<h2 id="6-个人思考与应用"><a href="#6-个人思考与应用" class="headerlink" title="6. 个人思考与应用"></a>6. 个人思考与应用</h2><p><strong>迁移分三步，别一次搬完。</strong> 新项目直接全量用 uv，先建立手感；老项目保留 conda 环境，把 <code>uv pip</code> 当作 pip 的加速替代，跑通再谈别的；确认无误后把依赖迁到 <code>pyproject.toml</code> + <code>uv.lock</code>，彻底脱离 conda。</p>
+<p><strong><code>environment.yml</code> 要拆着看。</strong> 先用 <code>conda env export --from-history</code> 拿到你真正显式装过的东西，把其中 pip 段抽成 <code>requirements.txt</code>，交给 <code>uv add -r</code>；剩下的系统级依赖继续留给 conda。混在一起直接转，十有八九装不上。</p>
+<p><strong>GPU / 深度学习项目可以两边分治。</strong> 系统层（CUDA、cuDNN、编译工具链）交给 conda 或系统包管理器，Python 层用 uv 管项目依赖。前提是让 uv 使用 conda 那个解释器（<code>uv venv --python &lt;conda 环境里的 python&gt;</code>），别让两套工具各建一套环境。</p>
+<p><strong>CI 用 <code>uv sync --frozen</code>。</strong> <code>--frozen</code> 表示不许改 lock，lock 与 <code>pyproject.toml</code> 不一致时直接失败，把「本地随手加了依赖忘了锁」挡在流水线外。Docker 里先 <code>COPY pyproject.toml uv.lock ./</code> 再 <code>uv sync --frozen --no-dev</code>，最后 <code>COPY . .</code>，改业务代码不会让依赖层缓存失效。</p>
+<p><strong>镜像配在哪。</strong> 个人机器用 <code>UV_DEFAULT_INDEX</code> 最省事；团队项目写进 <code>[[tool.uv.index]]</code>，让源跟着代码走、可 review、可回滚，代价是项目文件里混进了基础设施信息。</p>
+<p><strong>Python 版本也入库。</strong> <code>.python-version</code> 提交，配合 <code>uv python install</code>，「我这儿能跑、你那儿语法错」能少一大半——解释器差异比依赖差异更难查。</p>
+<p><strong>什么时候先别换。</strong> 团队已经用 poetry 且流程成熟、CI 镜像里 pip 缓存调得很顺、项目依赖里有只能在特定环境编译的包，迁移收益小于风险。可以先只替换「装包」这一环，跑顺了再动 lock。</p>
 <h2 id="7-延伸阅读"><a href="#7-延伸阅读" class="headerlink" title="7. 延伸阅读"></a>7. 延伸阅读</h2><ul>
 <li>uv 官方文档：<a target="_blank" rel="noopener" href="https://docs.astral.sh/uv/">https://docs.astral.sh/uv/</a> —— 索引源、workspace、Docker、CI 都有专章</li>
 <li><code>uv pip</code> 兼容接口：<a target="_blank" rel="noopener" href="https://docs.astral.sh/uv/pip/">https://docs.astral.sh/uv/pip/</a></li>
 <li>uv 源码与 release notes：<a target="_blank" rel="noopener" href="https://github.com/astral-sh/uv">https://github.com/astral-sh/uv</a></li>
+<li>conda 文档（对照看它擅长的部分）：<a target="_blank" rel="noopener" href="https://docs.conda.io/">https://docs.conda.io/</a></li>
 <li><code>pyproject.toml</code> 规范（PEP 621）：<a target="_blank" rel="noopener" href="https://peps.python.org/pep-0621/">https://peps.python.org/pep-0621/</a></li>
 <li>锁文件格式（PEP 751）：<a target="_blank" rel="noopener" href="https://peps.python.org/pep-0751/">https://peps.python.org/pep-0751/</a></li>
-<li>Python 打包用户指南：<a target="_blank" rel="noopener" href="https://packaging.python.org/">https://packaging.python.org/</a></li>
 <li>ruff / ty：<a target="_blank" rel="noopener" href="https://docs.astral.sh/ruff/">https://docs.astral.sh/ruff/</a> ｜ <a target="_blank" rel="noopener" href="https://docs.astral.sh/ty/">https://docs.astral.sh/ty/</a></li>
 </ul>
-<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/hello-world/">Hello World 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>记录学习、技术与日常</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">1. 概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E7%BB%93%E6%9E%84%E6%8B%86%E8%A7%A3"><span class="toc-number">2.</span> <span class="toc-text">2. 结构拆解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E4%B8%80%E4%B8%AA%E9%A1%B9%E7%9B%AE%E9%87%8C%E6%9C%89%E4%BB%80%E4%B9%88"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 一个项目里有什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E5%91%BD%E4%BB%A4%E5%9C%B0%E5%9B%BE"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 命令地图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E4%BA%94%E6%AD%A5%E8%B5%B0%E9%80%9A"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 五步走通</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E6%8A%8A%E9%A1%B9%E7%9B%AE%E4%BA%A4%E5%87%BA%E5%8E%BB"><span class="toc-number">2.4.</span> <span class="toc-text">2.4 把项目交出去</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%85%B3%E9%94%AE%E6%A6%82%E5%BF%B5%E4%B8%8E%E6%9C%AF%E8%AF%AD%E8%A1%A8"><span class="toc-number">3.</span> <span class="toc-text">3. 关键概念与术语表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%85%B3%E9%94%AE%E5%BC%95%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">4. 关键引用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E6%89%B9%E5%88%A4%E6%80%A7%E5%88%86%E6%9E%90"><span class="toc-number">5.</span> <span class="toc-text">5. 批判性分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E4%B8%AA%E4%BA%BA%E6%80%9D%E8%80%83%E4%B8%8E%E5%BA%94%E7%94%A8"><span class="toc-number">6.</span> <span class="toc-text">6. 个人思考与应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-%E5%BB%B6%E4%BC%B8%E9%98%85%E8%AF%BB"><span class="toc-number">7.</span> <span class="toc-text">7. 延伸阅读</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/hello-world/">Hello World 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>记录学习、技术与日常</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">1. 概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E7%BB%93%E6%9E%84%E6%8B%86%E8%A7%A3"><span class="toc-number">2.</span> <span class="toc-text">2. 结构拆解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E4%B8%A4%E7%A7%8D%E7%8E%AF%E5%A2%83%E7%9A%84%E5%BD%A2%E6%80%81"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 两种环境的形态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%BA%94%E6%9D%A1%E9%9C%80%E6%B1%82%E5%88%86%E5%88%AB%E7%94%B1%E4%BB%80%E4%B9%88%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 五条需求分别由什么实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 命令速查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E4%B8%89%E4%B8%AA%E6%96%87%E4%BB%B6"><span class="toc-number">2.4.</span> <span class="toc-text">2.4 三个文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-%E8%B5%B0%E4%B8%80%E9%81%8D"><span class="toc-number">2.5.</span> <span class="toc-text">2.5 走一遍</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%85%B3%E9%94%AE%E6%A6%82%E5%BF%B5%E4%B8%8E%E6%9C%AF%E8%AF%AD%E8%A1%A8"><span class="toc-number">3.</span> <span class="toc-text">3. 关键概念与术语表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%85%B3%E9%94%AE%E5%BC%95%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">4. 关键引用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E6%89%B9%E5%88%A4%E6%80%A7%E5%88%86%E6%9E%90"><span class="toc-number">5.</span> <span class="toc-text">5. 批判性分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E4%B8%AA%E4%BA%BA%E6%80%9D%E8%80%83%E4%B8%8E%E5%BA%94%E7%94%A8"><span class="toc-number">6.</span> <span class="toc-text">6. 个人思考与应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-%E5%BB%B6%E4%BC%B8%E9%98%85%E8%AF%BB"><span class="toc-number">7.</span> <span class="toc-text">7. 延伸阅读</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>
