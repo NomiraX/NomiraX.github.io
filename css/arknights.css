@@ -3257,6 +3257,66 @@ main {
   border-bottom: 1px solid rgba(255,255,255,0.2);
   opacity: calc(1 - var(--hero-progress) * 1.8);
 }
+.hero-archive-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #fff;
+  background: linear-gradient(145deg, rgba(7,18,27,0.94), rgba(20,50,64,0.94));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.hero-archive-transition.is-visible {
+  opacity: 1;
+  pointer-events: all;
+}
+.hero-archive-transition.is-leaving {
+  opacity: 0;
+}
+.hero-archive-transition::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border: 1px solid rgba(163,225,243,0.18);
+  transform: scale(0.96);
+  transition: transform 0.65s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hero-archive-transition.is-visible::before {
+  transform: scale(1);
+}
+.hero-archive-transition-title {
+  font-size: clamp(36px, 6vw, 76px);
+  letter-spacing: 0.18em;
+  transform: translateY(28px);
+  opacity: 0;
+  transition: transform 0.65s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.65s ease;
+}
+.hero-archive-transition.is-visible .hero-archive-transition-title {
+  transform: translateY(0);
+  opacity: 1;
+}
+.hero-archive-transition-line {
+  width: 0;
+  height: 2px;
+  background: #9adfee;
+  box-shadow: 0 0 20px rgba(154,223,238,0.7);
+  transition: width 0.65s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hero-archive-transition.is-visible .hero-archive-transition-line {
+  width: 50vw;
+}
+.hero-archive-transition-caption {
+  font-family: BenderLight, sans-serif;
+  letter-spacing: 0.35em;
+  font-size: 12px;
+  color: #bceaff;
+}
 .home-hero-brand {
   font-family: BenderLight, sans-serif;
   font-size: 22px;
@@ -3369,6 +3429,12 @@ main {
   #home-hero-slot:has(.home-hero) + .site-content header {
     opacity: 1;
     transform: none;
+  }
+  .hero-archive-transition,
+  .hero-archive-transition::before,
+  .hero-archive-transition-title,
+  .hero-archive-transition-line {
+    transition: none;
   }
 }
 @media (max-width: 480px) {

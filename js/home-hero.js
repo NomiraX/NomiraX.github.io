@@ -53,6 +53,50 @@ document.addEventListener('click', function (event) {
   if (event.target.closest('.home-hero-scroll')) enterHomeContent();
 });
 
+let archiveNavigationInProgress = false;
+document.addEventListener('click', function (event) {
+  const link = event.target.closest('.home-hero-archives');
+  if (!link || archiveNavigationInProgress || event.button !== 0 ||
+      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+      prefersReducedMotion()) return;
+  event.preventDefault();
+  event.stopPropagation();
+  archiveNavigationInProgress = true;
+
+  const veil = document.createElement('div');
+  veil.className = 'hero-archive-transition';
+  veil.setAttribute('role', 'status');
+  veil.setAttribute('aria-label', '正在打开归档');
+  veil.innerHTML = '<span class="hero-archive-transition-title">归档</span>' +
+    '<span class="hero-archive-transition-line"></span>' +
+    '<span class="hero-archive-transition-caption">ARCHIVES</span>';
+  document.body.appendChild(veil);
+  requestAnimationFrame(() => veil.classList.add('is-visible'));
+
+  const destination = link.href;
+  let navigated = false;
+  const fallback = setTimeout(() => {
+    if (!navigated) window.location.assign(destination);
+  }, 6000);
+  document.addEventListener('pjax:complete', function finish() {
+    document.removeEventListener('pjax:complete', finish);
+    navigated = true;
+    clearTimeout(fallback);
+    setTimeout(() => {
+      veil.classList.add('is-leaving');
+      setTimeout(() => veil.remove(), 550);
+      archiveNavigationInProgress = false;
+    }, 120);
+  });
+  setTimeout(() => {
+    if (window.pjax && typeof window.pjax.loadUrl === 'function') {
+      window.pjax.loadUrl(destination, { triggerElement: link });
+    } else {
+      window.location.assign(destination);
+    }
+  }, 650);
+}, true);
+
 // A scroll gesture on the first screen runs the whole transition.
 document.querySelector('main')?.addEventListener('wheel', function (event) {
   const hero = document.querySelector('.home-hero');
