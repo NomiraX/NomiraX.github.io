@@ -23,11 +23,9 @@ function cancelHeroAnimation() {
 }
 document.addEventListener('keydown', cancelHeroAnimation);
 
-function enterHomeContent() {
+function animateHeroScroll(end) {
   const main = document.querySelector('main');
-  const content = document.getElementById('home-content');
-  if (!main || !content) return;
-  const end = main.scrollTop + content.getBoundingClientRect().top - main.getBoundingClientRect().top;
+  if (!main) return;
   if (prefersReducedMotion()) {
     main.scrollTop = end;
     return;
@@ -46,6 +44,17 @@ function enterHomeContent() {
     else heroAnimating = false;
   }
   heroScrollAnimation = requestAnimationFrame(frame);
+}
+
+function enterHomeContent() {
+  const main = document.querySelector('main');
+  const content = document.getElementById('home-content');
+  if (!main || !content) return;
+  animateHeroScroll(main.scrollTop + content.getBoundingClientRect().top - main.getBoundingClientRect().top);
+}
+
+function returnHomeHero() {
+  animateHeroScroll(0);
 }
 
 // Delegate once so the control also works after PJAX replaces the cover.
@@ -109,6 +118,10 @@ document.querySelector('main')?.addEventListener('wheel', function (event) {
   if (event.deltaY > 0 && this.scrollTop < hero.offsetHeight * .06) {
     event.preventDefault();
     enterHomeContent();
+  } else if (event.deltaY < 0 && this.scrollTop > hero.offsetHeight * .72 &&
+             this.scrollTop <= hero.offsetHeight + 28) {
+    event.preventDefault();
+    returnHomeHero();
   }
 }, { passive: false });
 
@@ -120,11 +133,17 @@ document.querySelector('main')?.addEventListener('touchstart', function (event) 
 document.querySelector('main')?.addEventListener('touchmove', function (event) {
   if (heroTouchStartY === null || !event.touches[0]) return;
   const hero = document.querySelector('.home-hero');
-  if (!hero || this.scrollTop >= hero.offsetHeight * .06) return;
-  if (heroTouchStartY - event.touches[0].clientY > 45) {
+  if (!hero) return;
+  const distance = heroTouchStartY - event.touches[0].clientY;
+  if (distance > 45 && this.scrollTop < hero.offsetHeight * .06) {
     event.preventDefault();
     heroTouchStartY = null;
     enterHomeContent();
+  } else if (distance < -45 && this.scrollTop > hero.offsetHeight * .72 &&
+             this.scrollTop <= hero.offsetHeight + 28) {
+    event.preventDefault();
+    heroTouchStartY = null;
+    returnHomeHero();
   }
 }, { passive: false });
 document.querySelector('main')?.addEventListener('touchend', () => { heroTouchStartY = null; }, { passive: true });
