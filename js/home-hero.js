@@ -106,6 +106,58 @@ document.addEventListener('click', function (event) {
   }, 650);
 }, true);
 
+let postNavigationInProgress = false;
+document.addEventListener('click', function (event) {
+  const card = event.target.closest('a.recent-post, #Archives a[href^="/20"]');
+  if (!card || postNavigationInProgress || event.button !== 0 ||
+      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+      prefersReducedMotion()) return;
+  const innerLink = event.target.closest('a');
+  if (innerLink && innerLink !== card) return;
+  event.preventDefault();
+  event.stopPropagation();
+  postNavigationInProgress = true;
+
+  const rect = card.getBoundingClientRect();
+  const veil = document.createElement('div');
+  veil.className = 'post-open-veil';
+  veil.style.left = rect.left + 'px';
+  veil.style.top = rect.top + 'px';
+  veil.style.width = rect.width + 'px';
+  veil.style.height = rect.height + 'px';
+  veil.setAttribute('role', 'status');
+  veil.setAttribute('aria-label', '正在打开文章');
+  const title = document.createElement('span');
+  title.className = 'post-open-title';
+  title.textContent = card.querySelector('.recent-title')?.textContent?.trim() || card.textContent.trim();
+  veil.appendChild(title);
+  document.body.appendChild(veil);
+  requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('is-expanded')));
+
+  const destination = card.href;
+  let navigated = false;
+  const fallback = setTimeout(() => {
+    if (!navigated) window.location.assign(destination);
+  }, 6000);
+  document.addEventListener('pjax:complete', function finish() {
+    document.removeEventListener('pjax:complete', finish);
+    navigated = true;
+    clearTimeout(fallback);
+    setTimeout(() => {
+      veil.classList.add('is-leaving');
+      setTimeout(() => veil.remove(), 400);
+      postNavigationInProgress = false;
+    }, 100);
+  });
+  setTimeout(() => {
+    if (window.pjax && typeof window.pjax.loadUrl === 'function') {
+      window.pjax.loadUrl(destination, { triggerElement: card });
+    } else {
+      window.location.assign(destination);
+    }
+  }, 620);
+}, true);
+
 // A scroll gesture on the first screen runs the whole transition.
 document.querySelector('main')?.addEventListener('wheel', function (event) {
   const hero = document.querySelector('.home-hero');
