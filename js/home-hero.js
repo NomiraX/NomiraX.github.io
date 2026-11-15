@@ -1,14 +1,89 @@
-// Delegate once so the control also works after PJAX replaces the cover.
-document.addEventListener('click', function (event) {
-  if (!event.target.closest('.home-hero-scroll')) return;
+// The main element is the theme's scroll container, including after PJAX swaps pages.
+let heroScrollAnimation;
+let heroAnimating = false;
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function updateHeroTransition() {
+  const main = document.querySelector('main');
+  const hero = document.querySelector('.home-hero');
+  const content = document.getElementById('home-content');
+  if (!main || !hero || !content) return;
+  const progress = Math.min(1, Math.max(0, main.scrollTop / hero.offsetHeight));
+  hero.style.setProperty('--hero-progress', progress.toFixed(3));
+  content.style.setProperty('--hero-reveal', Math.min(1, Math.max(0, (progress - .3) / .7)).toFixed(3));
+}
+
+document.querySelector('main')?.addEventListener('scroll', updateHeroTransition, { passive: true });
+window.addEventListener('resize', updateHeroTransition, { passive: true });
+document.addEventListener('pjax:complete', updateHeroTransition);
+document.addEventListener('DOMContentLoaded', updateHeroTransition);
+function cancelHeroAnimation() {
+  cancelAnimationFrame(heroScrollAnimation);
+  heroAnimating = false;
+}
+document.addEventListener('keydown', cancelHeroAnimation);
+
+function enterHomeContent() {
   const main = document.querySelector('main');
   const content = document.getElementById('home-content');
   if (!main || !content) return;
-  main.scrollTo({
-    top: main.scrollTop + content.getBoundingClientRect().top - main.getBoundingClientRect().top,
-    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
-  });
+  const end = main.scrollTop + content.getBoundingClientRect().top - main.getBoundingClientRect().top;
+  if (prefersReducedMotion()) {
+    main.scrollTop = end;
+    return;
+  }
+  cancelHeroAnimation();
+  heroAnimating = true;
+  const start = main.scrollTop;
+  const distance = end - start;
+  const began = performance.now();
+  const duration = 1050;
+  function frame(now) {
+    const t = Math.min(1, (now - began) / duration);
+    const eased = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    main.scrollTop = start + distance * eased;
+    if (t < 1) heroScrollAnimation = requestAnimationFrame(frame);
+    else heroAnimating = false;
+  }
+  heroScrollAnimation = requestAnimationFrame(frame);
+}
+
+// Delegate once so the control also works after PJAX replaces the cover.
+document.addEventListener('click', function (event) {
+  if (event.target.closest('.home-hero-scroll')) enterHomeContent();
 });
+
+// A scroll gesture on the first screen runs the whole transition.
+document.querySelector('main')?.addEventListener('wheel', function (event) {
+  const hero = document.querySelector('.home-hero');
+  if (!hero) return;
+  if (heroAnimating) {
+    event.preventDefault();
+    if (event.deltaY < 0) cancelHeroAnimation();
+    return;
+  }
+  if (event.deltaY > 0 && this.scrollTop < hero.offsetHeight * .06) {
+    event.preventDefault();
+    enterHomeContent();
+  }
+}, { passive: false });
+
+let heroTouchStartY = null;
+document.querySelector('main')?.addEventListener('touchstart', function (event) {
+  heroTouchStartY = event.touches[0]?.clientY ?? null;
+  if (heroAnimating) cancelHeroAnimation();
+}, { passive: true });
+document.querySelector('main')?.addEventListener('touchmove', function (event) {
+  if (heroTouchStartY === null || !event.touches[0]) return;
+  const hero = document.querySelector('.home-hero');
+  if (!hero || this.scrollTop >= hero.offsetHeight * .06) return;
+  if (heroTouchStartY - event.touches[0].clientY > 45) {
+    event.preventDefault();
+    heroTouchStartY = null;
+    enterHomeContent();
+  }
+}, { passive: false });
+document.querySelector('main')?.addEventListener('touchend', () => { heroTouchStartY = null; }, { passive: true });
 
 let heroTypingTimer;
 function startHeroTyping() {
@@ -21,7 +96,7 @@ function startHeroTyping() {
   if (!Array.isArray(lines) || !lines.length || !output) return;
   lines = lines.filter(line => typeof line === 'string' && line.length);
   if (!lines.length) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (prefersReducedMotion()) {
     output.textContent = lines[0];
     return;
   }
