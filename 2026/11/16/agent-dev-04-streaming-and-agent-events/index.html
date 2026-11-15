@@ -1,0 +1,318 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>流式输出：让 Agent 边执行边反馈 | NomiraX 的博客</title><meta name="keywords" content="Agent,LLM,SSE,流式输出"><meta name="description" content="流式输出省下的不是时间，是等待时的空白。总耗时可能一点没变，但用户在第一秒就看见了东西在动——而 agent 比聊天更需要这件事，因为它可能要调十次工具才给你一句回答。 整理自 B 站视频：流式输出：让 Agent 边执行边反馈  一个必须回答的体验问题传统 HTTP 是「一问一答」：客户端发请求，服务端算完，一次性返回，连接结束。简单、稳定，很适合静态资源。 但大模型在 decode 阶段是逐">
+<meta property="og:type" content="article">
+<meta property="og:title" content="流式输出：让 Agent 边执行边反馈">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/16/agent-dev-04-streaming-and-agent-events/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="流式输出省下的不是时间，是等待时的空白。总耗时可能一点没变，但用户在第一秒就看见了东西在动——而 agent 比聊天更需要这件事，因为它可能要调十次工具才给你一句回答。 整理自 B 站视频：流式输出：让 Agent 边执行边反馈  一个必须回答的体验问题传统 HTTP 是「一问一答」：客户端发请求，服务端算完，一次性返回，连接结束。简单、稳定，很适合静态资源。 但大模型在 decode 阶段是逐">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-11-15T17:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-15T16:39:56.755Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="SSE">
+<meta property="article:tag" content="流式输出">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/16/agent-dev-04-streaming-and-agent-events/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
+lightGallery(document.getElementById('post-bg'), {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>流式输出：让 Agent 边执行边反馈</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-15T17:00:00.000Z" id="date"> 2026-11-16</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>流式输出省下的不是时间，是<strong>等待时的空白</strong>。总耗时可能一点没变，但用户在第一秒就看见了东西在动——而 agent 比聊天更需要这件事，因为它可能要调十次工具才给你一句回答。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Mr4x6sE4w/">流式输出：让 Agent 边执行边反馈</a></p>
+</blockquote>
+<h2 id="一个必须回答的体验问题"><a href="#一个必须回答的体验问题" class="headerlink" title="一个必须回答的体验问题"></a>一个必须回答的体验问题</h2><p>传统 HTTP 是「一问一答」：客户端发请求，服务端算完，一次性返回，连接结束。简单、稳定，很适合静态资源。</p>
+<p>但大模型在 decode 阶段是<strong>逐 token 生成</strong>的，要凑出一段完整回答得预测几十上百次，耗时半分钟甚至更久。如果还按老规矩等它全生成完再返回，用户在那半分钟里既看不到字，也分不清三种完全不同的状况：程序挂了、网络断了、还是模型正在努力。体验上是灾难。</p>
+<p>所以大模型产品几乎无一例外都用流式响应：服务端开始生成就往外吐，吐几个 token 就返回一次，客户端收到一段就渲染一段。用户立刻知道「它在工作」，还能边读前面边等后面。</p>
+<p>一个容易被忽略的澄清：<strong>流式不缩短总生成时间</strong>，它缩短的是「首字出现的时间」（TTFT）。但人对等待的感受几乎完全由这个指标决定——先看到字，剩下的等待就不再是煎熬，而是阅读。</p>
+<h2 id="SSE：一条只往一个方向流的水管"><a href="#SSE：一条只往一个方向流的水管" class="headerlink" title="SSE：一条只往一个方向流的水管"></a>SSE：一条只往一个方向流的水管</h2><p>服务端推送事件用的协议叫 <strong>SSE（Server-Sent Events）</strong>：基于普通 HTTP 的事件推送机制。客户端发一次请求，服务端把响应流保持打开，随着内容生成不断往里写事件帧，客户端逐个监听、逐个解析。</p>
+<p>要开这条流，响应头必须是 <code>Content-Type: text/event-stream</code>。响应体的格式是一条约定的文本协议，最基本的一帧长这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">data: &#123;&quot;type&quot;:&quot;message.delta&quot;,&quot;content&quot;:&quot;Agent&quot;&#125;<br><br>data: &#123;&quot;type&quot;:&quot;message.delta&quot;,&quot;content&quot;:&quot; 的开发&quot;&#125;<br></code></pre></td></tr></table></figure>
+<p>规则很少，但每条都有用：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>组成</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data:</code> 前缀</td>
+<td>这一帧的负载，多行 <code>data:</code> 会被拼成一个字符串</td>
+</tr>
+<tr>
+<td>两个换行 <code>\n\n</code></td>
+<td><strong>帧边界</strong>，一个空行表示这帧结束（最关键的一条）</td>
+</tr>
+<tr>
+<td><code>event:</code></td>
+<td>自定义事件名，客户端可据此分派（不写也能靠 payload 里的 type 分派）</td>
+</tr>
+<tr>
+<td><code>id:</code></td>
+<td>事件 ID，断线重连时客户端会带上 <code>Last-Event-ID</code>，服务端可据此补发</td>
+</tr>
+<tr>
+<td><code>retry:</code></td>
+<td>重连间隔建议值</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>因为是纯文本、走 HTTP、单向推送，SSE 省掉了 WebSocket 的握手、心跳和双向状态管理。聊天这种「服务端一直说、客户端偶尔说一句」的场景，单向刚好够用。</p>
+<h2 id="服务端：把生成过程包装成事件流"><a href="#服务端：把生成过程包装成事件流" class="headerlink" title="服务端：把生成过程包装成事件流"></a>服务端：把生成过程包装成事件流</h2><p>用 FastAPI 写一个最小的例子。核心思路只有一句：<strong>异步生成器不断 yield 事件，外面套一层把它格式化成 SSE 帧</strong>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> asyncio<br><span class="hljs-keyword">import</span> json<br><br><span class="hljs-keyword">from</span> fastapi <span class="hljs-keyword">import</span> FastAPI<br><span class="hljs-keyword">from</span> fastapi.responses <span class="hljs-keyword">import</span> StreamingResponse<br><br>app = FastAPI()<br><br><br><span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">fake_llm</span>():<br>    <span class="hljs-string">&quot;&quot;&quot;模拟逐 token 生成，每秒吐一段。&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">for</span> chunk <span class="hljs-keyword">in</span> [<span class="hljs-string">&quot;Agent&quot;</span>, <span class="hljs-string">&quot; 的开发&quot;</span>, <span class="hljs-string">&quot;主要包括三部分&quot;</span>]:<br>        <span class="hljs-keyword">await</span> asyncio.sleep(<span class="hljs-number">1</span>)<br>        <span class="hljs-keyword">yield</span> chunk<br><br><br><span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">event_stream</span>():<br>    <span class="hljs-keyword">yield</span> &#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;run.started&quot;</span>, <span class="hljs-string">&quot;model&quot;</span>: <span class="hljs-string">&quot;deepseek-chat&quot;</span>&#125;<br>    <span class="hljs-keyword">async</span> <span class="hljs-keyword">for</span> delta <span class="hljs-keyword">in</span> fake_llm():<br>        <span class="hljs-keyword">yield</span> &#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;message.delta&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: delta&#125;<br>    <span class="hljs-keyword">yield</span> &#123;<span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;run.completed&quot;</span>&#125;<br><br><br><span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">sse</span>(<span class="hljs-params">events</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;把业务事件包装成 SSE 帧：data: &lt;json&gt;\\n\\n&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">async</span> <span class="hljs-keyword">for</span> event <span class="hljs-keyword">in</span> events:<br>        <span class="hljs-keyword">yield</span> <span class="hljs-string">f&quot;data: <span class="hljs-subst">&#123;json.dumps(event, ensure_ascii=<span class="hljs-literal">False</span>)&#125;</span>\n\n&quot;</span><br><br><br><span class="hljs-meta">@app.post(<span class="hljs-params"><span class="hljs-string">&quot;/chat&quot;</span></span>)</span><br><span class="hljs-keyword">async</span> <span class="hljs-keyword">def</span> <span class="hljs-title function_">chat</span>():<br>    <span class="hljs-keyword">return</span> StreamingResponse(<br>        sse(event_stream()),<br>        media_type=<span class="hljs-string">&quot;text/event-stream&quot;</span>,<br>        headers=&#123;<br>            <span class="hljs-string">&quot;Cache-Control&quot;</span>: <span class="hljs-string">&quot;no-cache&quot;</span>,<br>            <span class="hljs-string">&quot;X-Accel-Buffering&quot;</span>: <span class="hljs-string">&quot;no&quot;</span>,  <span class="hljs-comment"># 关掉 Nginx 等反代的缓冲，否则流会被攒成一坨</span><br>        &#125;,<br>    )<br></code></pre></td></tr></table></figure>
+<p>三个值得记住的点：</p>
+<ol>
+<li><strong>事件是业务对象</strong>，不是字符串拼接。<code>event_stream()</code> 里只关心「发生了什么」，<code>sse()</code> 才关心「怎么变成字节」——这层分离后面会救你。</li>
+<li><strong><code>StreamingResponse</code> 接受任何异步迭代器</strong>，每 yield 一次就往客户端 flush 一次。想让它真的「边生成边到」而不是被攒起来，记得关掉反向代理和 CDN 的缓冲。</li>
+<li><strong>整理一下类型</strong>：这个例子已经是三个事件的骨架——开始、增量、结束。真实 agent 还会再加工具调用、思考、错误、需要用户输入等类型。</li>
+</ol>
+<h2 id="客户端：为什么-EventSource-不够用"><a href="#客户端：为什么-EventSource-不够用" class="headerlink" title="客户端：为什么 EventSource 不够用"></a>客户端：为什么 EventSource 不够用</h2><p>浏览器原生有 <code>EventSource</code>，专门接收 SSE，用起来极简。但它在真实场景里有两个硬伤：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>限制</th>
+<th>后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>只能发 <strong>GET</strong> 请求</td>
+<td>prompt、历史消息、鉴权都要塞进 URL</td>
+</tr>
+<tr>
+<td>URL 长度有限制</td>
+<td>多轮对话和长 prompt 很快就超了</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>大模型请求里既有多轮历史（长），又有 API Key 之类的敏感信息（不该进 URL 和日志）。所以实践中普遍用 <code>fetch</code> + <code>ReadableStream</code>。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs js"><span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">chat</span>(<span class="hljs-params">prompt, onEvent</span>) &#123;<br>  <span class="hljs-keyword">const</span> res = <span class="hljs-keyword">await</span> <span class="hljs-title function_">fetch</span>(<span class="hljs-string">&quot;/chat&quot;</span>, &#123;<br>    <span class="hljs-attr">method</span>: <span class="hljs-string">&quot;POST&quot;</span>,<br>    <span class="hljs-attr">headers</span>: &#123;<br>      <span class="hljs-string">&quot;Content-Type&quot;</span>: <span class="hljs-string">&quot;application/json&quot;</span>,<br>      <span class="hljs-title class_">Accept</span>: <span class="hljs-string">&quot;text/event-stream&quot;</span>,<br>    &#125;,<br>    <span class="hljs-attr">body</span>: <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>(&#123; prompt &#125;),<br>  &#125;);<br><br>  <span class="hljs-keyword">const</span> reader = res.<span class="hljs-property">body</span>.<span class="hljs-title function_">getReader</span>();<br>  <span class="hljs-keyword">const</span> decoder = <span class="hljs-keyword">new</span> <span class="hljs-title class_">TextDecoder</span>();<br>  <span class="hljs-keyword">let</span> buffer = <span class="hljs-string">&quot;&quot;</span>;<br><br>  <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) &#123;<br>    <span class="hljs-keyword">const</span> &#123; value, done &#125; = <span class="hljs-keyword">await</span> reader.<span class="hljs-title function_">read</span>();<br>    <span class="hljs-keyword">if</span> (done) <span class="hljs-keyword">break</span>;<br><br>    <span class="hljs-comment">// stream: true 表示&quot;还没结束，别把不完整的字节当非法字符丢掉&quot;</span><br>    buffer += decoder.<span class="hljs-title function_">decode</span>(value, &#123; <span class="hljs-attr">stream</span>: <span class="hljs-literal">true</span> &#125;);<br><br>    <span class="hljs-comment">// 按空行切帧：一次 read 可能拿到半帧，也可能拿到好几帧</span><br>    <span class="hljs-keyword">let</span> index;<br>    <span class="hljs-keyword">while</span> ((index = buffer.<span class="hljs-title function_">indexOf</span>(<span class="hljs-string">&quot;\n\n&quot;</span>)) !== -<span class="hljs-number">1</span>) &#123;<br>      <span class="hljs-keyword">const</span> frame = buffer.<span class="hljs-title function_">slice</span>(<span class="hljs-number">0</span>, index);<br>      buffer = buffer.<span class="hljs-title function_">slice</span>(index + <span class="hljs-number">2</span>);<br><br>      <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> line <span class="hljs-keyword">of</span> frame.<span class="hljs-title function_">split</span>(<span class="hljs-string">&quot;\n&quot;</span>)) &#123;<br>        <span class="hljs-keyword">if</span> (!line.<span class="hljs-title function_">startsWith</span>(<span class="hljs-string">&quot;data:&quot;</span>)) <span class="hljs-keyword">continue</span>;<br>        <span class="hljs-title function_">onEvent</span>(<span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(line.<span class="hljs-title function_">slice</span>(<span class="hljs-number">5</span>).<span class="hljs-title function_">trim</span>()));<br>      &#125;<br>    &#125;<br>  &#125;<br><br>  <span class="hljs-comment">// 收尾：把 decoder 里残留的字节刷出来</span><br>  buffer += decoder.<span class="hljs-title function_">decode</span>();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>几个新手最容易踩的点，视频里都点到了：</p>
+<ul>
+<li><strong>忘了 <code>await reader.read()</code></strong>：不加 await 会变成忙等死循环，CPU 直接跑满。</li>
+<li><strong><code>done</code> 才是结束信号</strong>，不是「读到内容为空」。<code>read()</code> 在没有新数据时会挂起，这正好是我们要的等待。</li>
+<li><strong><code>{ stream: true }</code> 不能省</strong>：一个中文字符在 UTF-8 里是 3 个字节，很容易被切在两次 <code>read()</code> 之间。开启 stream 模式，decoder 会把不完整的字节留在内部缓冲，等下一个分片拼上。</li>
+<li><strong>必须自己做帧重组</strong>：一次 <code>read()</code> 拿到的可能是半个 <code>data:</code> 行、半帧、或者三帧连在一起。视频里的 demo 为了讲清主线是直接 append 的，真做产品得按 <code>\n\n</code> 切。</li>
+<li><strong>最后要 flush</strong>：<code>decoder.decode()</code> 不带参数再调一次，把缓冲区里剩下的字节吐出来。</li>
+</ul>
+<h2 id="别自己造轮子：fetch-event-source"><a href="#别自己造轮子：fetch-event-source" class="headerlink" title="别自己造轮子：fetch-event-source"></a>别自己造轮子：fetch-event-source</h2><p>上面那段解析代码每一行都对，但写十遍还是会错一遍。微软的 <code>@microsoft/fetch-event-source</code> 把这些脏活封装成了事件回调：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs js"><span class="hljs-keyword">import</span> &#123; fetchEventSource &#125; <span class="hljs-keyword">from</span> <span class="hljs-string">&quot;@microsoft/fetch-event-source&quot;</span>;<br><br><span class="hljs-keyword">const</span> controller = <span class="hljs-keyword">new</span> <span class="hljs-title class_">AbortController</span>();<br><br><span class="hljs-keyword">await</span> <span class="hljs-title function_">fetchEventSource</span>(<span class="hljs-string">&quot;/chat&quot;</span>, &#123;<br>  <span class="hljs-attr">method</span>: <span class="hljs-string">&quot;POST&quot;</span>,<br>  <span class="hljs-attr">headers</span>: &#123; <span class="hljs-string">&quot;Content-Type&quot;</span>: <span class="hljs-string">&quot;application/json&quot;</span> &#125;,<br>  <span class="hljs-attr">body</span>: <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>(&#123; prompt &#125;),<br>  <span class="hljs-attr">signal</span>: controller.<span class="hljs-property">signal</span>,          <span class="hljs-comment">// 用户点「停止」时中断</span><br>  <span class="hljs-title function_">onmessage</span>(<span class="hljs-params">msg</span>) &#123;<br>    <span class="hljs-keyword">if</span> (!msg.<span class="hljs-property">data</span>) <span class="hljs-keyword">return</span>;<br>    <span class="hljs-keyword">const</span> event = <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(msg.<span class="hljs-property">data</span>);<br>    <span class="hljs-keyword">if</span> (event.<span class="hljs-property">type</span> === <span class="hljs-string">&quot;message.delta&quot;</span>) <span class="hljs-title function_">appendText</span>(event.<span class="hljs-property">content</span>);<br>  &#125;,<br>  <span class="hljs-title function_">onerror</span>(<span class="hljs-params">err</span>) &#123;<br>    <span class="hljs-keyword">throw</span> err;                        <span class="hljs-comment">// 不 throw 它会自动重连</span><br>  &#125;,<br>&#125;);<br></code></pre></td></tr></table></figure>
+<p>它顺带解决了一件事：<strong>主动中断</strong>。<code>AbortController</code> 的 <code>signal</code> 传进去，用户点「停止生成」时调 <code>controller.abort()</code>，请求立刻断掉，服务端那边的生成也该跟着停——否则你在前端省了等待，账单上照样在烧 token。</p>
+<h2 id="从「输出文本」到「输出事件」：协议才是重点"><a href="#从「输出文本」到「输出事件」：协议才是重点" class="headerlink" title="从「输出文本」到「输出事件」：协议才是重点"></a>从「输出文本」到「输出事件」：协议才是重点</h2><p>只显示文字的聊天，上面这点代码就够了。但 agent 不一样：它会调搜索、调各种工具、思考、汇报进度。前端必须能分清「这行字是要展示给用户的回答」还是「这是我刚调完一个工具的状态」——<strong>这需要服务端和客户端事先约定事件类型，也就是协议</strong>。</p>
+<p>业界的默认参照是 OpenAI 的约定，各家基本都往这个形状上靠：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>type</th>
+<th>含义</th>
+<th>前端典型反应</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run.started</code></td>
+<td>本次运行开始</td>
+<td>清空上次结果，显示「思考中」</td>
+</tr>
+<tr>
+<td><code>message.delta</code></td>
+<td>回答的增量片段</td>
+<td>追加到正文</td>
+</tr>
+<tr>
+<td><code>reasoning.delta</code></td>
+<td>思考过程的增量</td>
+<td>折叠面板里滚动</td>
+</tr>
+<tr>
+<td><code>tool.started</code></td>
+<td>开始调用某工具（带 <code>tool_name</code>）</td>
+<td>显示「正在执行：web_search」</td>
+</tr>
+<tr>
+<td><code>tool.completed</code></td>
+<td>工具返回</td>
+<td>收起进度，可展开看原始结果</td>
+</tr>
+<tr>
+<td><code>agent.handoff</code></td>
+<td>交接给子 agent</td>
+<td>显示「已转交 ×× 处理」</td>
+</tr>
+<tr>
+<td><code>run.completed</code></td>
+<td>运行正常结束</td>
+<td>移除进度条，定格</td>
+</tr>
+<tr>
+<td><code>run.failed</code></td>
+<td>运行失败（带错误信息）</td>
+<td>展示错误 + 重试按钮</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>关键转变在这里：<strong>界面不再由一句 prompt 决定，而由一串类型化事件驱动</strong>。服务端在事件里告诉你现在处于什么阶段，前端按 type 分派到不同的组件去渲染。这比「解析自然语言猜它想干什么」可靠得多，也是 agent 能做出「像应用」而不是「像聊天框」的前提。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs js"><span class="hljs-title function_">onmessage</span>(<span class="hljs-params">msg</span>) &#123;<br>  <span class="hljs-keyword">const</span> event = <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(msg.<span class="hljs-property">data</span>);<br>  <span class="hljs-keyword">switch</span> (event.<span class="hljs-property">type</span>) &#123;<br>    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;message.delta&quot;</span>:<br>      <span class="hljs-title function_">appendText</span>(event.<span class="hljs-property">content</span>);<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;tool.started&quot;</span>:<br>      <span class="hljs-title function_">showToolRunning</span>(event.<span class="hljs-property">tool_name</span>);<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;tool.completed&quot;</span>:<br>      <span class="hljs-title function_">hideToolRunning</span>();<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;run.completed&quot;</span>:<br>      <span class="hljs-title function_">finish</span>();<br>      <span class="hljs-keyword">break</span>;<br>    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;run.failed&quot;</span>:<br>      <span class="hljs-title function_">showError</span>(event.<span class="hljs-property">error</span>);<br>      <span class="hljs-keyword">break</span>;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="更进一步：让服务端决定界面（a2ui）"><a href="#更进一步：让服务端决定界面（a2ui）" class="headerlink" title="更进一步：让服务端决定界面（a2ui）"></a>更进一步：让服务端决定界面（a2ui）</h2><p>文本和状态之外，还有一类事件需要<strong>用户当场做选择</strong>：用哪种语言写这段代码、选哪个航班、确认要不要删文件。如果只让模型输出一句「请告诉我你选哪个」，用户就得手打回复，格式全靠自觉，前端也没法校验。</p>
+<p>于是有了 <strong>agent-to-UI</strong> 的思路：服务端在事件里直接携带「该渲染什么控件」的声明，客户端照着渲染，用户点选后把结果作为一条消息交回给 agent。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;ui.question&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;question&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;你希望用哪种语言开发 agent？&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;options&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;Python&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;JavaScript&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;Java&quot;</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;multiple&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>客户端收到就渲染成一组单选按钮（<code>multiple: true</code> 则渲染多选），用户点完把选中值回传，模型接着按这个前提往下答。这样交互是<strong>结构化</strong>的：不需要解析自由文本，不会出现「我说要 Python，它却理解成 PHP」，选完还能直接进入下一步。</p>
+<p>这也是为什么很多产品的选项卡片、确认按钮、表单看起来「不像聊天」——它们就是被这些事件渲染出来的。后面讲 human-in-the-loop 时还会回到这套机制。</p>
+<h2 id="CLI-里的流式：同一件事，换个终端"><a href="#CLI-里的流式：同一件事，换个终端" class="headerlink" title="CLI 里的流式：同一件事，换个终端"></a>CLI 里的流式：同一件事，换个终端</h2><p>流式不是 Web 专属。在命令行里同样需要「边生成边显示」，而 CLI 的 SDK（OpenAI 官方库）已经把它做成一个参数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI<br><br>client = OpenAI(api_key=API_KEY, base_url=BASE_URL)<br><br>stream = client.chat.completions.create(<br>    model=<span class="hljs-string">&quot;deepseek-chat&quot;</span>,<br>    messages=[&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;用三句话介绍 agent 的开发&quot;</span>&#125;],<br>    stream=<span class="hljs-literal">True</span>,<br>)<br><br><span class="hljs-keyword">for</span> chunk <span class="hljs-keyword">in</span> stream:<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> chunk.choices:<br>        <span class="hljs-keyword">continue</span><br>    delta = chunk.choices[<span class="hljs-number">0</span>].delta<br>    <span class="hljs-keyword">if</span> delta.content:<br>        <span class="hljs-built_in">print</span>(delta.content, end=<span class="hljs-string">&quot;&quot;</span>, flush=<span class="hljs-literal">True</span>)<br></code></pre></td></tr></table></figure>
+<p>三个细节：</p>
+<ul>
+<li><strong><code>stream=True</code></strong> 是开关，返回的是一个可迭代的事件流，而不是一个完整对象。</li>
+<li><strong><code>end=&quot;&quot;</code> + <code>flush=True</code></strong>，缺一个就看不到「逐字蹦」的效果：<code>end=&quot;&quot;</code> 保证不换行，<code>flush=True</code> 保证不攒在缓冲区里。</li>
+<li><strong>按类型分派</strong>，和前端一模一样：<code>delta.content</code> 打印正文，<code>delta.tool_calls</code> 拼装工具调用的展示，错误走 <code>stderr</code>（<code>print(..., file=sys.stderr)</code>）以便和正常输出分开。</li>
+</ul>
+<p>想调试自己收到了什么事件，直接把原始事件打出来即可——在浏览器 Network 面板里看到的 <code>data:</code> 帧，和 CLI 里打印的事件对象，本质是同一份东西。</p>
+<h2 id="三层结构，记住这个分工"><a href="#三层结构，记住这个分工" class="headerlink" title="三层结构，记住这个分工"></a>三层结构，记住这个分工</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>负责</th>
+<th>关键点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>传输层</td>
+<td>SSE / <code>text/event-stream</code></td>
+<td>一次 HTTP 响应里持续写帧，<code>\n\n</code> 切帧，关掉代理缓冲</td>
+</tr>
+<tr>
+<td>事件层</td>
+<td>事件协议（type + 结构化 data）</td>
+<td>把「agent 在做什么」变成可渲染的类型化数据</td>
+</tr>
+<tr>
+<td>界面层</td>
+<td>Web / CLI / 桌面</td>
+<td>按 type 分派到文本、进度、控件；用户操作回传成消息</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>写 agent 应用时，这三层塌在一处是最常见的返工原因：把渲染逻辑写进服务端字符串、或者在前端靠正则猜状态，等加了第二个工具就全崩。</p>
+<h2 id="这一课真正的收获"><a href="#这一课真正的收获" class="headerlink" title="这一课真正的收获"></a>这一课真正的收获</h2><ol>
+<li><strong>流式的价值是首字时间，不是总时间</strong>。体验由 TTFT 决定。</li>
+<li><strong>SSE 只是水管，事件协议才是灵魂</strong>。前者是十行代码，后者决定你的产品能不能长出聊天框以外的东西。</li>
+<li><strong><code>fetch</code> + <code>ReadableStream</code> 是主流选择</strong>，<code>EventSource</code> 的 GET 限制在大模型场景基本不可用。</li>
+<li><strong>字节解码和帧重组是两个独立的坑</strong>：UTF-8 跨块用 <code>TextDecoder</code> 的 <code>stream:true</code>，半帧/多帧用按 <code>\n\n</code> 切。</li>
+<li><strong>中断要能真的停下来</strong>，<code>AbortController</code> 在前端只解决一半，服务端还得配合取消，否则只是看不见但还在烧钱。</li>
+</ol>
+<p>下一课开始进入 agent 的核心能力——怎么让模型学会使用工具。流式输出的这套事件机制，正是工具调用能被「看见」的基础：工具开始时发一个 <code>tool.started</code>，返回时发 <code>tool.completed</code>，用户才知道它到底在干什么。</p>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/ai-agent-chronicle-2022-2026/">AI Agent 编年史：从 ChatGPT 到 Muse（2022–2026） 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E5%BF%85%E9%A1%BB%E5%9B%9E%E7%AD%94%E7%9A%84%E4%BD%93%E9%AA%8C%E9%97%AE%E9%A2%98"><span class="toc-number">1.</span> <span class="toc-text">一个必须回答的体验问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SSE%EF%BC%9A%E4%B8%80%E6%9D%A1%E5%8F%AA%E5%BE%80%E4%B8%80%E4%B8%AA%E6%96%B9%E5%90%91%E6%B5%81%E7%9A%84%E6%B0%B4%E7%AE%A1"><span class="toc-number">2.</span> <span class="toc-text">SSE：一条只往一个方向流的水管</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%EF%BC%9A%E6%8A%8A%E7%94%9F%E6%88%90%E8%BF%87%E7%A8%8B%E5%8C%85%E8%A3%85%E6%88%90%E4%BA%8B%E4%BB%B6%E6%B5%81"><span class="toc-number">3.</span> <span class="toc-text">服务端：把生成过程包装成事件流</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-EventSource-%E4%B8%8D%E5%A4%9F%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">客户端：为什么 EventSource 不够用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%AB%E8%87%AA%E5%B7%B1%E9%80%A0%E8%BD%AE%E5%AD%90%EF%BC%9Afetch-event-source"><span class="toc-number">5.</span> <span class="toc-text">别自己造轮子：fetch-event-source</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E3%80%8C%E8%BE%93%E5%87%BA%E6%96%87%E6%9C%AC%E3%80%8D%E5%88%B0%E3%80%8C%E8%BE%93%E5%87%BA%E4%BA%8B%E4%BB%B6%E3%80%8D%EF%BC%9A%E5%8D%8F%E8%AE%AE%E6%89%8D%E6%98%AF%E9%87%8D%E7%82%B9"><span class="toc-number">6.</span> <span class="toc-text">从「输出文本」到「输出事件」：协议才是重点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E8%BF%9B%E4%B8%80%E6%AD%A5%EF%BC%9A%E8%AE%A9%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%86%B3%E5%AE%9A%E7%95%8C%E9%9D%A2%EF%BC%88a2ui%EF%BC%89"><span class="toc-number">7.</span> <span class="toc-text">更进一步：让服务端决定界面（a2ui）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CLI-%E9%87%8C%E7%9A%84%E6%B5%81%E5%BC%8F%EF%BC%9A%E5%90%8C%E4%B8%80%E4%BB%B6%E4%BA%8B%EF%BC%8C%E6%8D%A2%E4%B8%AA%E7%BB%88%E7%AB%AF"><span class="toc-number">8.</span> <span class="toc-text">CLI 里的流式：同一件事，换个终端</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E5%B1%82%E7%BB%93%E6%9E%84%EF%BC%8C%E8%AE%B0%E4%BD%8F%E8%BF%99%E4%B8%AA%E5%88%86%E5%B7%A5"><span class="toc-number">9.</span> <span class="toc-text">三层结构，记住这个分工</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%99%E4%B8%80%E8%AF%BE%E7%9C%9F%E6%AD%A3%E7%9A%84%E6%94%B6%E8%8E%B7"><span class="toc-number">10.</span> <span class="toc-text">这一课真正的收获</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>
