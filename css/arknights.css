@@ -3203,6 +3203,7 @@ main {
 }
 .home-hero {
   --hero-progress: 0;
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
   position: relative;
   isolation: isolate;
   box-sizing: border-box;
@@ -3312,13 +3313,13 @@ main {
   width: 50vw;
 }
 .hero-archive-transition-caption {
-  font-family: BenderLight, sans-serif;
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
   letter-spacing: 0.35em;
   font-size: 12px;
   color: #bceaff;
 }
 .home-hero-brand {
-  font-family: BenderLight, sans-serif;
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
   font-size: 22px;
   letter-spacing: 3px;
 }
@@ -3345,7 +3346,7 @@ main {
   object-fit: contain;
 }
 .home-hero-eyebrow {
-  font-family: BenderLight, sans-serif;
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
   font-size: 12px;
   letter-spacing: 0.2em;
   color: #bceaff;
@@ -3452,6 +3453,32 @@ main {
 @media (max-height: 600px) {
   .home-hero-logo {
     display: none;
+  }
+}
+@media (min-width: 769px) {
+  .recent-post:hover {
+    background-color: rgba(8,14,20,0.78);
+    border-color: rgba(180,225,238,0.42);
+    color: #dceaf0;
+  }
+  .recent-post:hover h1,
+  .recent-post:hover time,
+  .recent-post:hover .recent-excerpt,
+  .recent-post:hover .recent-excerpt a {
+    color: #f3f7f9;
+  }
+  .recent-post:hover .categories,
+  .recent-post:hover .tags,
+  .recent-post:hover .tags a {
+    color: #9adfee;
+  }
+  .recent-post:hover .recent-info::after {
+    background-color: #9adfee;
+  }
+  .recent-post:hover .read-more,
+  .recent-post:hover .post-sticky {
+    background-color: rgba(255,255,255,0.14);
+    color: #fff;
   }
 }
 @-moz-keyframes hero-typed-blink {
