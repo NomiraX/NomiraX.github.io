@@ -5,14 +5,18 @@
 <meta property="og:site_name" content="NomiraX 的博客">
 <meta property="og:description" content="四年时间，我们把一句提示词长成了一整套系统。模型决定 agent 能做什么，harness 决定它能不能可靠地做到，而入口和规则决定它以什么形态、通过谁交到你手里。 整理自 B 站视频：3 万字干货真人讲解 AI Agent 编年史，从 ChatGPT 到 Muse  一句话看懂这四年2022 年，你让 AI 帮你订周五去上海的机票，它会告诉你步骤，但操作得你自己来。2026 年，同样的指令，p">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nomirax.github.io/images/agent-harness.png">
+<meta property="og:image" content="https://nomirax.github.io/images/agent-generations.png">
+<meta property="og:image" content="https://nomirax.github.io/images/agent-local-cloud.png">
 <meta property="article:published_time" content="2026-11-15T15:40:00.000Z">
-<meta property="article:modified_time" content="2026-11-15T15:14:46.451Z">
+<meta property="article:modified_time" content="2026-11-15T17:02:43.068Z">
 <meta property="article:author" content="NomiraX">
 <meta property="article:tag" content="AI 编年史">
 <meta property="article:tag" content="Agent">
 <meta property="article:tag" content="Harness">
 <meta property="article:tag" content="行业观察">
-<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/ai-agent-chronicle-2022-2026/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nomirax.github.io/images/agent-harness.png"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/ai-agent-chronicle-2022-2026/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
   font-family: Bender;
   src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
 }
@@ -188,6 +192,8 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 </tbody>
 </table>
 </div>
+<p><a href="/images/agent-harness.png" target="_blank" title="点击看大图" class='item-img' data-src='/images/agent-harness.png'><img src="/images/agent-harness.png" alt="agent = 模型 + harness：中间那个盒子只负责判断，其余七件套把上下文摆好、把动作执行掉、把结果判一遍"></a></p>
+<p><em>图 1：七件套的分工。模型只做判断，模型之外的一切都算 harness。</em></p>
 <h3 id="最重要的一条规律"><a href="#最重要的一条规律" class="headerlink" title="最重要的一条规律"></a>最重要的一条规律</h3><p><strong>新问题出现时，人们先用一个外挂补丁顶上；补丁用久了、做法成熟了，它要么被写成开放标准，要么被直接训练进模型。</strong></p>
 <ul>
 <li>写成标准的：function calling 的格式、MCP 协议、AGENTS.md、Agent Skills。</li>
@@ -234,6 +240,8 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 </div>
 <p>三条路线看着不同，卡住的是同一件事：<strong>世界必须先被人手工分割成意图、步骤和奖励</strong>。用今天的话说，那时候整个系统几乎全是 harness，缺的是一个能接住开放指令的模型核心。</p>
 <p>而零件其实已经凑齐了：Transformer（2017）、GPT-3、Codex（当年 Copilot 预览版里的模型名）、思维链（2022.01）、ReAct（2022.10，普林斯顿 + 谷歌，第一次提出「先想、再做、再看」的循环范式）、LangChain（2022.10）。2022 年秋天的状态是：技术组件齐了，只差一个足够强、足够通用的模型打进 C 端。</p>
+<p><a href="/images/agent-generations.png" target="_blank" title="点击看大图" class='item-img' data-src='/images/agent-generations.png'><img src="/images/agent-generations.png" alt="从第零代到第六代：每一代补一块新的 harness 部件，再把上一代的做法收进标准或训练进模型"></a></p>
+<p><em>图 2：七代是一条阶梯。纵向是时间，每个箭头都是「上一代缺的东西被补上」。</em></p>
 <h2 id="第零代：人就是-harness（2022-11–2023）"><a href="#第零代：人就是-harness（2022-11–2023）" class="headerlink" title="第零代：人就是 harness（2022.11–2023）"></a>第零代：人就是 harness（2022.11–2023）</h2><p>2022 年 11 月 30 日 ChatGPT 发布，5 天 100 万用户，2 个月月活破 1 亿。随后是 Bing Chat（2023.02，联网搜索，但只有 4K 上下文，多聊几轮就开始犯蠢）、Google Bard 发布会演示出错导致母公司一天蒸发 1000 亿美元、GPT-4（2023.03）、文心一言与百模大战（2023.03.16）、ChatGPT 插件。</p>
 <p>为什么叫「第零代」而不是第一代？因为它<strong>没有 harness——人就是那个 harness</strong>：你复制代码、粘到本机运行、把报错复制回去、推动一轮轮循环、自己记着前面聊过什么。工具是人搬的，反馈是人给的，循环是人推的。</p>
 <p>当时的两个硬限制：知识截止在训练数据那一天（不知道就一本正经地编），以及<strong>没有手</strong>（碰不到网站和本地工具）；上下文只有 4K，一份长合同都放不进去。</p>
@@ -582,6 +590,8 @@ document.addEventListener("pjax:complete", reset);reset()})</script><meta name="
 </table>
 </div>
 <p>真正的争论全在中间那一层。</p>
+<p><a href="/images/agent-local-cloud.png" target="_blank" title="点击看大图" class='item-img' data-src='/images/agent-local-cloud.png'><img src="/images/agent-local-cloud.png" alt="本地还是云端：推理永远在云端，真正要选的是动作在哪执行、凭证放在谁手里"></a></p>
+<p><em>图 3：把三件事分开问——推理、执行、凭证。左边是用户的电脑，右边是平台的电脑。</em></p>
 <h2 id="第六代：平台托管（2026-09-起）"><a href="#第六代：平台托管（2026-09-起）" class="headerlink" title="第六代：平台托管（2026.09 起）"></a>第六代：平台托管（2026.09 起）</h2><p>第四代 open cloud 提出的设想——一个全天在线、记得你、会替你办事的个人代理——这一代被大平台换了个方式实现。最大的区别是<strong>运行位置</strong>：agent 不再跑在你自己的电脑上，平台在云端给每个 agent 分配一台虚拟机和一个浏览器，账号凭证也由平台保管，你只需要授权。</p>
 <p>时间线：Gemini Spark（2026.05，云端虚拟机，关电脑关手机也能继续跑）→ 苹果 Siri AI（6 月）→ Grok Bot（8 月 11 日）→ <strong>Meta Muse（真正引爆全球流量）</strong> → OpenAI Dots → Manus Q1。六款产品里五款把代理放在平台电脑上，只有苹果在尝试设备端 + 私有云——因为苹果有自己的手机和整套生态。</p>
 <p>从 open cloud 继承下来的四样东西：全天在线的心跳机制、聊天式界面、长期记忆、技能与连接器。变的是谁来承担维护：运行位置从你的 Mac mini 搬到云端虚拟机；默认隔离、主动连接才能接入；密码写在平台配置文件里，不再随便交给模型；安装、更新、冲突处理、安全都由平台负责；费用从「自带 API key 付 token」变成打包进订阅，甚至免费。</p>
