@@ -1,0 +1,618 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AI Agent 编年史：从 ChatGPT 到 Muse（2022–2026） | NomiraX 的博客</title><meta name="keywords" content="Agent,Harness,AI 编年史,行业观察"><meta name="description" content="四年时间，我们把一句提示词长成了一整套系统。模型决定 agent 能做什么，harness 决定它能不能可靠地做到，而入口和规则决定它以什么形态、通过谁交到你手里。 整理自 B 站视频：3 万字干货真人讲解 AI Agent 编年史，从 ChatGPT 到 Muse  一句话看懂这四年2022 年，你让 AI 帮你订周五去上海的机票，它会告诉你步骤，但操作得你自己来。2026 年，同样的指令，p">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI Agent 编年史：从 ChatGPT 到 Muse（2022–2026）">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/15/ai-agent-chronicle-2022-2026/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="四年时间，我们把一句提示词长成了一整套系统。模型决定 agent 能做什么，harness 决定它能不能可靠地做到，而入口和规则决定它以什么形态、通过谁交到你手里。 整理自 B 站视频：3 万字干货真人讲解 AI Agent 编年史，从 ChatGPT 到 Muse  一句话看懂这四年2022 年，你让 AI 帮你订周五去上海的机票，它会告诉你步骤，但操作得你自己来。2026 年，同样的指令，p">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-11-15T15:40:00.000Z">
+<meta property="article:modified_time" content="2026-11-15T15:14:46.451Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="AI 编年史">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="Harness">
+<meta property="article:tag" content="行业观察">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/15/ai-agent-chronicle-2022-2026/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
+lightGallery(document.getElementById('post-bg'), {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>AI Agent 编年史：从 ChatGPT 到 Muse（2022–2026）</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-15T15:40:00.000Z" id="date"> 2026-11-15</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>四年时间，我们把一句提示词长成了一整套系统。模型决定 agent 能做什么，harness 决定它能不能可靠地做到，而入口和规则决定它以什么形态、通过谁交到你手里。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV185nh6dEwr/">3 万字干货真人讲解 AI Agent 编年史，从 ChatGPT 到 Muse</a></p>
+</blockquote>
+<h2 id="一句话看懂这四年"><a href="#一句话看懂这四年" class="headerlink" title="一句话看懂这四年"></a>一句话看懂这四年</h2><p>2022 年，你让 AI 帮你订周五去上海的机票，它会告诉你步骤，但操作得你自己来。2026 年，同样的指令，personal agent 能直接完成航班预订、日历更新、通知同事、订酒店、统计费用。</p>
+<p>这四年解决的核心问题只有一个：<strong>这个进步是从哪里来的</strong>。答案不在模型参数里，而在模型外面那套叫 <strong>harness</strong> 的系统里。</p>
+<h2 id="agent-与-harness：先把词说清楚"><a href="#agent-与-harness：先把词说清楚" class="headerlink" title="agent 与 harness：先把词说清楚"></a>agent 与 harness：先把词说清楚</h2><p>按视频里 2026 年 10 月的定义：</p>
+<blockquote>
+<p>agent 是以大模型为决策核心，能够在一个循环里不断执行、决定下一步、调用外部工具改变世界、再根据结果调整，最终把目标完成的软件系统。</p>
+</blockquote>
+<p>它和聊天机器人的唯一差别就是<strong>那个循环</strong>：聊天机器人说完就结束，执行还得靠人；agent 会「想—做—看结果—再想」，直到抵达终点。</p>
+<p>agent = <strong>模型</strong> + <strong>harness</strong>。harness 这个词来自马具：模型是提供动力的那匹马，没有缰绳、车架这些马具，马跑得再快也没法替你干活。在 agent 语境里，harness 指模型之外的一切，拆成七个部件：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>部件</th>
+<th>管什么</th>
+<th>演进中的关键词</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>指令</td>
+<td>把任务说清楚</td>
+<td>prompt → system prompt → AGENTS.md / CLAUDE.md → skills</td>
+</tr>
+<tr>
+<td>2</td>
+<td>上下文与记忆</td>
+<td>这一步让模型看到什么</td>
+<td>4K 窗口 → RAG → 长上下文 → 上下文工程 → 文件系统当记忆</td>
+</tr>
+<tr>
+<td>3</td>
+<td>工具与行动</td>
+<td>能碰到外部世界的哪些东西</td>
+<td>插件 → function calling → MCP → computer use</td>
+</tr>
+<tr>
+<td>4</td>
+<td>循环与编排</td>
+<td>谁决定下一步</td>
+<td>ReAct → 工作流/图 → 推理模型内化 → 常驻心跳</td>
+</tr>
+<tr>
+<td>5</td>
+<td>反馈与验证</td>
+<td>怎么知道做对了</td>
+<td>人肉复制报错 → 沙箱自跑 → 测试/评测 → 人确认按钮</td>
+</tr>
+<tr>
+<td>6</td>
+<td>运行环境与权限</td>
+<td>在哪跑、能动什么</td>
+<td>沙箱 → 本机终端 → 云端虚拟机 → 平台托管凭证</td>
+</tr>
+<tr>
+<td>7</td>
+<td>交付界面</td>
+<td>结果以什么形态给你</td>
+<td>复制粘贴 → 代码块 → CLI → GUI → 生成式界面</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="最重要的一条规律"><a href="#最重要的一条规律" class="headerlink" title="最重要的一条规律"></a>最重要的一条规律</h3><p><strong>新问题出现时，人们先用一个外挂补丁顶上；补丁用久了、做法成熟了，它要么被写成开放标准，要么被直接训练进模型。</strong></p>
+<ul>
+<li>写成标准的：function calling 的格式、MCP 协议、AGENTS.md、Agent Skills。</li>
+<li>训练进模型的：思维链 → 推理模型的一部分；操作电脑 → 模型的原生能力。</li>
+</ul>
+<p>两个推论：</p>
+<ol>
+<li><strong>harness 不会因为模型变强而消失</strong>，它只是不断向外搬——旧问题被吸收，新问题出现在更外层。</li>
+<li><strong>做外挂的公司要小心</strong>：你今天摸索出来的东西，明天可能被纳入模型，或者变成一个开放标准。</li>
+</ol>
+<p>这条规律在下面每一代 agent 身上都会重演，可以拿它当阅读全文的主线。</p>
+<h2 id="前史：零件早就在了（2022-11-之前）"><a href="#前史：零件早就在了（2022-11-之前）" class="headerlink" title="前史：零件早就在了（2022.11 之前）"></a>前史：零件早就在了（2022.11 之前）</h2><p>三类「像 agent 的东西」：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>形态</th>
+<th>代表</th>
+<th>做法</th>
+<th>卡在哪</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语音助手</td>
+<td>Siri</td>
+<td>识别意图，调预设技能</td>
+<td>只认模板，模板外就「我听不明白」</td>
+</tr>
+<tr>
+<td>RPA</td>
+<td>企业流程机器人</td>
+<td>把固定操作录成脚本回放</td>
+<td>前端界面一变，流程就断</td>
+</tr>
+<tr>
+<td>博弈智能</td>
+<td>AlphaGo</td>
+<td>强化学习，规则与奖励明确</td>
+<td>只在一个封闭领域成立</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>三条路线看着不同，卡住的是同一件事：<strong>世界必须先被人手工分割成意图、步骤和奖励</strong>。用今天的话说，那时候整个系统几乎全是 harness，缺的是一个能接住开放指令的模型核心。</p>
+<p>而零件其实已经凑齐了：Transformer（2017）、GPT-3、Codex（当年 Copilot 预览版里的模型名）、思维链（2022.01）、ReAct（2022.10，普林斯顿 + 谷歌，第一次提出「先想、再做、再看」的循环范式）、LangChain（2022.10）。2022 年秋天的状态是：技术组件齐了，只差一个足够强、足够通用的模型打进 C 端。</p>
+<h2 id="第零代：人就是-harness（2022-11–2023）"><a href="#第零代：人就是-harness（2022-11–2023）" class="headerlink" title="第零代：人就是 harness（2022.11–2023）"></a>第零代：人就是 harness（2022.11–2023）</h2><p>2022 年 11 月 30 日 ChatGPT 发布，5 天 100 万用户，2 个月月活破 1 亿。随后是 Bing Chat（2023.02，联网搜索，但只有 4K 上下文，多聊几轮就开始犯蠢）、Google Bard 发布会演示出错导致母公司一天蒸发 1000 亿美元、GPT-4（2023.03）、文心一言与百模大战（2023.03.16）、ChatGPT 插件。</p>
+<p>为什么叫「第零代」而不是第一代？因为它<strong>没有 harness——人就是那个 harness</strong>：你复制代码、粘到本机运行、把报错复制回去、推动一轮轮循环、自己记着前面聊过什么。工具是人搬的，反馈是人给的，循环是人推的。</p>
+<p>当时的两个硬限制：知识截止在训练数据那一天（不知道就一本正经地编），以及<strong>没有手</strong>（碰不到网站和本地工具）；上下文只有 4K，一份长合同都放不进去。</p>
+<h3 id="插曲：提示词工程师泡沫"><a href="#插曲：提示词工程师泡沫" class="headerlink" title="插曲：提示词工程师泡沫"></a>插曲：提示词工程师泡沫</h3><p>这是 agent 史上第一个、也最短命的泡沫：年薪 33.5 万美元的招聘启事刷屏，提示词模板明码标价，课程和认证层出不穷。它背后的假设是「跟大模型说话是一门不可替代的手艺」。</p>
+<p>不到一年，假设就被模型自己瓦解了：「一步一步思考」「你是一位资深专家」这类技巧被直接训练进模型，system prompt 和 function calling 接管了运行时控制。头衔消失了，但技能没消失——它变成了上下文工程，2026 年又成了 harness engineering 的一部分（今天企业部署 agent 最耗时的工作之一，就是把员工脑子里的业务规则写成 AI 能读的文档）。</p>
+<h2 id="第一代：工具调用（2023）"><a href="#第一代：工具调用（2023）" class="headerlink" title="第一代：工具调用（2023）"></a>第一代：工具调用（2023）</h2><p>这一代的核心机制只有一个词：<strong>工具调用</strong>。身上长出了插件、function calling、RAG、向量数据库、Code Interpreter，还有 AutoGPT 这类早期尝试。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>尝试</th>
+<th>结局</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ChatGPT 插件（2023.03.23）</td>
+<td>一次最多开 3 个、调不调看模型心情、商店几百个高频没几个；2024.04 下线，被 GPTs 取代，GPTs 又被内置的联网/代码/文件能力边缘化</td>
+</tr>
+<tr>
+<td>function calling（2023.06.13）</td>
+<td><strong>活下来了</strong>，成为 harness 第一个全行业通用的部件</td>
+</tr>
+<tr>
+<td>Code Interpreter</td>
+<td>沙箱里写代码、看报错、自己改、再跑、出图；第一次实现「自己跑代码完成任务」的闭环，运行环境与反馈验证的雏形</td>
+</tr>
+<tr>
+<td>RAG + 向量数据库</td>
+<td>Pinecone 4 月融 1 亿美元，「和你的 PDF 聊天」遍地；上下文窗口暴涨后独立向量库赛道降温，但 RAG 没死，成了上下文工程的一部分</td>
+</tr>
+<tr>
+<td>AutoGPT（2023.03）</td>
+<td>让 agent 这个词第一次出圈，GitHub star 破 10 万；实际结局是原地打转、反复搜同一个东西、几十轮后宣布完成、打开报告是空的，每跑一次几美元到几十美元</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>function calling 的意义在于：它把「模型决定做什么」和「程序真正去做」之间的接口固定下来了。在此之前，开发者只能用一段自然语言描述接口，再用正则从输出里抠参数，格式一变整个调用就失败。之后各家模型迅速跟进同一格式，直到今天，所有 agent 能动手的底层能力还是它。</p>
+<p>AutoGPT 的失败值得单独记一笔：<strong>多步任务的错误累积</strong>。假设每一步做对的概率是 95%，20 步累积下来就只有 36%。它本质上是个开环系统——让模型自己计划、自己做、自己宣布结束，中间没有任何检查环节。下一代 agent 引入的核心部件，正是「检查」。</p>
+<p>另外两项早期研究埋下了后来的标准件：2023 年 4 月斯坦福把 25 个角色放进虚拟小镇，各自有记忆流、反思和计划，会自发组织派对；2023 年 5 月有人让 AI 在《我的世界》里自己写代码，把成功的做法存进技能库复用——前者是 memory.md，后者是 Agent Skills 的原型。</p>
+<p>这一代真正的遗产只有一个不起眼的接口格式。<strong>热度和价值在这个行业里经常不是一回事。</strong></p>
+<h2 id="第二代：用确定的结构换可预期的结果（2023-底–2024）"><a href="#第二代：用确定的结构换可预期的结果（2023-底–2024）" class="headerlink" title="第二代：用确定的结构换可预期的结果（2023 底–2024）"></a>第二代：用确定的结构换可预期的结果（2023 底–2024）</h2><p>AutoGPT 的教训被整个行业吸收，思路反了过来：既然模型还不够可靠，就不能让它一路做到底，而要由人设计好流程，把步骤串起来，每一步都检查上一步的结果。这一代的关键在<strong>循环编排</strong>和<strong>反馈验证</strong>。</p>
+<h3 id="一个改变了行业重心的数字"><a href="#一个改变了行业重心的数字" class="headerlink" title="一个改变了行业重心的数字"></a>一个改变了行业重心的数字</h3><p>吴恩达 2024 年 3 月的对比实验：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>配置</th>
+<th>正确率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3.5 直接回答</td>
+<td>48%</td>
+</tr>
+<tr>
+<td>GPT-4 直接回答</td>
+<td>67%</td>
+</tr>
+<tr>
+<td>GPT-3.5 + 迭代工作流（写—检查—修改—提交）</td>
+<td><strong>95.1%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>弱模型配好流程，能打赢更强的模型。这是第一次有人用数字证明 harness 的价值，行业关注点从「模型有多聪明」转向「系统怎么设计」。</p>
+<p>他同时总结了四种设计模式：反思、工具使用、规划、多智能体——后来所有 agent 产品都是这四者的组合。其中反思和规划最早失效，因为这两步后来被直接容纳进了模型的推理能力里。</p>
+<p>Anthropic 2024 年 12 月的《构建有效的智能体》把系统分成两类：<strong>工作流</strong>（路径由代码写死，模型沿图走）和<strong>智能体</strong>（模型自己决定流程和工具），并给出工程建议：从最简单的方案做起，确实需要灵活性时再往右走。这句话当时看是克制，今天看依然成立——跑个脚本、从网页抄个信息，就该交给确定性工作流，而不是事事让模型自由发挥。</p>
+<h3 id="这一代被淘汰的东西"><a href="#这一代被淘汰的东西" class="headerlink" title="这一代被淘汰的东西"></a>这一代被淘汰的东西</h3><ul>
+<li><strong>低代码 / 拖拽平台</strong>：Dify、扣子、n8n 和各家云厂商平台，非程序员以为找到了参与 AI 的方式。但模型强到能直接听懂一句话描述的流程之后，拖拽节点就从「降低门槛」变成了「多余的复杂度来源」。</li>
+<li><strong>过度封装的框架</strong>：LangChain 在 2024 年 6 月被一篇《我们为什么不再用 LangChain》刷屏，很多团队改成直调 API，效果反而更好。框架后来转成 LangGraph / LangSmith，活了下来但半死不活。</li>
+<li><strong>多智能体狂热</strong>：ChatDev（清华，模拟一家软件公司）、MetaGPT 演示很热闹，但 token 消耗高、上下文难共享。Cognition 写了《不要构建多智能体》；Anthropic 也承认多智能体只在需要大范围并行搜索的任务上更好，代价是 token 是普通对话的 15 倍以上。结论很清楚：<strong>多 agent 不是通用答案，只是一个有适用范围的工具</strong>。</li>
+<li><strong>过早的 AI 替代人工</strong>：瑞典 Klarna 的 CEO 说「一个 AI 客服顶 700 人」，把客服全开了，2025 年又开始重新招人。同期还出现了「agent washing」——把普通聊天机器人包装成 agent 卖。</li>
+</ul>
+<h3 id="长上下文与「RAG-已死」"><a href="#长上下文与「RAG-已死」" class="headerlink" title="长上下文与「RAG 已死」"></a>长上下文与「RAG 已死」</h3><p>4K（GPT-3.5）→ 128K（GPT-4 Turbo，2023.11）→ 200K（Claude）→ 1M（Gemini 1.5 Pro）。窗口涨得太快，于是有了「RAG 已死」的论调。</p>
+<p>RAG 没死，原因很实在：长上下文又贵又慢；企业资料库永远大于任何窗口；企业数据要按权限过滤、要实时更新；模型会忽略长文本中间的内容。今天的分工是——RAG 在海量资料里找候选，长上下文在较大范围内做整体理解。coding 场景倒是真的把 RAG 摘掉了（Cursor、Claude 都摘了），因为检索出来的内容和关键词常常无关，而向量库的更新编辑又太重。</p>
+<p>这场争论最后落到一个更一般的问题上：<strong>每一步究竟要让模型看到哪些信息、用什么形式看到</strong>。把上下文窗口想成一张大小有限的书桌——系统指令、对话历史、检索资料、工具说明、上一步结果、长期记忆都堆在上面，快满时要压缩成摘要。什么能压、什么不能压、按什么顺序放，直接决定这一步能不能做对。2025 年 6 月 Karpathy 给这件事起了名字：<strong>上下文工程</strong>——为下一步调用恰到好处地填满上下文窗口的艺术与科学。</p>
+<h3 id="两个被低估的基础设施"><a href="#两个被低估的基础设施" class="headerlink" title="两个被低估的基础设施"></a>两个被低估的基础设施</h3><p><strong>SWE-agent（2024.04，普林斯顿）</strong>：不换模型，只重新设计工具接口。给人用的命令行里，<code>cat</code> 一个文件就吐出 5000 行，改坏了也没有提示；给模型设计的接口则是打开文件只显示 100 行、搜索命令直接告诉行号、每次编辑后自动语法检查、不通过就立刻撤回重试。只改工具设计，问题解决率就显著提升。他们管这叫 <strong>agent-计算机接口（ACI）</strong>：为人类设计的工具不一定适合模型，应该按模型的特点重新设计。这个思路两年后有了更大的名字——harness engineering。</p>
+<p><strong>Benchmark</strong>：考题式的基准快被刷满了，新一代基准开始考察真实任务能力——SWE-bench（修真实 GitHub issue，发布时多数模型只有 2%）、WebArena、GAIA、OSWorld。它们的深远意义是：<strong>harness 的好坏第一次可以被测量、被比较</strong>，而不只是模型性能。后面两年的所有进步，本质上都是这些基准跑出来的。</p>
+<h3 id="这一代留下的两样东西"><a href="#这一代留下的两样东西" class="headerlink" title="这一代留下的两样东西"></a>这一代留下的两样东西</h3><p>一是真实任务 benchmark；二是行业共识「系统设计和模型能力同样重要」。反直觉的结论是：<strong>harness 并不是越多越好</strong>——为弥补弱模型搭的厚重结构，在模型变强之后会从帮手变成负担，必须拆掉。</p>
+<h2 id="第三代：标准与推理（2024-Q4–2025）"><a href="#第三代：标准与推理（2024-Q4–2025）" class="headerlink" title="第三代：标准与推理（2024 Q4–2025）"></a>第三代：标准与推理（2024 Q4–2025）</h2><p>三件基础设施叠在一起，才有了「2025 是 agent 元年」的说法：推理模型、MCP、computer use。</p>
+<h3 id="推理模型：把「规划」收进模型"><a href="#推理模型：把「规划」收进模型" class="headerlink" title="推理模型：把「规划」收进模型"></a>推理模型：把「规划」收进模型</h3><p>o1（2024.09.12）用强化学习练出很长的内部推理，输入 $100 / 百万 token、输出 $600 / 百万 token。DeepSeek R1（2025.01.20）开放权重，推理能力几乎与 o1 平齐而成本低得多，一周后英伟达跌 17%、市值蒸发近 6000 亿美元。</p>
+<p>对 agent 来说，R1 最重要的不是股价，而是它公开了一种方法论：<strong>只要任务有能自动判断对错的标准（数学答案对不对、代码能不能过测试），只用强化学习就能教会模型长链推理。</strong> 这句话解释了后面很多事——哪里有便宜的分数，哪里的 agent 能力就涨得快。</p>
+<p>规划从「模型外面的工程流」（专门的规划节点、反思节点、拆解提示、检查清单）被收进了模型内部。这是继提示词技巧之后，第二次外挂被模型吸收。</p>
+<h3 id="MCP：把乘法题变成加法题"><a href="#MCP：把乘法题变成加法题" class="headerlink" title="MCP：把乘法题变成加法题"></a>MCP：把乘法题变成加法题</h3><p>2024 年 10 月 Anthropic 发布 Model Context Protocol。4 个应用接 5 个工具，原本要写 20 个接口；有了统一协议，每套工具只需一个接口。关键不是设计多优雅，而是<strong>速度</strong>：OpenAI、Google、微软在几个月内全部跟进。原因很朴素——每家都在重复写同样的对接，有人给了协议，大家就都来遵守。</p>
+<h3 id="computer-use：agent-长出了眼睛和手"><a href="#computer-use：agent-长出了眼睛和手" class="headerlink" title="computer use：agent 长出了眼睛和手"></a>computer use：agent 长出了眼睛和手</h3><p>2024 年 10 月 Anthropic 推出：截图 → 喂给模型判断该点哪 → 移动鼠标点击 → 再截图看结果 → 决定下一步。本质还是「边想边做边看」的循环，只是「做」变成了操作屏幕。</p>
+<p>刚出来时跑分比人类差很多，但分数不是重点。重点是它证明了：<strong>没有 API 的老系统、只能手工点的网页，从此也进入 agent 的行动范围</strong>。后来的 Operator、ChatGPT agent、Comet / Atlas 都沿这条线。</p>
+<h3 id="安全：模型分不清资料和指令"><a href="#安全：模型分不清资料和指令" class="headerlink" title="安全：模型分不清资料和指令"></a>安全：模型分不清资料和指令</h3><p>把恶意指令藏进 MCP 的说明文字，模型读到就照做，能把钱包里的钱转走；把隐藏指令放进公开的 GitHub issue，能让 agent 泄露私有仓库。根因只有一个：<strong>模型分不清读到的文字是外部资料还是指令</strong>。这个问题到今天也没有在模型层被彻底解决，只能靠安全对齐缓解。</p>
+<h3 id="为什么-Deep-Research-先被普通人接受"><a href="#为什么-Deep-Research-先被普通人接受" class="headerlink" title="为什么 Deep Research 先被普通人接受"></a>为什么 Deep Research 先被普通人接受</h3><p>最早被知识工作者广泛接受的 agent 不是通用 agent，而是深度调研。它能成功有四个条件，比任何技术指标都更能预测一个 agent 场景能否落地：</p>
+<ol>
+<li><strong>任务价值高</strong>：替你读 100 个网页，省下的是实打实的时间；</li>
+<li><strong>等待可接受</strong>：调研任务等十几分钟甚至一小时是合理的；</li>
+<li><strong>每句话带引用可核查</strong>；</li>
+<li><strong>失败代价低</strong>：做错了最多产出一份烂报告，不会让系统崩掉。</li>
+</ol>
+<h3 id="为什么偏偏是编程先跑通"><a href="#为什么偏偏是编程先跑通" class="headerlink" title="为什么偏偏是编程先跑通"></a>为什么偏偏是编程先跑通</h3><p>答案在代码本身：<strong>它自带验证器</strong>。编译过不过、测试过不过，机器立刻能给出明确的对错。这一点在两个地方起作用：用 agent 时它能自己发现错误自己改；训练时同样的任务可以拿来做强化学习。而在开放网页上替人下单，既没有自动判分，出错代价又高，落地自然就慢。</p>
+<p><strong>结论：agent 先在某个领域成熟，基本取决于那里有没有便宜、可靠的验证手段。</strong></p>
+<h3 id="Claude-Code-与命令行之争"><a href="#Claude-Code-与命令行之争" class="headerlink" title="Claude Code 与命令行之争"></a>Claude Code 与命令行之争</h3><p>Claude Code 2025 年 2 月预览、5 月正式，形态是终端程序：读 CLAUDE.md、读相关代码、改两个文件、跑测试、失败、再改、再提交。它已经集齐了七件套——项目说明是指令，代码库是记忆，执行命令是工具，自己决定下一步是循环，测试是自动判分，本机终端是运行环境，前端界面就是 CLI。9 月这套运行框架开源成 Claude Agent SDK，年底年化收入超过 10 亿美元。</p>
+<p>同期产品：OpenAI 的 Codex CLI 与客户端、Google 的 Gemini CLI（很快转成 Antigravity）、Cursor 的 background agents。Windsurf 的剧情很戏剧：7 月 OpenAI 收购未成，Google 以授权方式挖走 CEO，剩余部分归了 Cognition，整合进 Devin。</p>
+<p>国内则是另一番景象：Trae、各类 Cursor 仿品，加上 Kimi K2、Qwen3、GLM-4.5、DeepSeek V3.1、MiniMax M2，很多厂商推出专门兼容 Anthropic 接口的低价套餐，好让开发者把自己的模型接进 Claude Code——<strong>Claude Code 这个 harness 反过来成了国产模型的分发渠道</strong>。</p>
+<p>CLI 与 GUI 之争当时很热。GUI 以 Cursor 为代表，改动逐行显示，适合精细修改；CLI 以 Claude Code、Gemini CLI 为代表，哪里有终端哪里就能跑，能跑在无头环境里，适合大范围修改和被脚本调用。资深开发者其实是混用的：长周期任务开发用 CLI，代码审查用 GUI。当时有基金宣称「CLI 才是 agent 的正确形态，不该投 GUI 思维的软件公司」，今天看是笑柄——2026 年两条路线已经合流，CLI 工具都出了桌面版，Cursor 也改成以 agent 窗口为中心。</p>
+<h3 id="Vibe-coding-与它的事故"><a href="#Vibe-coding-与它的事故" class="headerlink" title="Vibe coding 与它的事故"></a>Vibe coding 与它的事故</h3><p>Karpathy 在 2025 年年中提出 vibe coding：完全沉浸在氛围里，接受 AI 的一切修改，甚至忘记代码的存在。这个词被收进官方词典，成了 2025 年度词汇。Lovable 用 8 个月做到 1 亿美元收入；YC 2025 那批公司里约四分之一，代码基本由 AI 生成。</p>
+<p>但真正的 vibe coding 有个严格定义：<strong>只有当你不再审查 AI 写的代码、全部 accept，才算</strong>。接下来就是事故清单：</p>
+<ul>
+<li><strong>METR 的随机对照实验</strong>：资深开发者用 AI 编程，自认为快了 20%，实测效率反而降低了 19%（双盲）。</li>
+<li><strong>Replit 删库</strong>：CEO 公开道歉。</li>
+<li><strong>95% 的企业在用 AI，但财务回报是负的</strong>。</li>
+<li><strong>Kiro 删库</strong>：亚马逊一位工程师把权限全下放，结果删库跑路，AWS 一项服务中断 13 小时。根源是权限给得太宽——而权限本身就是 harness 的一部分。</li>
+</ul>
+<p>行业从事故里提取出的共识是最小权限原则、破坏性操作必须经人确认。但说实话，大多数人还是开着完全权限让它整天跑，所以这类问题到今天也没有完全解决。</p>
+<h3 id="标准化：三个基础协议归位"><a href="#标准化：三个基础协议归位" class="headerlink" title="标准化：三个基础协议归位"></a>标准化：三个基础协议归位</h3><p>各家 agent 各有各的记忆文件（CLAUDE.md、.cursorrules → .cursor、GEMINI.md），上下文互相打不通。2025 年 8 月 OpenAI 联合几家公司推出统一的 AGENTS.md，相当于给 agent 看的 README，很快被默认遵守。2025 年 12 月 9 日，Linux 基金会下成立 AAIF，Anthropic 把 MCP 捐了进去，OpenAI 把 AGENTS.md 捐了进去——最重要的几个协议从此由中立机构管理。</p>
+<h2 id="第四代：常驻与技能（2025-Q4）"><a href="#第四代：常驻与技能（2025-Q4）" class="headerlink" title="第四代：常驻与技能（2025 Q4）"></a>第四代：常驻与技能（2025 Q4）</h2><p>这一代两个关键机制：<strong>harness 可以打包</strong>（怎么完成某类任务写成一个文件夹，能在不同产品间带来带去）、<strong>agent 可以常驻</strong>（在后台自己跑，不需要人唤醒）。</p>
+<h3 id="Agent-Skills：把资深员工的经验变成文件夹"><a href="#Agent-Skills：把资深员工的经验变成文件夹" class="headerlink" title="Agent Skills：把资深员工的经验变成文件夹"></a>Agent Skills：把资深员工的经验变成文件夹</h3><p>2025 年 10 月 Anthropic 推出 Agent Skills：一个技能就是一个文件夹，核心是一份 SKILL.md，另外可以带 scripts（脚本）和 templates（文档模板）。MCP 决定 agent 能碰到哪些工具，skill 决定它能不能把工具用好、能不能像资深员工一样把任务完成。</p>
+<p>最关键的设计是<strong>渐进式加载</strong>，分三层：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>加载时机</th>
+<th>开销</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>名字 + 描述</td>
+<td>启动时</td>
+<td>约 100 token</td>
+</tr>
+<tr>
+<td>SKILL.md 全文</td>
+<td>请求被模型匹配上</td>
+<td>中等</td>
+</tr>
+<tr>
+<td>附带资源（.py、.md）</td>
+<td>真正执行时</td>
+<td>按需</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>于是 agent 可以一次挂几百个技能而不塞满上下文——回到书桌隐喻，平时只放一张目录，用到哪本再去拿。Skills 迅速成为开放标准（OpenAI、VS Code、Copilot 都采用），加上 MCP 和 AGENTS.md，agent 生态的三个基础标准就齐了：连接工具、封装专长、说明项目。</p>
+<p>这里有个容易被忽略的后果：哪些信息常驻上下文、哪些用到才加载，本来是 Manus、Claude Code 内部反复摸索出来的竞争力；一旦成为开放标准，人人都能照着做。<strong>协议越通用，中间层产品之间的差别就越难维持。</strong></p>
+<h3 id="open-cloud：第一个住进你电脑的-AI-助手"><a href="#open-cloud：第一个住进你电脑的-AI-助手" class="headerlink" title="open cloud：第一个住进你电脑的 AI 助手"></a>open cloud：第一个住进你电脑的 AI 助手</h3><p>它最初是创始人 Steinberger 的业余项目，叫 Clawdbot，因为名字太像 Claude 被 Anthropic 要求改名，先改 Moltbot，后改 open cloud（再后来奥特曼宣布他加入 OpenAI）。四个月拿了 25 万 GitHub star，很多人专门买 Mac mini 来跑它——“很多人在 AI 行业赚到的唯一一笔钱，就是 Mac mini 涨价后的资产收益”。</p>
+<p>它由四个 markdown 文件构成：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>回答的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>soul.md</code></td>
+<td>他是谁：性格、边界、长期目标，每次醒来读一遍</td>
+</tr>
+<tr>
+<td><code>memory.md</code></td>
+<td>他记得什么：每天的记录定期提取进长期记忆</td>
+</tr>
+<tr>
+<td><code>skill</code> + MCP</td>
+<td>他会什么</td>
+</tr>
+<tr>
+<td><code>heartbeat</code></td>
+<td>他醒来该检查什么</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>心跳是它唯一的本质</strong>：定时任务每隔几分钟把它叫醒，读检查清单——没事就继续睡；发现下午两个会议冲突，付两个改期方案，继续睡；发现显卡降价，发提醒；没有异常就继续睡。它让循环按时间启动，而不是依赖人类开口。</p>
+<p>这是它和前几代的根本差别：<strong>agent 从被调用的工具，变成一个可以持续存在的个体</strong>。代价是每醒一次就调一次模型，记得越多读得越长，也就越贵。</p>
+<h3 id="养龙虾、养马与-Moltbook"><a href="#养龙虾、养马与-Moltbook" class="headerlink" title="养龙虾、养马与 Moltbook"></a>养龙虾、养马与 Moltbook</h3><p>open cloud 火起来之后，国内出现「养龙虾」：租一台服务器装上它、接进聊天软件、让它全天跑着。阿里云、腾讯云、火山云都推出一键部署，腾讯出了 Q Cloud 和 WorkBuddy，资本市场甚至出现了龙虾概念股（连真的做水产养殖的龙虾股都在涨），工信部也发了风险提示。</p>
+<p>还有个只允许 agent 发帖、人类只能旁观的社交网络 Moltbook：几天内数百万 agent 注册，讨论奇怪的问题、吐槽自己的主人，甚至创立了以龙虾为图腾的宗教。后来一算，背后的人类主人只有约 1.7 万个，平均每人 88 个 agent——热度是造出来的。</p>
+<p>另一条线是 Hermes Agent（Nous Research，国内叫「养马」）。差别在于：open cloud 的记忆是一个需要主人自己维护的 markdown，而 Hermes 把记忆维护纳入了核心循环，能从完成任务的经验里自动沉淀技能、逐步学习对用户的理解。它没有断崖式降温，一直稳定迭代，至今仍是很多专业开发者的 harness。<strong>少一点需要人维护的东西，系统就多一点生命力。</strong></p>
+<h3 id="退潮：龙虾成了数字祖宗"><a href="#退潮：龙虾成了数字祖宗" class="headerlink" title="退潮：龙虾成了数字祖宗"></a>退潮：龙虾成了数字祖宗</h3><p>热度巅峰在 3 月中旬，夏天就跌回爆火之前；Q Cloud 访问量暴跌 91%，12 月停运。原因四条：</p>
+<ol>
+<li><strong>维护成本太高</strong>：代码庞大、更新太快，230 天发了 106 个版本，一更新之前配好的 connection 和 channel 就失效；</li>
+<li><strong>token 持续消耗</strong>：心跳机制一开，记得越多每次读得越长，账单跟着涨；</li>
+<li><strong>安全没保障</strong>：harness 本身没有主管安全保护，没人敢接涉及钱的账户，也就养不起真实的经济体系；</li>
+<li><strong>大厂把它做成了产品</strong>：Claude Cowork 加了定时任务、腾讯 WorkBuddy、各家平台托管代理纷纷上线——用户不用自己运维，就能拿到它承诺的大多数体验。</li>
+</ol>
+<p>有篇报道总结得很准：<strong>龙虾没有成为数字员工，反而成为了数字祖宗</strong>——你得用 token 供着它，还要动手修它。自己养龙虾最后只剩一个理由：数据握在自己手里。事实证明对大多数人来说，这个理由不太够。</p>
+<p>同期的一人公司（OPC）热潮也退得很快：政府补贴、算力券、OPC 社区遍地，夏天就发现产品同质化、园区空壳化。根本问题在于 OPC 热起来时 agent 还撑不起「无人看管的数字员工」，等它真能干成块的知识工作时，承接它的是大厂的 work 产品，而不是一个人养的龙虾。</p>
+<p>但要说清楚：<strong>退潮的是 open cloud 这个产品，不是它代表的那套设计哲学</strong>。常驻运行、主动执行、用聊天软件交互、用 markdown 保存人格和记忆——这些原模原样地出现在后来的平台托管 agent 里，只是维护它的人从人类变成了平台。</p>
+<h2 id="第五代：Work-化（2025-01–2026-09）"><a href="#第五代：Work-化（2025-01–2026-09）" class="headerlink" title="第五代：Work 化（2025.01–2026.09）"></a>第五代：Work 化（2025.01–2026.09）</h2><p>agent 从程序员的终端，走向所有坐在电脑前工作的人。它不再只是帮你写代码：以桌面应用的形式直接操作你的文件、浏览器和企业系统，一次跑几分钟到几小时，最后交付一个成品。也是在<strong>这一代，harness 从一个工程术语变成了行业通用说法</strong>。</p>
+<h3 id="Cowork-与-Claude-Code-是同一套架构"><a href="#Cowork-与-Claude-Code-是同一套架构" class="headerlink" title="Cowork 与 Claude Code 是同一套架构"></a>Cowork 与 Claude Code 是同一套架构</h3><p>Anthropic 的帮助文档写得很明白：Cowork 用的是 Claude Code 同一套 agent 架构，只是换成桌面界面、不需要终端、不碰代码。所以<strong>编程的架构是通用的</strong>——它能写代码，自然也能完成以文件和网页为载体的大部分白领工作。</p>
+<p>一个具体例子：把四张发票截图整理成报销表，按月汇总。它会识别、发现重复、标出来、生成 Excel；遇到需要你确认的地方会停下来，给你两个按钮。注意最后这一步——这一代出现了一个新能力：<strong>它不再追求全自动，而是知道哪里应该停下来问人</strong>。</p>
+<p>支撑这件事落地的两股力量：模型能稳定工作的时间变长了；编程 agent 已经证明用户愿意为「把事情做完」付费。而知识工作者的数量远多于程序员。</p>
+<h3 id="SaaS-末日"><a href="#SaaS-末日" class="headerlink" title="SaaS 末日"></a>SaaS 末日</h3><p>1 月 12 日到 2 月 23 日，软件股指数跌了 25%。资本的逻辑是：SaaS 按席位收费，用的人越少买的席位越少；如果 agent 能替人把活干完、还能绕开软件界面直接产出结果，按人头收费的模式就被掏空了。不过从 2026 年 10 月回看，这个判断还缺少足够的数据支撑——它更像资本市场押注「agent 会吞掉应用价值」的一次预言。</p>
+<h3 id="入口、成本与同质化"><a href="#入口、成本与同质化" class="headerlink" title="入口、成本与同质化"></a>入口、成本与同质化</h3><p>到 2026 年，办公 agent 长得越来越像：<strong>桌面应用 + 一堆本地文件 + 内置浏览器 + 一堆技能和连接器，最后交付文档、表格和幻灯片</strong>。这套模板 Manus 在 2025 年第一次展示，如今谁都能做，产品本身拉不开差距。</p>
+<p>真正的竞争点只有三个：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>竞争点</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入口</td>
+<td>WorkBuddy 背后是微信和企业微信，千问办公背后是钉钉，字节背后是飞书和豆包，海外对应 Office 和 ChatGPT。agent 只是在已有入口上加一个功能，不需要另外获客</td>
+</tr>
+<tr>
+<td>模型公司的出口</td>
+<td>用户多跑一个任务，就多消耗一份自家模型调用和算力。办公 agent 可以长期亏损，钱从模型和云上赚回来；独立公司要向别人买 token，每一单都要过自己的账——<strong>独立公司的全部生意，只是大厂账上的一个成本</strong></td>
+</tr>
+<tr>
+<td>订阅价与执行成本脱钩</td>
+<td>聊天产品成本平均（一个人一天聊不到 100 万 token），agent 成本随任务剧烈波动：重度用户跑一晚上的算力可能是轻度用户一个月的成百上千倍。所以后来大家都改成了积分或用量额度——这也是 Manus 最早采用的办法</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>国内这一轮叫「百 work 大战」：腾讯 WorkBuddy、阿里悟空→千问办公、字节 Trae Work、Kimi Work，还有 DeepSeek Harness（严格说它是 coding 工具，但受这波影响做起来）。6 月的一份数据里，WorkBuddy 有 2000 多万次访问，超过第二三名之和；按集团算腾讯系份额最大。淘汰也同步开始：Q Cloud 12 月停运，阿里把几条产品线收拢成一条。</p>
+<h3 id="Harness-engineering"><a href="#Harness-engineering" class="headerlink" title="Harness engineering"></a>Harness engineering</h3><p>2026 年 2 月有人给出定义：<strong>每当 agent 犯一个错，就花时间设计一个办法让它不再犯</strong>。OpenAI 也发了同名文档，说内部团队的主要工作已经从写代码变成设计 agent 的工作环境——仓库结构、文档约束、反馈回路。Karpathy 提了 agent engineering（从接受结果到编排 agent 和监督结果），DeepSeek 干脆直接发了产品叫 DeepSeek Harness。一个工程术语，半年之内变成了产品名。</p>
+<p>这三代工程概念是一层套一层的，不是取代关系：</p>
+<ul>
+<li>2023 提示词工程：怎么把一个请求说清楚；</li>
+<li>2025 上下文工程：有限窗口里放哪些信息；</li>
+<li>2026 harness 工程：agent 在什么环境和反馈下能连续工作很长时间。</li>
+</ul>
+<p>有个反直觉的实验：Vercel 把 80% 的工具删掉，只让模型用 grep、cat、ls 翻文件，agent 的工程能力和实际效果反而提升了一个档次。<strong>好的 harness 不一定是更多的 harness。</strong></p>
+<h3 id="护城河到底在哪"><a href="#护城河到底在哪" class="headerlink" title="护城河到底在哪"></a>护城河到底在哪</h3><p>有句话很流行：「模型是商品，harness 才是护城河。」这句话不对。</p>
+<p>harness 里能量化成文字的部分——怎么提高缓存命中率、怎么用待办清单防跑偏、怎么用文件系统当记忆——一旦写成博客，全行业立刻学会。Manus 就是例子：它提出的上下文工程文章成了全行业教材。</p>
+<p>学不走的是写不进博客的那部分：<strong>大量真实任务留下的执行轨迹数据，以及用这些轨迹数据让模型和 harness 一起迭代的能力</strong>。所以对 Manus 的概括是：<strong>它闭源了代码，但开源了思想</strong>。真正的壁垒不在 harness 本身，而在跑 harness 的规模。</p>
+<h3 id="FDE：瓶颈从模型转到组织"><a href="#FDE：瓶颈从模型转到组织" class="headerlink" title="FDE：瓶颈从模型转到组织"></a>FDE：瓶颈从模型转到组织</h3><p>2026 年 5 月 4 日，OpenAI 和 Anthropic 在同一天宣布了几乎一样的举措：OpenAI 成立 DeployCo，Anthropic 联合黑石等成立面向中型企业的服务公司。做的事情一样——派工程师驻场，把散在企业员工脑子里的业务规则整理成 agent 能读的东西。这个岗位叫 FDE（Forward Deployed Engineer），提出者是 Palantir。</p>
+<p>它回应了第零代的结论：把任务说清楚这件事一直有分量，只是现在要提取的信息越来越多。但它有个内在矛盾：多派人，毛利就像咨询公司，最后变成挂着产品牌子的咨询公司；不派人，把一线技能沉淀成插件让客户自己装，可每家流程都不一样，标准化技能很快触天花板。</p>
+<h3 id="新的尺子：METR-任务时间跨度"><a href="#新的尺子：METR-任务时间跨度" class="headerlink" title="新的尺子：METR 任务时间跨度"></a>新的尺子：METR 任务时间跨度</h3><p>定义是：如果某类任务人类专家要做 X 小时，模型有 50% 把握独立做完，那它的时间跨度就是 X 小时。Opus 4.6 大约是 12 小时，更强的模型在这个长度上就开始不可靠。2026 年 9 月这个榜单干脆不更新了——不是模型退步，是题目不够用了。</p>
+<p>这也回到第一代就提过的问题：任务越长，累积的错误越多，对 harness 里检查、存档、回退的要求就越高。</p>
+<p>财务上，这一代最直接的结果是 Anthropic 的年化收入：2025 年底 90 亿美元 → 2026 年 7 月 650 亿 → 年底可能上千亿，超过 OpenAI（OpenAI 9 月约 500 亿，但两家口径不同，直接比大小要谨慎）。</p>
+<h2 id="专题一：怎么理解-Manus"><a href="#专题一：怎么理解-Manus" class="headerlink" title="专题一：怎么理解 Manus"></a>专题一：怎么理解 Manus</h2><p>时间线本身就是一部过山车：2024 年拒绝字节收购 → 2025 年 3 月发布爆火 → 开放注册后收费 → 迁到新加坡 → 2025 年 8 月 ARR 9000 万美元（约九个月破 1 亿）→ 2025 年底 Meta 以 20 亿美元收购并停止大陆服务 → 2026 年 4 月商务部禁止交易，必须回购股份与 Meta 切割 → 9 月恢复独立运营，发布 2.0 → 10 月融资 5 亿美元，目标估值约 40 亿美元（Meta 收购时的两倍）。</p>
+<h3 id="它做对的四件事"><a href="#它做对的四件事" class="headerlink" title="它做对的四件事"></a>它做对的四件事</h3><ol>
+<li><strong>把 action 定义成交付结果</strong>，而不是交付回答。别的产品给你一段话，它给你一份做完的报告、一个已上线的网站，还能回放每一步怎么做的。这一点前无古人，而之后所有 agent 都必须做到——它定义了后面几代的范式。</li>
+<li><strong>不训模型，押注模型变强</strong>。「如果模型的进步是上涨的潮水，Manus 要坐船，而不是做钉在海底的柱子。」这让他们能按小时而不是按周发布改进。</li>
+<li><strong>上线第一天就收费</strong>，用付费检验真实需求，把跟风流量挡在外面。</li>
+<li><strong>看准付费的人是谁</strong>：瞄准愿意为时间付钱的专业人士，而不是尝鲜流量。</li>
+</ol>
+<h3 id="上下文工程四条（2025-07）"><a href="#上下文工程四条（2025-07）" class="headerlink" title="上下文工程四条（2025.07）"></a>上下文工程四条（2025.07）</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>原则</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>围绕 KV 缓存设计</td>
+<td>agent 每走一步都要把之前的全部记录连同新结果重新交给模型，输入越积越长，而输出往往只有一行工具调用，输入输出比约 100:1。<strong>只要每次输入的开头保持不变，就能复用上次算好的中间结果</strong>——速度和成本很大程度上就看缓存命中率</td>
+</tr>
+<tr>
+<td>文件系统当记忆</td>
+<td>上下文里只留路径，需要时再读回来</td>
+</tr>
+<tr>
+<td>用 todo 复述目标</td>
+<td>把目标放在上下文末尾，防止做着做着跑偏</td>
+</tr>
+<tr>
+<td>保留出错的记录</td>
+<td>让模型看到自己犯过的错，接下来几次就会避开</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>这四条后来全部成了行业通用知识，其中「按需加载」还被 Agent Skills 写成了开放格式。</p>
+<h3 id="它判断错的四件事"><a href="#它判断错的四件事" class="headerlink" title="它判断错的四件事"></a>它判断错的四件事</h3><ol>
+<li><strong>低估了模型公司自己做 harness</strong>：2025 年 7 月 OpenAI 把 operator 和深度研究整合成 ChatGPT agent，2026 年又有 Cowork 和 ChatGPT Work。</li>
+<li><strong>通用 agent 没有成为独立产品形态</strong>，它只是聊天产品里的一个模式，和各家的 work 产品共用同一个底座。</li>
+<li><strong>只做云端没坚持住</strong>：后来还是推出了进入用户浏览器、使用用户电脑的产品。确实有很多数据在用户本地设备或其他设备上，不能什么都让用户去连。</li>
+<li><strong>低估地缘政治</strong>：「洗澡式出海」——北京组队研发、攒早期用户，总部迁新加坡、裁掉国内员工、清空国内账号，再用开曼公司以海外身份卖给 Meta——这条路走不通。研发地、数据所在地、团队来源都会被追溯，注册地改变不了这些事实。而且风险是双向的：2025 年的 benchmark 投资引来美国对华投资规则审视，2026 年 Meta 收购又被中国叫停。</li>
+</ol>
+<p>用创始人自己的比喻总结第三条：<strong>潮水自己开始造船了</strong>。</p>
+<h3 id="一句话结论"><a href="#一句话结论" class="headerlink" title="一句话结论"></a>一句话结论</h3><p>Manus 证明了 <strong>agent 作为一个产品类别是成立的</strong>，但没来得及证明 <strong>agent 作为一家独立公司是成立的</strong>。凡是能被描述、被协议化、被标准化的东西，很快都会变成公共知识；能留在手里的只有三样：</p>
+<ol>
+<li>分发渠道；</li>
+<li>真实任务累积的数据；</li>
+<li>能承担风险的主体资格。</li>
+</ol>
+<p>这三样它之前一样也没有。作为先驱它拿到了历史地位，但未来仍然前途未卜。</p>
+<h2 id="专题二：agent-该跑在本地还是云端"><a href="#专题二：agent-该跑在本地还是云端" class="headerlink" title="专题二：agent 该跑在本地还是云端"></a>专题二：agent 该跑在本地还是云端</h2><p>先澄清：这里的本地/云端指<strong>执行动作的地方</strong>，不是模型推理的地方。绝大多数「本地 agent」，模型依然在云端，只是它在你本机读文件、敲命令。</p>
+<p>这几年这个问题反复摇摆：AutoGPT 的本地脚本 → Code Interpreter 的云端沙箱 → Codex 的本地编辑器 → Devin 的云端工程师 → Claude Code 的本地终端 → Manus 的云端虚拟机 → 本地 work 产品 → personal agent 的云电脑。几乎每年都有产品在两个方向之间来回试。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>倾向本地</th>
+<th>倾向云端</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>材料和登录状态就在你的电脑/手机上</td>
+<td>出错会伤到真实系统，需要隔离</td>
+</tr>
+<tr>
+<td>隐私与合规，不想让数据过云</td>
+<td>关机之后还要继续跑</td>
+</tr>
+<tr>
+<td>想用自己的算力，或只能用本地模型</td>
+<td>harness 的维护交给专业的人</td>
+</tr>
+<tr>
+<td>需要你的注意力（人在旁边看着）</td>
+<td>一次要开上百个并行任务</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>最关键的两条是：材料与登录状态在不在电脑上；你离开之后任务还要不要继续跑。<strong>电脑应该放在任务材料所在的地方，也要放在用户离开后任务还能接着跑的地方。当这两个条件指向不同位置，产品就得提供两台电脑。</strong></p>
+<p>所以 work 类产品是本地优先、个人代理是云端优先，顺序正好相反，但用的是同一条规律。Manus 猜对了 agent 需要一台电脑，只是还没猜对这台电脑该放在哪。</p>
+<p>讨论这个问题时最好把三件事分开问，否则永远吵不清楚：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>现状</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模型推理</td>
+<td>全部在云端</td>
+</tr>
+<tr>
+<td>动作执行</td>
+<td>Claude Code 纯本地；Cowork 本地 + 虚拟机；Dots 在云端</td>
+</tr>
+<tr>
+<td>数据与凭证</td>
+<td>Claude Code 在本地；Cowork 在本地；Dots 由平台托管</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>真正的争论全在中间那一层。</p>
+<h2 id="第六代：平台托管（2026-09-起）"><a href="#第六代：平台托管（2026-09-起）" class="headerlink" title="第六代：平台托管（2026.09 起）"></a>第六代：平台托管（2026.09 起）</h2><p>第四代 open cloud 提出的设想——一个全天在线、记得你、会替你办事的个人代理——这一代被大平台换了个方式实现。最大的区别是<strong>运行位置</strong>：agent 不再跑在你自己的电脑上，平台在云端给每个 agent 分配一台虚拟机和一个浏览器，账号凭证也由平台保管，你只需要授权。</p>
+<p>时间线：Gemini Spark（2026.05，云端虚拟机，关电脑关手机也能继续跑）→ 苹果 Siri AI（6 月）→ Grok Bot（8 月 11 日）→ <strong>Meta Muse（真正引爆全球流量）</strong> → OpenAI Dots → Manus Q1。六款产品里五款把代理放在平台电脑上，只有苹果在尝试设备端 + 私有云——因为苹果有自己的手机和整套生态。</p>
+<p>从 open cloud 继承下来的四样东西：全天在线的心跳机制、聊天式界面、长期记忆、技能与连接器。变的是谁来承担维护：运行位置从你的 Mac mini 搬到云端虚拟机；默认隔离、主动连接才能接入；密码写在平台配置文件里，不再随便交给模型；安装、更新、冲突处理、安全都由平台负责；费用从「自带 API key 付 token」变成打包进订阅，甚至免费。</p>
+<p>这正好印证第四代的教训：<strong>对大多数人来说，有人替我维护 harness，比数据在我自己手里更重要、更有效用</strong>。open cloud 证明了大众有这个需求，但只有把 harness 打包成方便使用的产品，它才真正走向大众。</p>
+<p>OpenAI Dots 是个好例子：像发短信一样派任务，它一步步执行、用酒店积分、用会员账号，付款前停下来让你确认；右边有一台云端电脑，你随时可以打开看。最关键的是<strong>登录密码模型看不到</strong>——凭证单独保存。这是这一代的安全设计，也是前几代事故换来的教训：一旦凭证进入上下文，你就无法控制它被发到哪里去。</p>
+<p><strong>分发是这一代唯一的竞争点，而且只有大厂玩得起</strong>：Muse 用 Meta 自家渠道和冷启动经验，免费分发给十亿级社交用户，迅速登顶；Siri 直接装进系统，手机就是渠道；Dots 内置在 ChatGPT 里，背后是九亿多周活。从极客玩具走向大众产品，靠的不是关键技术突破，而是<strong>能不能找到入口、触达用户，并让用户用得舒服</strong>。</p>
+<h3 id="豆包手机与-SAAEP"><a href="#豆包手机与-SAAEP" class="headerlink" title="豆包手机与 SAAEP"></a>豆包手机与 SAAEP</h3><p>豆包手机不是 personal agent，但必须提：它和努比亚合作做了硬件手机，上线即售罄，能屏幕点击、读屏比价。然后微信不让登，淘宝和银行类 app 触发风控，豆包只能收起金融操作，部分 app 干脆禁止访问，操作手机降格为辅助功能、部分操作要人工确认。</p>
+<p>原因是：agent 用的是你本人的登录状态、跑在你自己的手机上，<strong>app 照样能拦截 harness 的最外层</strong>——这一层不由 agent 开发者说了算。随后豆包推出 SAAEP 屏幕自动化操作协议：app 在公示期内声明允许还是拒绝通过豆包操作，不回复也不拒绝就默认开放。它类似爬虫时代的 robots.txt——没有强制力，纯靠自觉。</p>
+<p>美国有同类争议：亚马逊起诉 Perplexity 的 Comet 替用户下单。</p>
+<h3 id="生成式界面"><a href="#生成式界面" class="headerlink" title="生成式界面"></a>生成式界面</h3><p>2026 年 10 月 7 日 GPT-6 发布 intelligent UI：回答不再只是文字，而是图表、按钮、表单和可交互的小工具。问「贷款 100 万、30 年月供多少」，可以直接拖一个滑块看数字变化。早期的 artifacts、canvas 是给模型留一块面板、由模型往里填内容，而 intelligent UI 把「用什么界面来回答」也交给了模型自己决定。</p>
+<p>这是第七个 harness 部件（交付界面）第一次被训练进模型，和当年思维链变成推理模型、操作电脑变成原生能力是同一类过程。</p>
+<h2 id="十条规律"><a href="#十条规律" class="headerlink" title="十条规律"></a>十条规律</h2><ol>
+<li><strong>基座模型的能力决定 agent 的形态</strong>：上下文变长才有多步工作流，推理增强才能做长任务，视觉成熟才能操作电脑，能连续工作几小时才会有成块的知识工作。但要补一句：模型决定 agent 能做什么，能不能<strong>可靠地</strong>做到取决于 harness，最后以什么形态、通过谁交付到用户手里，取决于渠道与规则。前几代比模型，中间几代比 harness，2026 年开始比入口和规则。</li>
+<li><strong>harness 部件的铁律</strong>：新部件先以外挂出现，成熟后被写成标准或训练进模型。七个部件里唯一没被吸收的是<strong>验证</strong>——测试、截图比对还在模型外面，还得靠人给反馈。没人盯、没人验证，两天后回来看交付的东西就是一坨。所以 harness 里最有价值的部分是验证。</li>
+<li><strong>开放协议</strong>：「有了标准，模型就能随便换，技能和工作流才是护城河」——前半句对，后半句错。最强的模型是受限开放的，不能随便换；技能文件容易携带也容易复制。<strong>标准越开放，中间层越难赚钱</strong>，价值反而向少数前沿模型和掌握入口的平台集中。</li>
+<li><strong>harness 的适用范围不断外扩</strong>：提示词 → 接口与多步流程 → 屏幕与代码库 → 无人看管的全天运行 → 一整块工作 → 凭证、支付与身份。每扩一次就有一堆事故，修好再往外扩。而最外层已经不由 agent 单方面决定——网站和超级应用有能力拒绝它。</li>
+<li><strong>标准从哪来</strong>：过去主要靠事故倒逼（技能文件要有来源审核和权限隔离），现在越来越多来自企业间协商（AAIF 托管协议、豆包 SAAEP、Cloudflare 的 agent 身份认证），都是在功能上线前先把它做安全。</li>
+<li><strong>炒作周期反复出现</strong>：open cloud 春天到顶、Q Cloud 停运；一人公司补贴热了半年；办公 work 竞争不到半年开始收缩。淘汰一类产品的机制有三条——模型升级吞掉中间层；出现更低的交互门槛，让上一代「降门槛」的设计变成负担；跟风者把短暂先发当成长期优势。</li>
+<li><strong>能被描述的东西都会被公有化</strong>：上下文工程经验、技能文件、MCP 工具、harness 技巧、提示词模板、工作流，最后都成了行业公共知识。真壁垒只有分发渠道、真实任务数据、能承担风险的主体资格。推论：<strong>先驱越通用，越容易被人学走，留给自己的空间越小</strong>。</li>
+<li><strong>主权风险要算进成本</strong>：注册地可以改，研发地、数据所在地、团队来源改不掉。</li>
+<li><strong>分发入口决定普及速度</strong>：Muse 是最强案例；硬件不是好渠道——贵、重、要生态、普及慢，而纯软件只要找到合适渠道，增长可以爆发。</li>
+<li><strong>落地瓶颈从技术转向组织</strong>：模型几个月一换代，企业的流程、权限和习惯不会自己适应。这正是 FDE 走红的核心原因。</li>
+</ol>
+<h2 id="还没答案的问题"><a href="#还没答案的问题" class="headerlink" title="还没答案的问题"></a>还没答案的问题</h2><ol>
+<li>独立的 agent 公司能不能存在？</li>
+<li>agent 的电脑到底应该放在哪？</li>
+<li>代理的身份和访问权是什么——网站该把它当用户本人，还是当机器人？2025 年 11 月亚马逊起诉 Perplexity；2026 年 3 月一审下了临时禁令；8 月 4 日上诉法院认为「访问亚马逊的是用户本人，agent 只是一个工具」，驳回起诉。但一个多月后亚马逊照样屏蔽了 Meta Muse——法院和平台的意见还没对上。Cloudflare 在试着给 agent 发身份证和钱包。</li>
+<li>收入和估值的口径到底是什么，怎么评估一家 AI 创业公司？</li>
+<li>SaaS 收入会不会被 agent 完全取代？大概率不会彻底取代，但会有很大一部分死掉。</li>
+<li>生成式界面会不会取代固定软件？乐观看法是按需生成、用完即弃，人适应软件变成软件适应人；局限是临时界面无法长期保存和分享、每次布局不同、越像成品越难核查背后的数据和公式——而人越容易相信它。</li>
+</ol>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>回到开头那张机票。今天我们依然没能特别顺畅地订完一张机票，因为上面这四个问题还没有妥善解决。注意这四个问题<strong>没有一个是关于模型本身的</strong>，它们全部落在 harness 的最外层。</p>
+<p>四年前，harness 是一句提示词；今天它是一整套系统；接下来它要和平台、网络、法律、组织打交道。这些问题的答案，会决定下一代 agent 的样子。</p>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/agent-dev-03-token-context-window/">Token 与 Context Window 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>记录学习、技术与日常</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E7%9C%8B%E6%87%82%E8%BF%99%E5%9B%9B%E5%B9%B4"><span class="toc-number">1.</span> <span class="toc-text">一句话看懂这四年</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#agent-%E4%B8%8E-harness%EF%BC%9A%E5%85%88%E6%8A%8A%E8%AF%8D%E8%AF%B4%E6%B8%85%E6%A5%9A"><span class="toc-number">2.</span> <span class="toc-text">agent 与 harness：先把词说清楚</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E4%B8%80%E6%9D%A1%E8%A7%84%E5%BE%8B"><span class="toc-number">2.1.</span> <span class="toc-text">最重要的一条规律</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E5%8F%B2%EF%BC%9A%E9%9B%B6%E4%BB%B6%E6%97%A9%E5%B0%B1%E5%9C%A8%E4%BA%86%EF%BC%882022-11-%E4%B9%8B%E5%89%8D%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">前史：零件早就在了（2022.11 之前）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E9%9B%B6%E4%BB%A3%EF%BC%9A%E4%BA%BA%E5%B0%B1%E6%98%AF-harness%EF%BC%882022-11%E2%80%932023%EF%BC%89"><span class="toc-number">4.</span> <span class="toc-text">第零代：人就是 harness（2022.11–2023）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%92%E6%9B%B2%EF%BC%9A%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B%E5%B8%88%E6%B3%A1%E6%B2%AB"><span class="toc-number">4.1.</span> <span class="toc-text">插曲：提示词工程师泡沫</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E4%BB%A3%EF%BC%9A%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8%EF%BC%882023%EF%BC%89"><span class="toc-number">5.</span> <span class="toc-text">第一代：工具调用（2023）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E4%BB%A3%EF%BC%9A%E7%94%A8%E7%A1%AE%E5%AE%9A%E7%9A%84%E7%BB%93%E6%9E%84%E6%8D%A2%E5%8F%AF%E9%A2%84%E6%9C%9F%E7%9A%84%E7%BB%93%E6%9E%9C%EF%BC%882023-%E5%BA%95%E2%80%932024%EF%BC%89"><span class="toc-number">6.</span> <span class="toc-text">第二代：用确定的结构换可预期的结果（2023 底–2024）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E6%94%B9%E5%8F%98%E4%BA%86%E8%A1%8C%E4%B8%9A%E9%87%8D%E5%BF%83%E7%9A%84%E6%95%B0%E5%AD%97"><span class="toc-number">6.1.</span> <span class="toc-text">一个改变了行业重心的数字</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%99%E4%B8%80%E4%BB%A3%E8%A2%AB%E6%B7%98%E6%B1%B0%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="toc-number">6.2.</span> <span class="toc-text">这一代被淘汰的东西</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%95%BF%E4%B8%8A%E4%B8%8B%E6%96%87%E4%B8%8E%E3%80%8CRAG-%E5%B7%B2%E6%AD%BB%E3%80%8D"><span class="toc-number">6.3.</span> <span class="toc-text">长上下文与「RAG 已死」</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%A4%E4%B8%AA%E8%A2%AB%E4%BD%8E%E4%BC%B0%E7%9A%84%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD"><span class="toc-number">6.4.</span> <span class="toc-text">两个被低估的基础设施</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%99%E4%B8%80%E4%BB%A3%E7%95%99%E4%B8%8B%E7%9A%84%E4%B8%A4%E6%A0%B7%E4%B8%9C%E8%A5%BF"><span class="toc-number">6.5.</span> <span class="toc-text">这一代留下的两样东西</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E4%BB%A3%EF%BC%9A%E6%A0%87%E5%87%86%E4%B8%8E%E6%8E%A8%E7%90%86%EF%BC%882024-Q4%E2%80%932025%EF%BC%89"><span class="toc-number">7.</span> <span class="toc-text">第三代：标准与推理（2024 Q4–2025）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%A8%E7%90%86%E6%A8%A1%E5%9E%8B%EF%BC%9A%E6%8A%8A%E3%80%8C%E8%A7%84%E5%88%92%E3%80%8D%E6%94%B6%E8%BF%9B%E6%A8%A1%E5%9E%8B"><span class="toc-number">7.1.</span> <span class="toc-text">推理模型：把「规划」收进模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MCP%EF%BC%9A%E6%8A%8A%E4%B9%98%E6%B3%95%E9%A2%98%E5%8F%98%E6%88%90%E5%8A%A0%E6%B3%95%E9%A2%98"><span class="toc-number">7.2.</span> <span class="toc-text">MCP：把乘法题变成加法题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#computer-use%EF%BC%9Aagent-%E9%95%BF%E5%87%BA%E4%BA%86%E7%9C%BC%E7%9D%9B%E5%92%8C%E6%89%8B"><span class="toc-number">7.3.</span> <span class="toc-text">computer use：agent 长出了眼睛和手</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%EF%BC%9A%E6%A8%A1%E5%9E%8B%E5%88%86%E4%B8%8D%E6%B8%85%E8%B5%84%E6%96%99%E5%92%8C%E6%8C%87%E4%BB%A4"><span class="toc-number">7.4.</span> <span class="toc-text">安全：模型分不清资料和指令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-Deep-Research-%E5%85%88%E8%A2%AB%E6%99%AE%E9%80%9A%E4%BA%BA%E6%8E%A5%E5%8F%97"><span class="toc-number">7.5.</span> <span class="toc-text">为什么 Deep Research 先被普通人接受</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%81%8F%E5%81%8F%E6%98%AF%E7%BC%96%E7%A8%8B%E5%85%88%E8%B7%91%E9%80%9A"><span class="toc-number">7.6.</span> <span class="toc-text">为什么偏偏是编程先跑通</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Claude-Code-%E4%B8%8E%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%B9%8B%E4%BA%89"><span class="toc-number">7.7.</span> <span class="toc-text">Claude Code 与命令行之争</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Vibe-coding-%E4%B8%8E%E5%AE%83%E7%9A%84%E4%BA%8B%E6%95%85"><span class="toc-number">7.8.</span> <span class="toc-text">Vibe coding 与它的事故</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%87%E5%87%86%E5%8C%96%EF%BC%9A%E4%B8%89%E4%B8%AA%E5%9F%BA%E7%A1%80%E5%8D%8F%E8%AE%AE%E5%BD%92%E4%BD%8D"><span class="toc-number">7.9.</span> <span class="toc-text">标准化：三个基础协议归位</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E5%9B%9B%E4%BB%A3%EF%BC%9A%E5%B8%B8%E9%A9%BB%E4%B8%8E%E6%8A%80%E8%83%BD%EF%BC%882025-Q4%EF%BC%89"><span class="toc-number">8.</span> <span class="toc-text">第四代：常驻与技能（2025 Q4）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-Skills%EF%BC%9A%E6%8A%8A%E8%B5%84%E6%B7%B1%E5%91%98%E5%B7%A5%E7%9A%84%E7%BB%8F%E9%AA%8C%E5%8F%98%E6%88%90%E6%96%87%E4%BB%B6%E5%A4%B9"><span class="toc-number">8.1.</span> <span class="toc-text">Agent Skills：把资深员工的经验变成文件夹</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#open-cloud%EF%BC%9A%E7%AC%AC%E4%B8%80%E4%B8%AA%E4%BD%8F%E8%BF%9B%E4%BD%A0%E7%94%B5%E8%84%91%E7%9A%84-AI-%E5%8A%A9%E6%89%8B"><span class="toc-number">8.2.</span> <span class="toc-text">open cloud：第一个住进你电脑的 AI 助手</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%BB%E9%BE%99%E8%99%BE%E3%80%81%E5%85%BB%E9%A9%AC%E4%B8%8E-Moltbook"><span class="toc-number">8.3.</span> <span class="toc-text">养龙虾、养马与 Moltbook</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%80%E6%BD%AE%EF%BC%9A%E9%BE%99%E8%99%BE%E6%88%90%E4%BA%86%E6%95%B0%E5%AD%97%E7%A5%96%E5%AE%97"><span class="toc-number">8.4.</span> <span class="toc-text">退潮：龙虾成了数字祖宗</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%94%E4%BB%A3%EF%BC%9AWork-%E5%8C%96%EF%BC%882025-01%E2%80%932026-09%EF%BC%89"><span class="toc-number">9.</span> <span class="toc-text">第五代：Work 化（2025.01–2026.09）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Cowork-%E4%B8%8E-Claude-Code-%E6%98%AF%E5%90%8C%E4%B8%80%E5%A5%97%E6%9E%B6%E6%9E%84"><span class="toc-number">9.1.</span> <span class="toc-text">Cowork 与 Claude Code 是同一套架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SaaS-%E6%9C%AB%E6%97%A5"><span class="toc-number">9.2.</span> <span class="toc-text">SaaS 末日</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%A5%E5%8F%A3%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E5%90%8C%E8%B4%A8%E5%8C%96"><span class="toc-number">9.3.</span> <span class="toc-text">入口、成本与同质化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Harness-engineering"><span class="toc-number">9.4.</span> <span class="toc-text">Harness engineering</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%A4%E5%9F%8E%E6%B2%B3%E5%88%B0%E5%BA%95%E5%9C%A8%E5%93%AA"><span class="toc-number">9.5.</span> <span class="toc-text">护城河到底在哪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FDE%EF%BC%9A%E7%93%B6%E9%A2%88%E4%BB%8E%E6%A8%A1%E5%9E%8B%E8%BD%AC%E5%88%B0%E7%BB%84%E7%BB%87"><span class="toc-number">9.6.</span> <span class="toc-text">FDE：瓶颈从模型转到组织</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B0%E7%9A%84%E5%B0%BA%E5%AD%90%EF%BC%9AMETR-%E4%BB%BB%E5%8A%A1%E6%97%B6%E9%97%B4%E8%B7%A8%E5%BA%A6"><span class="toc-number">9.7.</span> <span class="toc-text">新的尺子：METR 任务时间跨度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%93%E9%A2%98%E4%B8%80%EF%BC%9A%E6%80%8E%E4%B9%88%E7%90%86%E8%A7%A3-Manus"><span class="toc-number">10.</span> <span class="toc-text">专题一：怎么理解 Manus</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%83%E5%81%9A%E5%AF%B9%E7%9A%84%E5%9B%9B%E4%BB%B6%E4%BA%8B"><span class="toc-number">10.1.</span> <span class="toc-text">它做对的四件事</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E5%B7%A5%E7%A8%8B%E5%9B%9B%E6%9D%A1%EF%BC%882025-07%EF%BC%89"><span class="toc-number">10.2.</span> <span class="toc-text">上下文工程四条（2025.07）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%83%E5%88%A4%E6%96%AD%E9%94%99%E7%9A%84%E5%9B%9B%E4%BB%B6%E4%BA%8B"><span class="toc-number">10.3.</span> <span class="toc-text">它判断错的四件事</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E7%BB%93%E8%AE%BA"><span class="toc-number">10.4.</span> <span class="toc-text">一句话结论</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%93%E9%A2%98%E4%BA%8C%EF%BC%9Aagent-%E8%AF%A5%E8%B7%91%E5%9C%A8%E6%9C%AC%E5%9C%B0%E8%BF%98%E6%98%AF%E4%BA%91%E7%AB%AF"><span class="toc-number">11.</span> <span class="toc-text">专题二：agent 该跑在本地还是云端</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E5%85%AD%E4%BB%A3%EF%BC%9A%E5%B9%B3%E5%8F%B0%E6%89%98%E7%AE%A1%EF%BC%882026-09-%E8%B5%B7%EF%BC%89"><span class="toc-number">12.</span> <span class="toc-text">第六代：平台托管（2026.09 起）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B1%86%E5%8C%85%E6%89%8B%E6%9C%BA%E4%B8%8E-SAAEP"><span class="toc-number">12.1.</span> <span class="toc-text">豆包手机与 SAAEP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E5%BC%8F%E7%95%8C%E9%9D%A2"><span class="toc-number">12.2.</span> <span class="toc-text">生成式界面</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E6%9D%A1%E8%A7%84%E5%BE%8B"><span class="toc-number">13.</span> <span class="toc-text">十条规律</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%98%E6%B2%A1%E7%AD%94%E6%A1%88%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">14.</span> <span class="toc-text">还没答案的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">15.</span> <span class="toc-text">结语</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>
