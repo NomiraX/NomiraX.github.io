@@ -64,8 +64,8 @@ document.addEventListener('click', function (event) {
 
 let archiveNavigationInProgress = false;
 document.addEventListener('click', function (event) {
-  const link = event.target.closest('.home-hero-archives');
-  if (!link || archiveNavigationInProgress || event.button !== 0 ||
+  const link = event.target.closest('.home-hero-archives, .navContent a[href^="/archives"]');
+  if (!link || archiveNavigationInProgress || location.pathname === '/archives/' || event.button !== 0 ||
       event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
       prefersReducedMotion()) return;
   event.preventDefault();
@@ -104,6 +104,48 @@ document.addEventListener('click', function (event) {
       window.location.assign(destination);
     }
   }, 650);
+}, true);
+
+let homeNavigationInProgress = false;
+document.addEventListener('click', function (event) {
+  const link = event.target.closest('.navContent a[href="/"]');
+  if (!link || homeNavigationInProgress || location.pathname === '/' ||
+      event.button !== 0 || event.metaKey || event.ctrlKey ||
+      event.shiftKey || event.altKey || prefersReducedMotion()) return;
+  event.preventDefault();
+  event.stopPropagation();
+  homeNavigationInProgress = true;
+
+  const veil = document.createElement('div');
+  veil.className = 'home-return-transition';
+  veil.setAttribute('role', 'status');
+  veil.setAttribute('aria-label', '正在返回首页');
+  veil.innerHTML = '<span class="home-return-title">返回首页</span><span class="home-return-line"></span>';
+  document.body.appendChild(veil);
+  requestAnimationFrame(() => veil.classList.add('is-visible'));
+
+  const destination = link.href;
+  let navigated = false;
+  const fallback = setTimeout(() => {
+    if (!navigated) window.location.assign(destination);
+  }, 6000);
+  document.addEventListener('pjax:complete', function finish() {
+    document.removeEventListener('pjax:complete', finish);
+    navigated = true;
+    clearTimeout(fallback);
+    setTimeout(() => {
+      veil.classList.add('is-leaving');
+      setTimeout(() => veil.remove(), 500);
+      homeNavigationInProgress = false;
+    }, 100);
+  });
+  setTimeout(() => {
+    if (window.pjax && typeof window.pjax.loadUrl === 'function') {
+      window.pjax.loadUrl(destination, { triggerElement: link });
+    } else {
+      window.location.assign(destination);
+    }
+  }, 520);
 }, true);
 
 let postNavigationInProgress = false;
