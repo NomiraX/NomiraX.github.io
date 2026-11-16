@@ -78,7 +78,7 @@ document.addEventListener('click', function (event) {
   veil.setAttribute('aria-label', '正在打开归档');
   veil.innerHTML = '<span class="hero-archive-transition-title">归档</span>' +
     '<span class="hero-archive-transition-line"></span>' +
-    '<span class="hero-archive-transition-caption">ARCHIVES</span>';
+    '<span class="hero-archive-transition-caption">ARCHIVES · 01</span>';
   document.body.appendChild(veil);
   requestAnimationFrame(() => veil.classList.add('is-visible'));
 
@@ -120,7 +120,9 @@ document.addEventListener('click', function (event) {
   veil.className = 'home-return-transition';
   veil.setAttribute('role', 'status');
   veil.setAttribute('aria-label', '正在返回首页');
-  veil.innerHTML = '<span class="home-return-title">返回首页</span><span class="home-return-line"></span>';
+  veil.innerHTML = '<span class="home-return-title">返回首页</span>' +
+    '<span class="home-return-line"></span>' +
+    '<span class="home-return-caption">HOME · 00</span>';
   document.body.appendChild(veil);
   requestAnimationFrame(() => veil.classList.add('is-visible'));
 
@@ -173,6 +175,10 @@ document.addEventListener('click', function (event) {
   title.className = 'post-open-title';
   title.textContent = card.querySelector('.recent-title')?.textContent?.trim() || card.textContent.trim();
   veil.appendChild(title);
+  const caption = document.createElement('span');
+  caption.className = 'post-open-caption';
+  caption.textContent = 'OPENING ARTICLE';
+  veil.appendChild(caption);
   document.body.appendChild(veil);
   requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('is-expanded')));
 
