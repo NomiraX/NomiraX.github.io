@@ -3677,3 +3677,100 @@ body img,
 body canvas {
   filter: grayscale(1);
 }
+#reading-progress {
+  --read-progress: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  width: 100%;
+  height: 3px;
+  opacity: 0;
+  pointer-events: none;
+  background: rgba(127,127,127,0.2);
+  transition: opacity 0.25s ease;
+}
+#reading-progress.is-visible {
+  opacity: 1;
+}
+#reading-progress::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(var(--read-progress));
+  background: #0a0a0a;
+}
+:root[theme-mode=dark] #reading-progress::after {
+  background: #fff;
+}
+#Archives-bg {
+  position: relative;
+  padding: 18px 24px 60px 46px;
+}
+#Archives-bg::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  bottom: 60px;
+  left: 29px;
+  width: 1px;
+  background: var(--theme-border-light);
+  opacity: 0.35;
+}
+#Archives #Archives-bg h2 {
+  position: relative;
+  margin: 6px 0 16px;
+  color: var(--theme-text-light);
+  font-size: 1.15em;
+}
+#Archives #Archives-bg h2::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 0.4em;
+  width: 9px;
+  height: 9px;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--theme-border-light);
+}
+#Archives .article-item {
+  padding: 8px 12px;
+  margin: 0 0 8px;
+  align-items: baseline;
+  border-radius: 4px;
+  transition: background-color 0.25s ease, transform 0.25s ease;
+}
+#Archives .article-item::before {
+  content: '';
+  position: absolute;
+  left: -21px;
+  top: 14px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--theme-border-light);
+  border-radius: 50%;
+  background: var(--theme-background);
+}
+#Archives .article-item::after {
+  display: none;
+}
+#Archives .article-item:hover {
+  background: #0a0a0a;
+  color: #fff;
+  transform: translateX(4px);
+}
+#Archives .article-item:hover time,
+#Archives .article-item:hover a {
+  color: #fff;
+}
+@media (max-width: 768px) {
+  #Archives-bg {
+    padding-right: 12px;
+  }
+  #Archives .article-item {
+    flex-wrap: wrap;
+  }
+}
