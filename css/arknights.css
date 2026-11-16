@@ -3480,6 +3480,103 @@ main {
   opacity: 0.75;
   transform: translateY(0);
 }
+.transition-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.transition-hud::before {
+  content: '';
+  position: absolute;
+  inset: 24px;
+  background: linear-gradient(#fff, #fff) left top/22px 1px no-repeat, linear-gradient(#fff, #fff) left top/1px 22px no-repeat, linear-gradient(#fff, #fff) right top/22px 1px no-repeat, linear-gradient(#fff, #fff) right top/1px 22px no-repeat, linear-gradient(#fff, #fff) left bottom/22px 1px no-repeat, linear-gradient(#fff, #fff) left bottom/1px 22px no-repeat, linear-gradient(#fff, #fff) right bottom/22px 1px no-repeat, linear-gradient(#fff, #fff) right bottom/1px 22px no-repeat;
+  opacity: 0.65;
+}
+.hero-archive-transition.is-visible .transition-hud,
+.home-return-transition.is-visible .transition-hud,
+.post-open-veil.is-expanded .transition-hud {
+  opacity: 1;
+}
+.transition-hud-top,
+.transition-hud-bottom {
+  position: absolute;
+  left: clamp(30px, 5vw, 90px);
+  right: clamp(30px, 5vw, 90px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  font-family: 'JetBrains Mono', 'Microsoft YaHei', monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: rgba(255,255,255,0.85);
+}
+.transition-hud-top {
+  top: clamp(34px, 6vh, 70px);
+}
+.transition-hud-bottom {
+  bottom: clamp(38px, 7vh, 84px);
+}
+.transition-hud-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.2);
+  overflow: hidden;
+}
+.transition-hud-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #fff;
+  box-shadow: 0 0 12px rgba(255,255,255,0.6);
+}
+.transition-hud-value {
+  min-width: 4ch;
+  text-align: right;
+}
+.transition-hud-reticle {
+  position: absolute;
+  right: clamp(35px, 8vw, 130px);
+  top: 22%;
+  width: 90px;
+  height: 90px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  opacity: 0.75;
+  animation: hud-reticle 6s linear infinite;
+}
+.transition-hud-reticle::before,
+.transition-hud-reticle::after {
+  content: '';
+  position: absolute;
+  background: rgba(255,255,255,0.55);
+}
+.transition-hud-reticle::before {
+  width: 130px;
+  height: 1px;
+  top: 44px;
+  left: -20px;
+}
+.transition-hud-reticle::after {
+  width: 1px;
+  height: 130px;
+  left: 44px;
+  top: -20px;
+}
+.transition-hud-scan {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.12) 49%, transparent 51%);
+  transform: translateY(-100%);
+  animation: hud-scan 1.8s ease-in-out infinite;
+}
 .home-hero-brand {
   font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
   font-size: 22px;
@@ -3615,6 +3712,40 @@ main {
   .post-open-caption {
     transition: none;
   }
+  .transition-hud {
+    transition: none;
+  }
+  .transition-hud-reticle,
+  .transition-hud-scan {
+    animation: none;
+  }
+}
+@media (max-width: 600px) {
+  .transition-hud-top,
+  .transition-hud-bottom {
+    left: 30px;
+    right: 30px;
+    font-size: 9px;
+  }
+  .transition-hud-state {
+    display: none;
+  }
+  .transition-hud-reticle {
+    width: 52px;
+    height: 52px;
+    top: 18%;
+    right: 45px;
+  }
+  .transition-hud-reticle::before {
+    width: 76px;
+    top: 25px;
+    left: -12px;
+  }
+  .transition-hud-reticle::after {
+    height: 76px;
+    left: 25px;
+    top: -12px;
+  }
 }
 @media (max-width: 480px) {
   .home-hero-top {
@@ -3657,6 +3788,46 @@ main {
   .recent-post:hover .post-sticky {
     background-color: rgba(255,255,255,0.14);
     color: #fff;
+  }
+}
+@-moz-keyframes hud-reticle {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes hud-reticle {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@-o-keyframes hud-reticle {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes hud-reticle {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@-moz-keyframes hud-scan {
+  to {
+    transform: translateY(100%);
+  }
+}
+@-webkit-keyframes hud-scan {
+  to {
+    transform: translateY(100%);
+  }
+}
+@-o-keyframes hud-scan {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes hud-scan {
+  to {
+    transform: translateY(100%);
   }
 }
 @-moz-keyframes archive-orbit {

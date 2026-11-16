@@ -3,6 +3,39 @@ let heroScrollAnimation;
 let heroAnimating = false;
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+function addTransitionHud(veil, section) {
+  const hud = document.createElement('div');
+  hud.className = 'transition-hud';
+  hud.setAttribute('aria-hidden', 'true');
+  hud.innerHTML = '<div class="transition-hud-top"><span>NOMIRAX / SYSTEM</span>' +
+    '<span>SECTION: ' + section + '</span></div>' +
+    '<span class="transition-hud-reticle"></span>' +
+    '<span class="transition-hud-scan"></span>' +
+    '<div class="transition-hud-bottom"><span class="transition-hud-state">SYNCHRONIZING</span>' +
+    '<span class="transition-hud-track"><span class="transition-hud-fill"></span></span>' +
+    '<span class="transition-hud-value">00%</span></div>';
+  veil.appendChild(hud);
+  const fill = hud.querySelector('.transition-hud-fill');
+  const value = hud.querySelector('.transition-hud-value');
+  const state = hud.querySelector('.transition-hud-state');
+  const started = performance.now();
+  let frame;
+  function update(now) {
+    if (!veil.isConnected) return;
+    const percent = Math.min(88, Math.floor((now - started) / 10));
+    fill.style.width = percent + '%';
+    value.textContent = String(percent).padStart(2, '0') + '%';
+    frame = requestAnimationFrame(update);
+  }
+  frame = requestAnimationFrame(update);
+  return () => {
+    cancelAnimationFrame(frame);
+    fill.style.width = '100%';
+    value.textContent = '100%';
+    state.textContent = 'READY';
+  };
+}
+
 function updateHeroTransition() {
   const main = document.querySelector('main');
   const hero = document.querySelector('.home-hero');
@@ -80,6 +113,7 @@ document.addEventListener('click', function (event) {
     '<span class="hero-archive-transition-line"></span>' +
     '<span class="hero-archive-transition-caption">ARCHIVES · 01</span>';
   document.body.appendChild(veil);
+  const completeHud = addTransitionHud(veil, 'ARCHIVES / 01');
   requestAnimationFrame(() => veil.classList.add('is-visible'));
 
   const destination = link.href;
@@ -91,6 +125,7 @@ document.addEventListener('click', function (event) {
     document.removeEventListener('pjax:complete', finish);
     navigated = true;
     clearTimeout(fallback);
+    completeHud();
     setTimeout(() => {
       veil.classList.add('is-leaving');
       setTimeout(() => veil.remove(), 550);
@@ -124,6 +159,7 @@ document.addEventListener('click', function (event) {
     '<span class="home-return-line"></span>' +
     '<span class="home-return-caption">HOME · 00</span>';
   document.body.appendChild(veil);
+  const completeHud = addTransitionHud(veil, 'HOME / 00');
   requestAnimationFrame(() => veil.classList.add('is-visible'));
 
   const destination = link.href;
@@ -135,6 +171,7 @@ document.addEventListener('click', function (event) {
     document.removeEventListener('pjax:complete', finish);
     navigated = true;
     clearTimeout(fallback);
+    completeHud();
     setTimeout(() => {
       veil.classList.add('is-leaving');
       setTimeout(() => veil.remove(), 500);
@@ -180,6 +217,7 @@ document.addEventListener('click', function (event) {
   caption.textContent = 'OPENING ARTICLE';
   veil.appendChild(caption);
   document.body.appendChild(veil);
+  const completeHud = addTransitionHud(veil, 'ARTICLE / 02');
   requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('is-expanded')));
 
   const destination = card.href;
@@ -191,6 +229,7 @@ document.addEventListener('click', function (event) {
     document.removeEventListener('pjax:complete', finish);
     navigated = true;
     clearTimeout(fallback);
+    completeHud();
     setTimeout(() => {
       veil.classList.add('is-leaving');
       setTimeout(() => veil.remove(), 400);
