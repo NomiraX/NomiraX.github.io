@@ -19,18 +19,19 @@ function addTransitionHud(veil, section) {
   const value = hud.querySelector('.transition-hud-value');
   const state = hud.querySelector('.transition-hud-state');
   const started = performance.now();
-  let frame;
-  function update(now) {
-    if (!veil.isConnected) return;
-    const percent = Math.min(88, Math.floor((now - started) / 10));
-    fill.style.width = percent + '%';
+  function update() {
+    if (!veil.isConnected) {
+      clearInterval(interval);
+      return;
+    }
+    const percent = Math.min(88, Math.floor((performance.now() - started) / 10));
+    fill.style.transform = 'scaleX(' + percent / 100 + ')';
     value.textContent = String(percent).padStart(2, '0') + '%';
-    frame = requestAnimationFrame(update);
   }
-  frame = requestAnimationFrame(update);
+  const interval = setInterval(update, 80);
   return () => {
-    cancelAnimationFrame(frame);
-    fill.style.width = '100%';
+    clearInterval(interval);
+    fill.style.transform = 'scaleX(1)';
     value.textContent = '100%';
     state.textContent = 'READY';
   };
@@ -42,14 +43,29 @@ function updateHeroTransition() {
   const content = document.getElementById('home-content');
   if (!main || !hero || !content) return;
   const progress = Math.min(1, Math.max(0, main.scrollTop / hero.offsetHeight));
-  hero.style.setProperty('--hero-progress', progress.toFixed(3));
-  content.style.setProperty('--hero-reveal', Math.min(1, Math.max(0, (progress - .3) / .7)).toFixed(3));
+  const nextProgress = progress.toFixed(3);
+  const nextReveal = Math.min(1, Math.max(0, (progress - .3) / .7)).toFixed(3);
+  if (hero.style.getPropertyValue('--hero-progress') !== nextProgress) {
+    hero.style.setProperty('--hero-progress', nextProgress);
+  }
+  if (content.style.getPropertyValue('--hero-reveal') !== nextReveal) {
+    content.style.setProperty('--hero-reveal', nextReveal);
+  }
 }
 
-document.querySelector('main')?.addEventListener('scroll', updateHeroTransition, { passive: true });
-window.addEventListener('resize', updateHeroTransition, { passive: true });
-document.addEventListener('pjax:complete', updateHeroTransition);
-document.addEventListener('DOMContentLoaded', updateHeroTransition);
+let heroUpdateQueued = false;
+function scheduleHeroTransition() {
+  if (heroUpdateQueued) return;
+  heroUpdateQueued = true;
+  requestAnimationFrame(() => {
+    heroUpdateQueued = false;
+    updateHeroTransition();
+  });
+}
+document.querySelector('main')?.addEventListener('scroll', scheduleHeroTransition, { passive: true });
+window.addEventListener('resize', scheduleHeroTransition, { passive: true });
+document.addEventListener('pjax:complete', scheduleHeroTransition);
+document.addEventListener('DOMContentLoaded', scheduleHeroTransition);
 function cancelHeroAnimation() {
   cancelAnimationFrame(heroScrollAnimation);
   heroAnimating = false;

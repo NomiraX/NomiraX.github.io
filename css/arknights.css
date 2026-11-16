@@ -3531,10 +3531,13 @@ main {
 }
 .transition-hud-fill {
   display: block;
-  width: 0;
+  width: 100%;
   height: 100%;
   background: #fff;
   box-shadow: 0 0 12px rgba(255,255,255,0.6);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.08s linear;
 }
 .transition-hud-value {
   min-width: 4ch;
@@ -3571,10 +3574,14 @@ main {
 }
 .transition-hud-scan {
   position: absolute;
-  inset: 0;
-  opacity: 0.5;
-  background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.12) 49%, transparent 51%);
-  transform: translateY(-100%);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0.55;
+  background: rgba(255,255,255,0.28);
+  box-shadow: 0 0 18px rgba(255,255,255,0.25);
+  transform: translateY(0);
   animation: hud-scan 1.8s ease-in-out infinite;
 }
 .home-hero-brand {
@@ -3812,22 +3819,22 @@ main {
 }
 @-moz-keyframes hud-scan {
   to {
-    transform: translateY(100%);
+    transform: translateY(100vh);
   }
 }
 @-webkit-keyframes hud-scan {
   to {
-    transform: translateY(100%);
+    transform: translateY(100vh);
   }
 }
 @-o-keyframes hud-scan {
   to {
-    transform: translateY(100%);
+    transform: translateY(100vh);
   }
 }
 @keyframes hud-scan {
   to {
-    transform: translateY(100%);
+    transform: translateY(100vh);
   }
 }
 @-moz-keyframes archive-orbit {
@@ -4098,9 +4105,13 @@ main {
 .hljs {
   filter: grayscale(1);
 }
-body img,
-body canvas {
+body img {
   filter: grayscale(1);
+}
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+  }
 }
 #reading-progress {
   --read-progress: 0;

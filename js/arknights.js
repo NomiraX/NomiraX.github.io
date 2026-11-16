@@ -205,13 +205,24 @@ class canvasDust {
     dustQuantity = 50;
     dustArr = [];
     inStop = false;
+    animationId = null;
+    timerId = null;
     constructor(canvasID) {
         const canvas = getElement(canvasID);
         this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d');
         this.build();
         window.addEventListener('resize', this.resize);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden)
+                this.schedule();
+        });
     }
+    schedule = () => {
+        if (this.animationId === null && !this.inStop && !document.hidden) {
+            this.animationId = requestAnimationFrame(this.paint);
+        }
+    };
     build = () => {
         this.resize();
         if (this.ctx) {
@@ -221,13 +232,13 @@ class canvasDust {
                 this.buildDust(dustObj);
                 this.dustArr.push(dustObj);
             }
-            requestAnimationFrame(this.paint);
+            this.schedule();
         }
     };
     paint = () => {
-        if (this.inStop) {
+        this.animationId = null;
+        if (this.inStop || document.hidden)
             return;
-        }
         const dustArr = this.dustArr;
         for (let i of dustArr) {
             this.ctx.clearRect(i.x - 6, i.y - 6, 12, 12);
@@ -245,7 +256,10 @@ class canvasDust {
         for (let i of dustArr) {
             this.buildDust(i);
         }
-        requestAnimationFrame(this.paint);
+        this.timerId = window.setTimeout(() => {
+            this.timerId = null;
+            this.schedule();
+        }, 40);
     };
     buildDust = (dust) => {
         const ctx = this.ctx;
@@ -263,9 +277,11 @@ class canvasDust {
         const height = window.innerHeight;
         this.width = width;
         this.height = height;
-        this.dustQuantity = Math.floor((width + height) / 38);
-        canvas.width = width;
-        canvas.height = height;
+        this.dustQuantity = Math.min(30, Math.floor((width + height) / 75));
+        if (canvas.width !== width)
+            canvas.width = width;
+        if (canvas.height !== height)
+            canvas.height = height;
         this.ctx.shadowColor =
             this.ctx.fillStyle = this.color;
     };
@@ -280,11 +296,17 @@ class canvasDust {
     };
     stop = () => {
         this.inStop = true;
+        if (this.animationId !== null)
+            cancelAnimationFrame(this.animationId);
+        this.animationId = null;
+        if (this.timerId !== null)
+            clearTimeout(this.timerId);
+        this.timerId = null;
     };
     play = () => {
         if (this.inStop === true) {
             this.inStop = false;
-            requestAnimationFrame(this.paint);
+            this.schedule();
         }
     };
 }
