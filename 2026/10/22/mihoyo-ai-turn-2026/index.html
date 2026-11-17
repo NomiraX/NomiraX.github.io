@@ -1,0 +1,283 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>米哈游的 1000 亿赌局：砍掉 AI 游戏，去手搓大模型 | NomiraX 的博客</title><meta name="keywords" content="Agent,米哈游,大模型,游戏"><meta name="description" content="2026 年夏天，米哈游把自研模型、AI 游戏、在研视频模型几乎全停了；同一段时间，大伟哥却说未来三年要再砸 1000 亿。这篇笔记把「关掉了什么」「为什么关」和「那篇 79 页论文给出的答案」串成一条线。 整理自 B 站视频：砍掉一切，再砸 1000 亿，米哈游到底想造什么？  一句话概括米哈游不是在「放弃 AI」，而是发现卡住 2030 年那个虚拟世界的不是角色的嘴和脸，是角色的大脑——所以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="米哈游的 1000 亿赌局：砍掉 AI 游戏，去手搓大模型">
+<meta property="og:url" content="https://nomirax.github.io/2026/10/22/mihoyo-ai-turn-2026/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="2026 年夏天，米哈游把自研模型、AI 游戏、在研视频模型几乎全停了；同一段时间，大伟哥却说未来三年要再砸 1000 亿。这篇笔记把「关掉了什么」「为什么关」和「那篇 79 页论文给出的答案」串成一条线。 整理自 B 站视频：砍掉一切，再砸 1000 亿，米哈游到底想造什么？  一句话概括米哈游不是在「放弃 AI」，而是发现卡住 2030 年那个虚拟世界的不是角色的嘴和脸，是角色的大脑——所以">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-10-22T12:21:04.000Z">
+<meta property="article:modified_time" content="2026-11-17T12:41:51.395Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="游戏">
+<meta property="article:tag" content="米哈游">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/10/22/mihoyo-ai-turn-2026/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css?v=20261116-no-contrib"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js?v=20261116-perf"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','#home-hero-slot','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide, '#home-hero-slot': Pjax.switches.outerHTML},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div id="reading-progress" role="progressbar" aria-label="文章阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><div id="home-hero-slot"></div><div class="site-content" id="home-content"><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>米哈游的 1000 亿赌局：砍掉 AI 游戏，去手搓大模型</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-10-22T12:21:04.000Z" id="date"> 2026-10-22</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>2026 年夏天，米哈游把自研模型、AI 游戏、在研视频模型几乎全停了；同一段时间，大伟哥却说未来三年要再砸 1000 亿。这篇笔记把「关掉了什么」「为什么关」和「那篇 79 页论文给出的答案」串成一条线。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1HBn26xERi/">砍掉一切，再砸 1000 亿，米哈游到底想造什么？</a></p>
+</blockquote>
+<h2 id="一句话概括"><a href="#一句话概括" class="headerlink" title="一句话概括"></a>一句话概括</h2><p>米哈游不是在「放弃 AI」，而是发现<strong>卡住 2030 年那个虚拟世界的不是角色的嘴和脸，是角色的大脑</strong>——所以他们把做应用的钱和人，全部推去做大模型本身。</p>
+<h2 id="先把事实摆出来"><a href="#先把事实摆出来" class="headerlink" title="先把事实摆出来"></a>先把事实摆出来</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>发生了什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026 年夏</td>
+<td>自研模型 LPM 1.0 发布仅一个月就被砍</td>
+</tr>
+<tr>
+<td>紧随其后</td>
+<td>AI 游戏《群星低语》发布关停公告，Steam 同时在线只剩一百多人，停止更新</td>
+</tr>
+<tr>
+<td>同期</td>
+<td>在研的视频模型被砍，上线中的项目被砍</td>
+</tr>
+<tr>
+<td>2026 年 7 月</td>
+<td>蔡浩宇把领英上的公司身份也去掉了</td>
+</tr>
+<tr>
+<td>同期</td>
+<td>大伟哥公开表示：未来三年再投 1000 亿</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>蔡浩宇的领英头衔，三年里换了三次，本身就是一条叙事线：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>头衔</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>米哈游时期</td>
+<td>CEO（干了 10 年）</td>
+</tr>
+<tr>
+<td>出海之后</td>
+<td>Anuttacon，「AI 灵魂大法师」</td>
+</tr>
+<tr>
+<td>2026 年 7 月起</td>
+<td>只写「独立大语言模型与智能体开发者」</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>10 年 CEO、3 年大法师、然后归零成一个独立开发者。看上去一切都清零了，但把这几年的材料摊开看，会发现三件很反常的事。</p>
+<h2 id="三个反常"><a href="#三个反常" class="headerlink" title="三个反常"></a>三个反常</h2><p><strong>第一，砍掉的不是失败的东西。</strong> LPM 是刚发布的、业内看得到竞争力的成果，发出来一个月就叫停。如果只是业务不行，砍的节奏不会这么急。</p>
+<p><strong>第二，一边关项目，一边疯狂加注。</strong> 就在同一段时间，大伟哥给出的数是「三年 1000 亿」。</p>
+<p><strong>第三，最剧烈震荡的这几个月，一篇 79 页的论文悄悄放了出来。</strong> 论文没有署公司名，但好几位作者是 Anuttacon 的人，示意图里画的是芙宁娜。</p>
+<p>当时媒体的解释是「集中资源做大模型」。但这个解释没有回答下一个问题：一家做游戏的公司，为什么非要在这个时间点自己从零手搓大模型，去和全世界最烧钱的顶尖大厂正面竞争？造出来又要干什么？</p>
+<h2 id="一条-16-年前的线索"><a href="#一条-16-年前的线索" class="headerlink" title="一条 16 年前的线索"></a>一条 16 年前的线索</h2><p>线索在蔡浩宇很多年前的一句话里：</p>
+<blockquote>
+<p>2030 年，打造全球 10 亿人愿意生活在其中的虚拟世界。</p>
+</blockquote>
+<p>这句话说出来时 ChatGPT 还没出现，听起来像一句口出狂言的漂亮口号。但它至今还挂在米哈游官方愿景最显眼的位置。于是问题就变成：<strong>他们要在 2030 年做出来的，到底是什么东西？</strong></p>
+<p>「崩坏神域」这个概念刚提出来时，大家以为他们想做《刀剑神域》，这个梗甚至写进了员工手册——「或许有时候你会在公司听人提起：卧槽那不就是崩坏神域了吗」「实在不行，我们这个项目的名字就叫崩坏神域了吧」。</p>
+<p>后来蔡浩宇在演讲里改用《黑客帝国》和《头号玩家》打比方。今年大伟哥换了一个更精准的类比：<strong>《西部世界》。</strong></p>
+<blockquote>
+<p>你可以去玩一个游戏，它有一个大概的世界观，但每一个人深入去玩的时候，每一个人的体验完全不一样。</p>
+</blockquote>
+<p>剧里那个场景说得很清楚：乐园的接待员德洛丽丝，农场主的女儿，每天早上骑马进城，路过街道时手里那罐牛奶总会掉在地上。大多数游客直接走过去。直到有一天，一个刚来的年轻人弯腰把罐子捡起来——从那一刻起，他被卷进了德洛丽丝的生活，开始了一段只属于他一个人的旅程。</p>
+<p>关键在于：这段故事<strong>没有任何文案策划提前写好剧本</strong>，只有基础设定。</p>
+<p>「每个角色都有自己的生活」，今天这是玩家之间的一句调侃；但在类西部世界的游戏里，这恰恰是整套设计的基础。开发者只设定德洛丽丝是谁、她想要什么，然后把她放进世界里，剩下的事在你和世界的交互里自然发生。</p>
+<h2 id="79-页论文：Agentopia"><a href="#79-页论文：Agentopia" class="headerlink" title="79 页论文：Agentopia"></a>79 页论文：Agentopia</h2><p>那篇论文叫 <strong>Agentopia: Long-Term Life Simulation and Learning in Agent Societies</strong>（智能体社会中的长期生活模拟与学习），技术演示用的角色卡，记忆文件夹路径写的是「芙宁娜」，记忆里给认识的人各建了一个文件：那维莱特、娜维娅、胡桃、旅行者，还有一个专属的「甜品」文件夹；左下角对他人的记忆写着「他非常看重法律」「我想听他的判断」「温暖的盟友」「欣赏他的真诚」。</p>
+<p>没有公司署名，作者机构看起来只是复旦大学、约翰霍普金斯、中科大和独立研究者。但论文第一作者王新涛，此前最有名的作品是 <strong>COSER</strong>——教 AI 去扮演小说里的角色；而这篇论文的多位作者，曾是 Anuttacon 的员工。王新涛在分享会的 QA 里也提到过一句：「我们公司的《群星低语》」。</p>
+<p>它和斯坦福 AI 小镇的区别只有两点，但这两点很关键：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>斯坦福 AI 小镇</th>
+<th>Agentopia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>时间跨度</td>
+<td>两天</td>
+<td>10 年</td>
+</tr>
+<tr>
+<td>产出</td>
+<td>观察</td>
+<td>把这 10 年拿去训练模型</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>实验设了三个世界：纽约的一栋合租公寓、一所魔法学院、一所中国的高中。每个世界放进 100 个 AI 角色，每个角色都有自己的身份、性格、目标，有工作、有收入、要消费，还有一套自己管理的笔记，记录「发生了什么」「对认识的每个人是什么看法」。初始人设参考文学作品设计，但 10 年里的故事没有剧本，全部由角色在各自的生活轨迹里碰撞出来。</p>
+<h3 id="10-年跑出来的东西"><a href="#10-年跑出来的东西" class="headerlink" title="10 年跑出来的东西"></a>10 年跑出来的东西</h3><p>一些很「像人」的片段：</p>
+<ul>
+<li>魔法学院里，一个学生送给朋友一盒甘草药。盒子是他母亲手工雕的，草药来自祖母的花园。他心里想的是：<strong>送出薰衣草是有代价的，不是因为我舍不得，而是因为它来自祖母的花园——这就是信任，把重要的东西交给你，而不需要你先证明自己配得上。</strong></li>
+<li>一个音乐人要给朋友听一首没写完的歌，特意选了天台而不是排练室。因为「排练室意味着要表演，天台意味着随便听听」。他说：不录音，没压力，就给你看看我有什么。</li>
+<li>公寓里一位医生把朋友 A 介绍给 B，又把 B 介绍给 C。后来 B 和 C 成了整个圈子里最亲的一对，10 年一起活动了 76 次。到第 10 年，A 已经不再把他列为喜欢的人了——尽管他们见面比以前更频繁。<strong>社交组局者，是第一个被当作理所当然的人。</strong></li>
+<li>一个女生在食堂，人很多，她只对其中一个人悄悄说了一句：「你是学校里少数几个不让我觉得累的人。」然后在心里想：这是她能说出的、最接近「你对我很重要」的话了。</li>
+</ul>
+<p>这些情节没有人编写过。</p>
+<h3 id="打分、训练、-15-6"><a href="#打分、训练、-15-6" class="headerlink" title="打分、训练、+15.6%"></a>打分、训练、+15.6%</h3><p>研究者给每个角色的人生打分，看三样东西：社交、心情、财富。然后把「过得好的那些经历」挑出来，拿去训练背后的模型。结果是<strong>角色扮演能力提升了 15.6%</strong>。</p>
+<p>王新涛把这个思路概括成一句话：<strong>「不要教他，要激励他。」</strong> 说得再玄一点——想让 AI 演得像人，就要从根上把它当作一个真正的人来培养。</p>
+<h3 id="已经不只是概念"><a href="#已经不只是概念" class="headerlink" title="已经不只是概念"></a>已经不只是概念</h3><p>星布谷地的 AI 负责人在分享会上讲了一个咖啡店店长：目标是赚钱，某天发现客人越来越少、收入在下降，而他心里始终装着「多赚钱」这个长期目标，于是开始找别的 NPC 打听客人到底想要什么。</p>
+<p>于是游戏里出现了一个近似人类小社会的场景：你跟一个 NPC 说过的话，会通过 NPC 间接传话，被其他 NPC 知道——<strong>群体记忆扩散</strong>。他们有自然遗忘，也有数月到数年的长期记忆。NPC 不再需要一字一句写脚本，无数个这样的 NPC 撑起一个自我演化的世界。</p>
+<p>有爆料说，后续的《雨之城》真的在支线任务里尝试「千人千面」的故事体验。</p>
+<h2 id="那为什么还要砍？问题不在游戏，在模型"><a href="#那为什么还要砍？问题不在游戏，在模型" class="headerlink" title="那为什么还要砍？问题不在游戏，在模型"></a>那为什么还要砍？问题不在游戏，在模型</h2><p>到这里，一切似乎都在往好的方向走。但这也让前面的问题更刺眼：如果技术已经验证可行、工具已经接入成熟产品、甚至已经呈现出「小西部世界」的能力，为什么会在几天之内把这一切推翻？</p>
+<p>关键在一段采访里。此前大语言模型主要服务于游戏中的角色交互——用后训练塑造人格与对话风格。但在实际使用中，这个能力很快触及上限：</p>
+<blockquote>
+<p>蔡哥觉得我们这个模型有点蠢。虽然好玩，但没办法留住用户。聊两下还挺有意思，但很快就不想继续了。</p>
+</blockquote>
+<p>在蔡浩宇看来，这不是应用问题，<strong>是模型本身的问题</strong>。基于这个判断，大模型组率先转向预训练：从「让模型更像人」，转向「让模型更强」，方向再次转向做大模型、做 agent，而且不再局限于游戏场景。</p>
+<p>Anuttacon 的愿景写得很清楚：文本、语音、视觉，打造具有真正情感理解能力和丰富表达能力多模态人工智能。所以有了 STELLA、有了 LPM。</p>
+<p>以前的判断是：要做成 2030 那个虚拟世界，缺的是角色的嘴和脸，以及不知道该怎么抓住的情感。现在的客观现实是：<strong>他们缺的是角色的大脑</strong>——而这个大脑，正是全世界都在疯狂争抢的东西。</p>
+<h2 id="钱和人"><a href="#钱和人" class="headerlink" title="钱和人"></a>钱和人</h2><ul>
+<li>大伟哥的原话是「三年最多投 1000 亿，失败了就当放一场大烟花」。</li>
+<li>但雪崩的惯性没有停在产品层。全球 AI 抢人大战正白热化：</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>去向</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Anuttacon 大模型负责人 吴肖剑</td>
+<td>OpenAI</td>
+</tr>
+<tr>
+<td>Agentopia 作者 陶云哲</td>
+<td>微软</td>
+</tr>
+<tr>
+<td>Agentopia 作者 朱明浩</td>
+<td>阿里</td>
+</tr>
+<tr>
+<td>同月</td>
+<td>Anuttacon 北美大模型团队解散</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>视角转回国内，又像是刚刚开始：之前挂在北美、新加坡的 AI 招聘，现在出现在米哈游自己的招聘页上，工作地点是北京和上海。</li>
+</ul>
+<h2 id="员工手册：一本提前写好的预言书"><a href="#员工手册：一本提前写好的预言书" class="headerlink" title="员工手册：一本提前写好的预言书"></a>员工手册：一本提前写好的预言书</h2><p>有一本书像先知之书一样，提前写好了米哈游今天的处境——《米哈游员工手册》。</p>
+<ul>
+<li><strong>4.2「空想具象化」</strong>：我们在尝试自动建模、自动绑定、自动生成动作……我们在尝试让设备的声线可以随意转换。</li>
+<li><strong>4.3「因为商业，这些并不是空谈」</strong>：仍旧有很多细节的点需要突破，比如还不知道怎么让 NPC 说话也像真人一样自然。</li>
+</ul>
+<p>这本诞生在 AI 大爆发之前的手册，不仅写了 AI 会带来的革命，还提前写好了他们最近几年的诸多尝试，甚至预示了今天整个公司的大转向。</p>
+<h2 id="结语：不是归零，是同一种打法的第二轮"><a href="#结语：不是归零，是同一种打法的第二轮" class="headerlink" title="结语：不是归零，是同一种打法的第二轮"></a>结语：不是归零，是同一种打法的第二轮</h2><p>2010 年，蔡浩宇还在读研，和刘伟、罗宇皓一起手搓了一个 2.5D 游戏引擎 Misato，用它做了《娑婆物语》，拿下一个 Flash 游戏开发大赛的冠军。第二年，米哈游成立。</p>
+<p>16 年后，他们又一次回到「自己手搓引擎」的阶段——只不过这一次，一起参与市场竞争的是全世界的最强大脑。</p>
+<p>所以这轮赌局的本质，不是「一家游戏公司能不能赢过大模型公司」，而是：</p>
+<blockquote>
+<p>角色能不能自己活起来，这件事的底层能力，值不值得自己从零造一遍。</p>
+</blockquote>
+<p>赌赢了，2030 年那个「10 亿人愿意生活在其中的虚拟世界」有了地基；赌输了，也不会真的归零——数据集、模型、论文、以及一批在真实世界里活过十年的 agent，都留下来了。</p>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages"><div class="footer-link" style="width: 50%;text-align:right;border-right:1px #fe2 solid"><a href="/2026/10/23/ai-agent-chronicle-2022-2026/">← 下一篇 AI Agent 编年史：从 ChatGPT 到 Muse（2022–2026）</a></div><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/08/17/modern-python-toolchain-uv-ruff/">现代python工具链：uv&amp;ruff 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%A6%82%E6%8B%AC"><span class="toc-number">1.</span> <span class="toc-text">一句话概括</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E6%8A%8A%E4%BA%8B%E5%AE%9E%E6%91%86%E5%87%BA%E6%9D%A5"><span class="toc-number">2.</span> <span class="toc-text">先把事实摆出来</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E4%B8%AA%E5%8F%8D%E5%B8%B8"><span class="toc-number">3.</span> <span class="toc-text">三个反常</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E6%9D%A1-16-%E5%B9%B4%E5%89%8D%E7%9A%84%E7%BA%BF%E7%B4%A2"><span class="toc-number">4.</span> <span class="toc-text">一条 16 年前的线索</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#79-%E9%A1%B5%E8%AE%BA%E6%96%87%EF%BC%9AAgentopia"><span class="toc-number">5.</span> <span class="toc-text">79 页论文：Agentopia</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#10-%E5%B9%B4%E8%B7%91%E5%87%BA%E6%9D%A5%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="toc-number">5.1.</span> <span class="toc-text">10 年跑出来的东西</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E5%88%86%E3%80%81%E8%AE%AD%E7%BB%83%E3%80%81-15-6"><span class="toc-number">5.2.</span> <span class="toc-text">打分、训练、+15.6%</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%B2%E7%BB%8F%E4%B8%8D%E5%8F%AA%E6%98%AF%E6%A6%82%E5%BF%B5"><span class="toc-number">5.3.</span> <span class="toc-text">已经不只是概念</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%82%A3%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E8%A6%81%E7%A0%8D%EF%BC%9F%E9%97%AE%E9%A2%98%E4%B8%8D%E5%9C%A8%E6%B8%B8%E6%88%8F%EF%BC%8C%E5%9C%A8%E6%A8%A1%E5%9E%8B"><span class="toc-number">6.</span> <span class="toc-text">那为什么还要砍？问题不在游戏，在模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%92%B1%E5%92%8C%E4%BA%BA"><span class="toc-number">7.</span> <span class="toc-text">钱和人</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%98%E5%B7%A5%E6%89%8B%E5%86%8C%EF%BC%9A%E4%B8%80%E6%9C%AC%E6%8F%90%E5%89%8D%E5%86%99%E5%A5%BD%E7%9A%84%E9%A2%84%E8%A8%80%E4%B9%A6"><span class="toc-number">8.</span> <span class="toc-text">员工手册：一本提前写好的预言书</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD%EF%BC%9A%E4%B8%8D%E6%98%AF%E5%BD%92%E9%9B%B6%EF%BC%8C%E6%98%AF%E5%90%8C%E4%B8%80%E7%A7%8D%E6%89%93%E6%B3%95%E7%9A%84%E7%AC%AC%E4%BA%8C%E8%BD%AE"><span class="toc-number">9.</span> <span class="toc-text">结语：不是归零，是同一种打法的第二轮</span></a></li></ol></div></div></aside></div></main><script defer src="/js/home-hero.js?v=20261116-perf"></script><script defer src="/js/reading-progress.js?v=20261116-perf"></script><canvas id="canvas-dust"></canvas></body></html>
