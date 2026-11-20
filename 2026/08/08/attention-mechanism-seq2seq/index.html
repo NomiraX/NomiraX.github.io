@@ -1,0 +1,374 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>注意力机制：seq2seq 卡在哪儿，以及它怎么把路让开 | NomiraX 的博客</title><meta name="keywords" content="注意力机制,Transformer,NLP"><meta name="description" content="注意力机制不是凭空冒出来的新结构，它只是把 seq2seq 里「只交出一个固定上下文向量」改成了「每一步都回头查一遍原文」。就这一下，序列长度、词序对齐、并行化三件事全松动了，Transformer 才有地方落脚。 整理自 B 站视频：注意力机制：大模型前夜的最后一块拼图  一句话概括seq2seq 的问题不是 RNN 太弱，而是它被迫把所有信息压进一个固定长度的向量；注意力做的事，是把这个「一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="注意力机制：seq2seq 卡在哪儿，以及它怎么把路让开">
+<meta property="og:url" content="https://nomirax.github.io/2026/08/08/attention-mechanism-seq2seq/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="注意力机制不是凭空冒出来的新结构，它只是把 seq2seq 里「只交出一个固定上下文向量」改成了「每一步都回头查一遍原文」。就这一下，序列长度、词序对齐、并行化三件事全松动了，Transformer 才有地方落脚。 整理自 B 站视频：注意力机制：大模型前夜的最后一块拼图  一句话概括seq2seq 的问题不是 RNN 太弱，而是它被迫把所有信息压进一个固定长度的向量；注意力做的事，是把这个「一">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-08-08T11:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-20T10:43:49.795Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="NLP">
+<meta property="article:tag" content="Transformer">
+<meta property="article:tag" content="注意力机制">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/08/08/attention-mechanism-seq2seq/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css?v=20261116-no-contrib"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js?v=20261116-perf"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','#home-hero-slot','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide, '#home-hero-slot': Pjax.switches.outerHTML},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div id="reading-progress" role="progressbar" aria-label="文章阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><div id="home-hero-slot"></div><div class="site-content" id="home-content"><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>注意力机制：seq2seq 卡在哪儿，以及它怎么把路让开</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-08-08T11:00:00.000Z" id="date"> 2026-08-08</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>注意力机制不是凭空冒出来的新结构，它只是把 seq2seq 里「只交出一个固定上下文向量」改成了「每一步都回头查一遍原文」。就这一下，序列长度、词序对齐、并行化三件事全松动了，Transformer 才有地方落脚。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV13UGu6yErd/">注意力机制：大模型前夜的最后一块拼图</a></p>
+</blockquote>
+<h2 id="一句话概括"><a href="#一句话概括" class="headerlink" title="一句话概括"></a>一句话概括</h2><p>seq2seq 的问题不是 RNN 太弱，而是<strong>它被迫把所有信息压进一个固定长度的向量</strong>；注意力做的事，是把这个「一次交底」换成「按需检索」——解码每一步都用不同的权重回看编码器的全部隐藏态。</p>
+<h2 id="先看-seq2seq-卡在哪"><a href="#先看-seq2seq-卡在哪" class="headerlink" title="先看 seq2seq 卡在哪"></a>先看 seq2seq 卡在哪</h2><p>seq2seq 是编码器-解码器思想的一个实现，本质上把「一个序列」转成「另一个序列」：长度可以不等，位置也可以不对齐。机器翻译就是它最典型的任务。</p>
+<p>它的工作方式是串行的：</p>
+<ol>
+<li>编码器依次读入 <code>i love deep learning</code> 的每个 token；</li>
+<li>每读一个产生一个隐藏态 <code>H1…Hn</code>；</li>
+<li>最后只把<strong>最后一个隐藏态</strong>当作固定长度的上下文向量交给解码器；</li>
+<li>解码器也是 RNN，根据这个向量一步一步吐出译文。</li>
+</ol>
+<p>瓶颈就写在这一步上：<strong>固定长度的上下文向量</strong>。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>序列长度</th>
+<th>256 维上下文向量能表示多少</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>一句话</td>
+<td>基本够用</td>
+</tr>
+<tr>
+<td>一段话</td>
+<td>开始丢信息</td>
+</tr>
+<tr>
+<td>一部小说</td>
+<td>严重损失，越靠前的内容丢得越狠</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>后来的 LSTM、GRU 用门控机制增强了保存长期信息的能力，但出口仍然是「一个固定长度的向量」——只是缓解，没有解决。让机器翻译一部小说，按这个架构信息损失必然过大。</p>
+<h2 id="人的翻译方式给的灵感"><a href="#人的翻译方式给的灵感" class="headerlink" title="人的翻译方式给的灵感"></a>人的翻译方式给的灵感</h2><p>人翻译长文时不背全文。人是把原文放在手边，翻到哪就回头看哪：这一段对应原文哪几句，就多看几眼，其余少看。</p>
+<p>这个动作换成模型语言就是：</p>
+<ul>
+<li>编码器每一步的隐藏态 <code>H1…Hn</code> 其实都还在，为什么要只取最后一个？</li>
+<li>解码器生成不同的词时，能不能<strong>以不同的权重</strong>参考所有这些隐藏态？</li>
+</ul>
+<p>于是信息传递方式改了，整体骨架没变：编码器照旧，解码器还是 RNN，只是每一步不再只看那一个静态向量，而是对全部隐藏态做一次加权。</p>
+<h2 id="注意力怎么算：三步"><a href="#注意力怎么算：三步" class="headerlink" title="注意力怎么算：三步"></a>注意力怎么算：三步</h2><p><strong>第一步，打分。</strong> 用解码器当前时间步的隐藏态 <code>s_t</code>，和编码器每个隐藏态 <code>H_i</code> 做匹配：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">score(s_t, H_i) = s_tᵀ · H_i        # 点积，本质上接近余弦相似度<br></code></pre></td></tr></table></figure>
+<p>点积越大，说明这个位置跟当前要生成的内容越相关。注意维度要一致——自己写代码时这点很容易踩坑。</p>
+<p><strong>第二步，归一化。</strong> 分数可能为负，总和也不固定，不能直接当权重，所以过一遍 softmax：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">α_i = softmax(score(s_t, H_i))      # 每个 α 在 0~1 之间，总和为 1<br></code></pre></td></tr></table></figure>
+<p><strong>第三步，加权求和，得到动态上下文向量：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">c_t = Σ α_i · H_i<br></code></pre></td></tr></table></figure>
+<p>然后把 <code>c_t</code> 和解码器当前状态 <code>s_t</code> 拼接，过一层线性 + 非线性变换，再 softmax 出词表上的概率，选出下一个 token。</p>
+<p>一个完整循环就是：<strong>当前解码状态 → 和每个编码状态打分 → softmax 成权重 → 加权求和 → 拼回解码状态 → 预测下一个词。</strong></p>
+<h2 id="走一遍「i-love-deep-learning」"><a href="#走一遍「i-love-deep-learning」" class="headerlink" title="走一遍「i love deep learning」"></a>走一遍「i love deep learning」</h2><p>编码器读出四个隐藏态 <code>H1..H4</code>，解码器已经生成了「我喜欢」，现在是 <code>S3</code>，要生成「深度」：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>编码位置</th>
+<th>隐藏态</th>
+<th>注意力权重</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>i</td>
+<td>H1</td>
+<td>0.07</td>
+</tr>
+<tr>
+<td>love</td>
+<td>H2</td>
+<td>0.06</td>
+</tr>
+<tr>
+<td>deep</td>
+<td>H3</td>
+<td>0.78</td>
+</tr>
+<tr>
+<td>learning</td>
+<td>H4</td>
+<td>0.09</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>c3</code> 主要来自 <code>H3</code>，所以下一个词是「深度」的概率最高。接着到 <code>S4</code> 生成「学习」，权重又会向后面几个位置偏移——<strong>编码结果 <code>H1..H4</code> 自始至终没变，变的是每一步的权重和上下文向量</strong>。</p>
+<p>这就是它相对「固定上下文向量」最核心的改进。</p>
+<h2 id="软对齐：词序不对齐也没关系"><a href="#软对齐：词序不对齐也没关系" class="headerlink" title="软对齐：词序不对齐也没关系"></a>软对齐：词序不对齐也没关系</h2><p>把 <code>There&#39;s the cat under the table</code> 翻成「桌子下面有一只猫」，注意力的热力分布大致是：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>译文</th>
+<th>最相关的原文位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>桌子</td>
+<td>table</td>
+</tr>
+<tr>
+<td>下面</td>
+<td>under</td>
+</tr>
+<tr>
+<td>猫</td>
+<td>cat</td>
+</tr>
+<tr>
+<td>有一只</td>
+<td>is / a</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>注意「桌子」对应的是原文中间偏后的 <code>table</code>，而 <code>table</code> 又不是最后一个词；「猫」对应的是中间的 <code>cat</code>。<strong>位置完全不对应，注意力照样能找到该看的地方。</strong></p>
+<p>这种用连续权重表示的对应关系叫<strong>软对齐</strong>：不要求一个目标词只对应一个源词，允许多个输入位置以不同权重同时参与。也不是人工标注出来的，而是训练时为了降低翻译误差，模型自己学会了把高权重分配到位。</p>
+<h2 id="实验：把句子拼长，差距立刻出现"><a href="#实验：把句子拼长，差距立刻出现" class="headerlink" title="实验：把句子拼长，差距立刻出现"></a>实验：把句子拼长，差距立刻出现</h2><p>用 <code>AND</code> 把两个句子拼起来，让模型翻译更长的输入。两个版本唯一的区别在解码器：</p>
+<ul>
+<li>无注意力：只拿最后一个隐藏态做解码器初始值；</li>
+<li>有注意力：拿到全部隐藏态，预测时多做打分、归一化、加权求和三步。</li>
+</ul>
+<p>各自训练 35 轮后的匹配率：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>输入</th>
+<th>无注意力</th>
+<th>有注意力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单个子句</td>
+<td>100%</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>两个子句</td>
+<td>40.4%</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>三个子句</td>
+<td>几乎为 0</td>
+<td>97.5%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>多出来的这几步运算，参数只增加了约 <strong>4.6%</strong>。所以差距不是「模型容量」问题，而是<strong>信息通道</strong>问题——固定向量那道闸门太窄。</p>
+<h2 id="消融：输入倒序这个技巧失效了"><a href="#消融：输入倒序这个技巧失效了" class="headerlink" title="消融：输入倒序这个技巧失效了"></a>消融：输入倒序这个技巧失效了</h2><p>seq2seq 时代有个训练技巧：把输入序列倒过来。因为只取最后一个隐藏态，倒序能让「原文第一个词」离解码起点更近一点，缓解长距离遗忘。</p>
+<p>加了注意力之后再做消融：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>输入翻转的影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>纯 seq2seq</td>
+<td>差别很大</td>
+</tr>
+<tr>
+<td>seq2seq + attention</td>
+<td>翻转与不翻转分数一样</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>因为每一步都是动态计算「该关注谁」，跟具体位置无关了——<strong>你在哪儿，我都能算出该不该看你</strong>。</p>
+<h2 id="换个说法：注意力就是可学习的信息检索"><a href="#换个说法：注意力就是可学习的信息检索" class="headerlink" title="换个说法：注意力就是可学习的信息检索"></a>换个说法：注意力就是可学习的信息检索</h2><p>把上面三步抽象出来，就是 Q / K / V：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>在 seq2seq + attention 里是谁</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Query（Q）</td>
+<td>解码器当前状态 <code>s_t</code></td>
+<td>表达「我现在需要什么」</td>
+</tr>
+<tr>
+<td>Key（K）</td>
+<td>编码器全部隐藏态 <code>H1..Hn</code></td>
+<td>接受查询、算匹配分数</td>
+</tr>
+<tr>
+<td>Value（V）</td>
+<td>同样是 <code>H1..Hn</code></td>
+<td>按权重取出的内容</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>通用公式：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">Attention(Q, K, V) = softmax(Q·Kᵀ / √d_k) · V<br></code></pre></td></tr></table></figure>
+<p>分母的 <code>√d_k</code> 是为了数值稳定（维度越大点积越大，softmax 会变得过尖），这也是 Transformer 里那个公式。</p>
+<p>一个常见疑问：K 和 V 都是同一批隐藏态，凭什么能扮演两个角色？因为它们在参与运算前会各自乘一个<strong>不同的权重矩阵</strong>，被投影成不同的表示。这两个（以及 Q 的）投影矩阵都是训练学出来的，不是人指定的——所以才说注意力是<strong>可学习的</strong>信息检索。</p>
+<h2 id="它解决了什么，又没解决什么"><a href="#它解决了什么，又没解决什么" class="headerlink" title="它解决了什么，又没解决什么"></a>它解决了什么，又没解决什么</h2><p><strong>解决了：</strong></p>
+<ul>
+<li>不再用固定长度向量概括全部信息，而是按需动态访问各个位置；</li>
+<li>seq2seq 能处理的有效序列长度大幅提升；</li>
+<li>不再依赖输入顺序上的技巧（倒序失效）。</li>
+</ul>
+<p><strong>没解决：</strong></p>
+<ul>
+<li>循环结构还在，仍然按时间步串行推进，训练慢；</li>
+<li>长度再长依然受限；</li>
+<li>解码器仍然要一步步等上一个状态。</li>
+</ul>
+<p>但注意力的抽象本身是通用的：<strong>只要有「某个位置需要从一组候选信息里找相关内容」这件事，就可以用 QK 匹配算权重、再用权重汇总 V。</strong> 它不绑定编码器-解码器的结构。</p>
+<h2 id="通向-self-attention：把那句-all-you-need-读懂"><a href="#通向-self-attention：把那句-all-you-need-读懂" class="headerlink" title="通向 self-attention：把那句 all you need 读懂"></a>通向 self-attention：把那句 all you need 读懂</h2><p>既然解码器能直接访问编码器的任意位置，那模型内部的不同位置为什么不能互相访问？</p>
+<p>让 Q、K、V 全部来自<strong>同一个序列</strong>：每个位置既发起查询，也接受匹配，也提供内容——这就是 <strong>self-attention（自注意力）</strong>。</p>
+<p>关键在于它顺手解决了 RNN 的另一个死结：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>RNN</th>
+<th>self-attention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>依赖关系</td>
+<td>下一步依赖上一步，必须串行</td>
+<td>各位置直接两两计算，无依赖</td>
+</tr>
+<tr>
+<td>并行度</td>
+<td>低</td>
+<td>一次算完，能喂满 GPU</td>
+</tr>
+<tr>
+<td>训练速度</td>
+<td>慢</td>
+<td>快，参数量也敢往上堆</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>2017 年《Attention Is All You Need》提出 Transformer，核心就是 self-attention，然后<strong>把循环结构整个删掉</strong>。</p>
+<p>论文标题其实是句回答：以前光有注意力不够，还得有循环架构去算那些隐藏态；现在不要循环了，只要注意力——所以「attention is all you need」。</p>
+<p>和当年 seq2seq 把编码器-解码器从统计机器翻译的一个打分组件，变成整个模型的骨架，是同一种「组件升格为架构」的路径。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ol>
+<li>seq2seq 的瓶颈是<strong>固定长度的上下文向量</strong>，LSTM/GRU 只是缓解。</li>
+<li>注意力 = 解码时用<strong>动态权重</strong>回看编码器全部隐藏态：打分 → softmax → 加权求和。</li>
+<li>多个子句的实验里，无注意力 40.4% / 几乎为 0，有注意力 100% / 97.5%，参数只多 4.6%。</li>
+<li>它带来的是<strong>软对齐</strong>：词序不必对应，权重自己学出来。</li>
+<li>抽象成 Q/K/V 之后，它就是一个可学习的信息检索机制，能脱离 seq2seq 存在。</li>
+<li>让 Q/K/V 同源，就是 self-attention；去掉循环，就是 Transformer。</li>
+</ol>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-start"><div class="footer-link" style="width: 50%;text-align:right;border-right:1px #fe2 solid"><a href="/2026/08/17/modern-python-toolchain-uv-ruff/">← 下一篇 现代python工具链：uv&amp;ruff</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%A6%82%E6%8B%AC"><span class="toc-number">1.</span> <span class="toc-text">一句话概括</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E7%9C%8B-seq2seq-%E5%8D%A1%E5%9C%A8%E5%93%AA"><span class="toc-number">2.</span> <span class="toc-text">先看 seq2seq 卡在哪</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%BA%E7%9A%84%E7%BF%BB%E8%AF%91%E6%96%B9%E5%BC%8F%E7%BB%99%E7%9A%84%E7%81%B5%E6%84%9F"><span class="toc-number">3.</span> <span class="toc-text">人的翻译方式给的灵感</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%80%8E%E4%B9%88%E7%AE%97%EF%BC%9A%E4%B8%89%E6%AD%A5"><span class="toc-number">4.</span> <span class="toc-text">注意力怎么算：三步</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B5%B0%E4%B8%80%E9%81%8D%E3%80%8Ci-love-deep-learning%E3%80%8D"><span class="toc-number">5.</span> <span class="toc-text">走一遍「i love deep learning」</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AF%E5%AF%B9%E9%BD%90%EF%BC%9A%E8%AF%8D%E5%BA%8F%E4%B8%8D%E5%AF%B9%E9%BD%90%E4%B9%9F%E6%B2%A1%E5%85%B3%E7%B3%BB"><span class="toc-number">6.</span> <span class="toc-text">软对齐：词序不对齐也没关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%EF%BC%9A%E6%8A%8A%E5%8F%A5%E5%AD%90%E6%8B%BC%E9%95%BF%EF%BC%8C%E5%B7%AE%E8%B7%9D%E7%AB%8B%E5%88%BB%E5%87%BA%E7%8E%B0"><span class="toc-number">7.</span> <span class="toc-text">实验：把句子拼长，差距立刻出现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E8%9E%8D%EF%BC%9A%E8%BE%93%E5%85%A5%E5%80%92%E5%BA%8F%E8%BF%99%E4%B8%AA%E6%8A%80%E5%B7%A7%E5%A4%B1%E6%95%88%E4%BA%86"><span class="toc-number">8.</span> <span class="toc-text">消融：输入倒序这个技巧失效了</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8D%A2%E4%B8%AA%E8%AF%B4%E6%B3%95%EF%BC%9A%E6%B3%A8%E6%84%8F%E5%8A%9B%E5%B0%B1%E6%98%AF%E5%8F%AF%E5%AD%A6%E4%B9%A0%E7%9A%84%E4%BF%A1%E6%81%AF%E6%A3%80%E7%B4%A2"><span class="toc-number">9.</span> <span class="toc-text">换个说法：注意力就是可学习的信息检索</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%83%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%8C%E5%8F%88%E6%B2%A1%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="toc-number">10.</span> <span class="toc-text">它解决了什么，又没解决什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E5%90%91-self-attention%EF%BC%9A%E6%8A%8A%E9%82%A3%E5%8F%A5-all-you-need-%E8%AF%BB%E6%87%82"><span class="toc-number">11.</span> <span class="toc-text">通向 self-attention：把那句 all you need 读懂</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">12.</span> <span class="toc-text">小结</span></a></li></ol></div></div></aside></div></main><script defer src="/js/home-hero.js?v=20261116-perf"></script><script defer src="/js/reading-progress.js?v=20261116-perf"></script><canvas id="canvas-dust"></canvas></body></html>
