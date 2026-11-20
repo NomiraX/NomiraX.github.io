@@ -1,0 +1,516 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>为什么是 Decoder-Only 的 GPT 赢了：三条分支与一次收束 | NomiraX 的博客</title><meta name="keywords" content="Transformer,GPT,BERT,大模型"><meta name="description" content="Transformer 给了架构，但大模型不是从它直接长出来的。BERT、T5、GPT 沿着三条不同的路出发，最后收束到了看起来最简单的那一条。 整理自 B 站视频：为什么是 Decoder-Only 的 GPT 赢了  一、2017 年给的只是「一种能并行的建模方式」Attention Is All You Need 的贡献是自注意力：它去掉了 RNN 的循环依赖，让训练可以并行，效率大幅提升">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为什么是 Decoder-Only 的 GPT 赢了：三条分支与一次收束">
+<meta property="og:url" content="https://nomirax.github.io/2026/10/02/gpt-decoder-only-history/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="Transformer 给了架构，但大模型不是从它直接长出来的。BERT、T5、GPT 沿着三条不同的路出发，最后收束到了看起来最简单的那一条。 整理自 B 站视频：为什么是 Decoder-Only 的 GPT 赢了  一、2017 年给的只是「一种能并行的建模方式」Attention Is All You Need 的贡献是自注意力：它去掉了 RNN 的循环依赖，让训练可以并行，效率大幅提升">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-10-02T11:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-20T11:10:54.798Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="BERT">
+<meta property="article:tag" content="GPT">
+<meta property="article:tag" content="Transformer">
+<meta property="article:tag" content="大模型">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/10/02/gpt-decoder-only-history/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css?v=20261116-no-contrib"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js?v=20261116-perf"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','#home-hero-slot','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide, '#home-hero-slot': Pjax.switches.outerHTML},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div id="reading-progress" role="progressbar" aria-label="文章阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><div id="home-hero-slot"></div><div class="site-content" id="home-content"><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>为什么是 Decoder-Only 的 GPT 赢了：三条分支与一次收束</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-10-02T11:00:00.000Z" id="date"> 2026-10-02</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>Transformer 给了架构，但大模型不是从它直接长出来的。BERT、T5、GPT 沿着三条不同的路出发，最后收束到了看起来最简单的那一条。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV16yhd6BEdf/">为什么是 Decoder-Only 的 GPT 赢了</a></p>
+</blockquote>
+<h2 id="一、2017-年给的只是「一种能并行的建模方式」"><a href="#一、2017-年给的只是「一种能并行的建模方式」" class="headerlink" title="一、2017 年给的只是「一种能并行的建模方式」"></a>一、2017 年给的只是「一种能并行的建模方式」</h2><p><code>Attention Is All You Need</code> 的贡献是自注意力：它去掉了 RNN 的循环依赖，让训练可以并行，效率大幅提升。但它是为<strong>机器翻译</strong>设计的——一个输入序列、一个输出序列。</p>
+<p>于是问题变成：怎么改、怎么训，才能让它服务更多 NLP 任务？这就分出了三条路。</p>
+<h2 id="二、三条分支，差别只在用哪半截"><a href="#二、三条分支，差别只在用哪半截" class="headerlink" title="二、三条分支，差别只在用哪半截"></a>二、三条分支，差别只在用哪半截</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>架构</th>
+<th>用了 Transformer 的</th>
+<th>有没有交叉注意力</th>
+<th>代表</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Decoder-Only</td>
+<td>只有解码器</td>
+<td>没有（没编码器，无处可交叉）</td>
+<td>GPT 系列</td>
+</tr>
+<tr>
+<td>Encoder-Only</td>
+<td>只有编码器</td>
+<td>没有</td>
+<td>BERT</td>
+</tr>
+<tr>
+<td>Encoder-Decoder</td>
+<td>编码器 + 解码器</td>
+<td>有</td>
+<td>T5、原始 Transformer</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一个容易被忽略的点：<strong>Decoder-Only 比 Transformer 的 decoder 还要简单</strong>——少了交叉注意力，一层里只有一次注意力和一个 FFN。</p>
+<h2 id="三、它们共同的贡献：预训练-微调"><a href="#三、它们共同的贡献：预训练-微调" class="headerlink" title="三、它们共同的贡献：预训练 + 微调"></a>三、它们共同的贡献：预训练 + 微调</h2><p>GPT 和 BERT 发布时间太近（差四个月），这个范式算两人共同的功劳。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>传统做法</th>
+<th>预训练 + 微调</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据</td>
+<td>每个任务各标一批</td>
+<td>先用海量无标注文本自监督预训练</td>
+</tr>
+<tr>
+<td>起点</td>
+<td>每个任务从零开始</td>
+<td>都从同一个预训练模型出发</td>
+</tr>
+<tr>
+<td>迁移</td>
+<td>几乎为零</td>
+<td>通用语言能力（词法、语法、语义关系）可复用</td>
+</tr>
+<tr>
+<td>微调</td>
+<td>无</td>
+<td>加个任务头，用少量标注数据调整参数</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>关键在「微调」这个词的字面意思：相对于海量语言学习，这部分参数调整是<strong>很少</strong>的。</p>
+<h2 id="四、GPT-1：把两阶段范式立起来"><a href="#四、GPT-1：把两阶段范式立起来" class="headerlink" title="四、GPT-1：把两阶段范式立起来"></a>四、GPT-1：把两阶段范式立起来</h2><p>2018 年 6 月，Transformer 论文出来才半年多，OpenAI 就动手了。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">阶段一：预训练 —— 海量无标注文本，只做一件事：预测下一个 token<br>阶段二：微调   —— 有标注的任务数据（分类 / 问答 / NLI），加任务头<br></code></pre></td></tr></table></figure>
+<p>它展示了预训练加微调的效果。<strong>从左到右</strong>预测下一个 token，每个位置只能看到它前面已经生成的内容——这个约束后面成了它最大的优势。</p>
+<h2 id="五、BERT：既然左右都看得见，为什么只看一边"><a href="#五、BERT：既然左右都看得见，为什么只看一边" class="headerlink" title="五、BERT：既然左右都看得见，为什么只看一边"></a>五、BERT：既然左右都看得见，为什么只看一边</h2><p>Google 的思路很直接：训练时左右两侧的文本明明都在，只用左边太浪费，不如让模型<strong>同时看两边，去猜中间被盖住的词</strong>。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>做法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>遮挡比例</td>
+<td>随机挑 15% 的 token</td>
+</tr>
+<tr>
+<td>编码方式</td>
+<td>双向编码（所以是 encoder-only）</td>
+</tr>
+<tr>
+<td>输出</td>
+<td>隐藏表示 → 概率，预测被遮的词</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>有个小巧思：真实语句里并不会出现 <code>[MASK]</code>，为防止模型依赖这个符号，被选中的 15% 里再做切分——</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>处理</th>
+<th>比例</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>换成 <code>[MASK]</code></td>
+<td>80%</td>
+<td>正常填空</td>
+</tr>
+<tr>
+<td>换成随机词</td>
+<td>10%</td>
+<td>逼模型别信「这个词是 mask」</td>
+</tr>
+<tr>
+<td>保持原样</td>
+<td>10%</td>
+<td>逼模型别信「这个词一定被改过」</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>为什么当时 BERT 在各类语言理解评测榜上遥遥领先？因为在<strong>数据量和算力有限</strong>的条件下，双向信息比单向多，猜中间那个词更准。</p>
+<p>它最大的贡献是：<strong>一次预训练的 encoder，可以成为多种理解任务的共同底座</strong>——分类、实体识别、阅读理解，各自加一个任务头微调就行。</p>
+<p>但要注意，BERT 的结构天然不适合开放式生成：它没有自回归的机制。</p>
+<h2 id="六、T5：把所有任务压成「文本进、文本出」"><a href="#六、T5：把所有任务压成「文本进、文本出」" class="headerlink" title="六、T5：把所有任务压成「文本进、文本出」"></a>六、T5：把所有任务压成「文本进、文本出」</h2><p>2019 年，Google 又提出 T5，用的是完整的 encoder-decoder。</p>
+<p>它最大的贡献不是架构，是<strong>统一表达形式</strong>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">translate English to German: That is good.<br>cola sentence: The course is jumping well.<br>summarize: &lt;正文&gt;<br></code></pre></td></tr></table></figure>
+<p>输入前面加任务前缀，输入是文本，输出也是文本。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>BERT / GPT-1</th>
+<th>T5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>任务怎么表达</td>
+<td>不同任务不同任务头</td>
+<td>任务前缀（也是文本）</td>
+</tr>
+<tr>
+<td>输出格式</td>
+<td>标签概率（最后显示成单词）</td>
+<td>文本</td>
+</tr>
+<tr>
+<td>训练方式</td>
+<td>每个任务一套</td>
+<td>统一成 seq2seq</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>这件事非常接近今天用大模型的方式，也直接启发了后来的 prompt engineering 和指令微调。</p>
+<p>T5 的论文还特别长：做了大规模消融实验，覆盖不同训练目标、模型结构、数据处理和迁移策略；顺手清洗构建了一个大语料 <strong>C4</strong>，至今仍有大量模型在用。</p>
+<h2 id="七、GPT-2：不微调，用上下文告诉模型干什么"><a href="#七、GPT-2：不微调，用上下文告诉模型干什么" class="headerlink" title="七、GPT-2：不微调，用上下文告诉模型干什么"></a>七、GPT-2：不微调，用上下文告诉模型干什么</h2><p>BERT 和 T5 有个共同前提：<strong>换任务就要微调</strong>。GPT-2 把这个前提拿掉了。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>做法</th>
+<th>细节</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>训练</td>
+<td>还是预测下一个 token，从海量文本学知识和语言规律</td>
+</tr>
+<tr>
+<td>使用时</td>
+<td>参数完全不动</td>
+</tr>
+<tr>
+<td>怎么指定任务</td>
+<td>把任务写成提示，让模型续写</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">摘要：&lt;文章正文&gt; TL;DR:<br>翻译：English: &lt;原文&gt; French:<br>问答：Q: &lt;问题&gt; A:<br></code></pre></td></tr></table></figure>
+<p>这叫<strong>零样本任务迁移</strong>。</p>
+<p>它有两个关键选择：</p>
+<ol>
+<li><strong>继续走 decoder-only</strong>，靠因果自注意力从左到右自回归，分类标签、译文、摘要、答案都由同一个模型逐字产出，不做任何架构改动。</li>
+<li><strong>继续扩大规模</strong>：参数 15 亿，约为 BERT-large（3.4 亿）的 4.4 倍。</li>
+</ol>
+<p>必须承认，当时效果其实一般——受限于算力和数据量，还不如 T5。但路线是对的：<strong>模型永远在预测下一个 token，上下文决定这次续写的到底是什么任务</strong>。</p>
+<h2 id="八、Scaling-Law：给「加钱」一个数学保证"><a href="#八、Scaling-Law：给「加钱」一个数学保证" class="headerlink" title="八、Scaling Law：给「加钱」一个数学保证"></a>八、Scaling Law：给「加钱」一个数学保证</h2><p>从 BERT 到 BERT-large，从 T5 到 GPT-2，参数一直在涨，效果确实在变好。但没人知道「能好到什么程度」「什么时候过拟合」。</p>
+<p>2020 年 OpenAI 系统研究了参数量、数据量、训练时长与损失的关系，结论是：</p>
+<blockquote>
+<p>当其他条件不构成瓶颈时，任意增加其中一项，损失都会按稳定的幂律趋势下降。</p>
+</blockquote>
+<p>意义不在学术，在<strong>确定性</strong>：它告诉投资人和企业，加钱不会过拟合，加多少钱大概能换来多少效果。这句话直接打开了大模型的融资通道。</p>
+<h2 id="九、GPT-3：1750-亿参数与上下文学习"><a href="#九、GPT-3：1750-亿参数与上下文学习" class="headerlink" title="九、GPT-3：1750 亿参数与上下文学习"></a>九、GPT-3：1750 亿参数与上下文学习</h2><p>沿着 scaling law 加钱，参数从 15 亿推到 1750 亿，并且系统对比了三种用法：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>做法</th>
+<th>是否更新参数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zero-shot</td>
+<td>只给任务描述</td>
+<td>否</td>
+</tr>
+<tr>
+<td>One-shot</td>
+<td>给一个示例</td>
+<td>否</td>
+</tr>
+<tr>
+<td>Few-shot</td>
+<td>给少量示例</td>
+<td>否</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>模型能从示例中识别出「这是什么任务」以及「输出该长什么样」：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs text">把英语翻译成中文：<br>sea otter =&gt; 海獭<br>cheese =&gt; 奶酪<br>orange =&gt;<br></code></pre></td></tr></table></figure>
+<p>它输出「橙子」——没有任何梯度更新。</p>
+<h3 id="上下文学习-vs-微调"><a href="#上下文学习-vs-微调" class="headerlink" title="上下文学习 vs 微调"></a>上下文学习 vs 微调</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>微调</th>
+<th>上下文学习</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>标注数据</td>
+<td>需要，而且要参与训练</td>
+<td>不需要（示例只是输入的一部分）</td>
+</tr>
+<tr>
+<td>参数</td>
+<td>被更新</td>
+<td>完全不动</td>
+</tr>
+<tr>
+<td>能力存哪</td>
+<td>模型参数里</td>
+<td>当前上下文里</td>
+</tr>
+<tr>
+<td>切换任务</td>
+<td>重新训练</td>
+<td>换一段提示词</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>这就带来一个非常实用的开发习惯：<strong>遇到新任务，先别急着训练，先换说法、调示例，看看同一个模型行不行</strong>。不行再上微调。</p>
+<p>这也正是 prompt engineering 的起源——选哪些示例、怎么描述要求、输出格式怎么定，都会显著影响结果。2024 年底到 2025 年甚至专门有「提示词工程师」这个岗位。</p>
+<h2 id="十、ChatGPT：自然语言成了调用能力的入口"><a href="#十、ChatGPT：自然语言成了调用能力的入口" class="headerlink" title="十、ChatGPT：自然语言成了调用能力的入口"></a>十、ChatGPT：自然语言成了调用能力的入口</h2><p>2022 年底，基于 GPT-3.5 的 ChatGPT 出现。它让普通人第一次意识到：用日常语言说话，模型就能写文章、改代码、解释知识。</p>
+<p>这也意味着<strong>自然语言正式成为调用模型能力的接口</strong>。今天做 agent 时常说的 context engineering，本质上还是同一件事——把「你之前在做什么、有哪些工具、哪里已经错了」放进上下文，让模型在行动前先看一眼。</p>
+<h2 id="十一、那为什么偏偏是最简单的那个赢了"><a href="#十一、那为什么偏偏是最简单的那个赢了" class="headerlink" title="十一、那为什么偏偏是最简单的那个赢了"></a>十一、那为什么偏偏是最简单的那个赢了</h2><p>三条路各有各的擅长：BERT 用双向表示在理解任务上先赢，T5 用完整 encoder-decoder 统一了任务表达，GPT 一直坚持自回归。可走到「通用生成式大模型」阶段，最像论文、最完备的那两个反而让位了。</p>
+<p>原因有三层，并且相互放大。</p>
+<h3 id="1-训练信号几乎免费"><a href="#1-训练信号几乎免费" class="headerlink" title="1. 训练信号几乎免费"></a>1. 训练信号几乎免费</h3><p>大规模训练首先要解决「数据和学习信号从哪来」。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>构造训练信号要做什么</th>
+<th>训练目标与生成目标一致吗</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BERT</td>
+<td>随机遮 15%，还要做 80/10/10 替换</td>
+<td>不一致（训练是填空，用起来不是）</td>
+</tr>
+<tr>
+<td>T5</td>
+<td>构造缺失片段，做填空式预训练</td>
+<td>部分不一致（还要额外任务格式）</td>
+</tr>
+<tr>
+<td>GPT</td>
+<td>拿连续文本，<strong>右移一位</strong>就是标签</td>
+<td>完全一致</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一段长度 N 的文本，能提供 N−1 个训练信号，不花钱、不要标注、任何网页都能用。而且填空式目标本身不擅长开放式生成，GPT 的训练和推理是同一种动作。</p>
+<h3 id="2-任务切换靠上下文，不靠参数"><a href="#2-任务切换靠上下文，不靠参数" class="headerlink" title="2. 任务切换靠上下文，不靠参数"></a>2. 任务切换靠上下文，不靠参数</h3><p>BERT 换任务要换任务头还得微调，T5 换任务也要微调；GPT 换任务只是改提示词。规模一大，模型就越能从描述和少量示例里认出任务要求。</p>
+<h3 id="3-结构最简单，工程红利最多"><a href="#3-结构最简单，工程红利最多" class="headerlink" title="3. 结构最简单，工程红利最多"></a>3. 结构最简单，工程红利最多</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>红利</th>
+<th>具体表现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>参数利用率</td>
+<td>省下的参数可以多堆几层</td>
+</tr>
+<tr>
+<td>KV cache</td>
+<td>结构单一，缓存策略好实现、好复用</td>
+</tr>
+<tr>
+<td>部署链路</td>
+<td>一套网络一套参数，不用为不同任务准备不同管线</td>
+</tr>
+<tr>
+<td>扩展性</td>
+<td>加层、加宽都只是改数字</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一个方案要真正大规模落地，光理论先进不够，工程上必须简单。decoder-only 恰好两头都占。</p>
+<p>于是三件事形成一个正循环：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">训练目标统一 → 能用上全部互联网文本 → 数据量上去<br>任务表达统一 → 一个模型能干所有事 → 使用成本下来<br>结构简单     → 部署和扩展都容易 → 规模继续上去<br>            ↓<br>        scaling law 保证：规模越大越准<br></code></pre></td></tr></table></figure>
+<h2 id="十二、今天的「GPT」其实是同一种东西"><a href="#十二、今天的「GPT」其实是同一种东西" class="headerlink" title="十二、今天的「GPT」其实是同一种东西"></a>十二、今天的「GPT」其实是同一种东西</h2><p>不管叫不叫 GPT，现在的模型基本都是 decoder-only：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>系族</th>
+<th>代表</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>海外</td>
+<td>GPT、Llama、Gemma</td>
+</tr>
+<tr>
+<td>国内</td>
+<td>Qwen、DeepSeek、Kimi、GLM</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="十三、小结"><a href="#十三、小结" class="headerlink" title="十三、小结"></a>十三、小结</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>关键贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transformer（2017）</td>
+<td>自注意力 + 可并行训练，但只服务翻译</td>
+</tr>
+<tr>
+<td>GPT-1（2018.06）</td>
+<td>预训练 + 微调的范式</td>
+</tr>
+<tr>
+<td>BERT（2018.10）</td>
+<td>双向 MLM；一个 encoder 支撑多种理解任务；推广了该范式</td>
+</tr>
+<tr>
+<td>T5（2019.10）</td>
+<td>一切任务统一成文本到文本；大规模消融；C4 语料</td>
+</tr>
+<tr>
+<td>GPT-2（2019）</td>
+<td>不微调，用上下文表达任务（零样本）</td>
+</tr>
+<tr>
+<td>Scaling Law（2020）</td>
+<td>损失随规模稳定下降，给投入一个可预测的回报</td>
+</tr>
+<tr>
+<td>GPT-3（2020）</td>
+<td>1750 亿参数；上下文学习 / few-shot</td>
+</tr>
+<tr>
+<td>ChatGPT（2022.11）</td>
+<td>自然语言成为调用能力的入口</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>最值得记住的一句：<strong>能力不只是存在参数里，也存在于输入里</strong>。模型在预训练中积累能力，在上下文里切换任务——那些看起来「涌现」出来的表现，很多时候只是这层组合被踩中了。</p>
+<blockquote>
+<p>下一篇会从零实现一个 decoder-only 的 mini GPT，并用它写古诗。既然已经能手写 Transformer，写 GPT 其实只是砍掉编码器和交叉注意力。</p>
+</blockquote>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages"><div class="footer-link" style="width: 50%;text-align:right;border-right:1px #fe2 solid"><a href="/2026/10/22/mihoyo-ai-turn-2026/">← 下一篇 米哈游的 1000 亿赌局：砍掉 AI 游戏，去手搓大模型</a></div><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/09/19/mini-transformer-pytorch/">手搓 Mini Transformer：用 PyTorch 写一个英译中翻译器 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%812017-%E5%B9%B4%E7%BB%99%E7%9A%84%E5%8F%AA%E6%98%AF%E3%80%8C%E4%B8%80%E7%A7%8D%E8%83%BD%E5%B9%B6%E8%A1%8C%E7%9A%84%E5%BB%BA%E6%A8%A1%E6%96%B9%E5%BC%8F%E3%80%8D"><span class="toc-number">1.</span> <span class="toc-text">一、2017 年给的只是「一种能并行的建模方式」</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E4%B8%89%E6%9D%A1%E5%88%86%E6%94%AF%EF%BC%8C%E5%B7%AE%E5%88%AB%E5%8F%AA%E5%9C%A8%E7%94%A8%E5%93%AA%E5%8D%8A%E6%88%AA"><span class="toc-number">2.</span> <span class="toc-text">二、三条分支，差别只在用哪半截</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%AE%83%E4%BB%AC%E5%85%B1%E5%90%8C%E7%9A%84%E8%B4%A1%E7%8C%AE%EF%BC%9A%E9%A2%84%E8%AE%AD%E7%BB%83-%E5%BE%AE%E8%B0%83"><span class="toc-number">3.</span> <span class="toc-text">三、它们共同的贡献：预训练 + 微调</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81GPT-1%EF%BC%9A%E6%8A%8A%E4%B8%A4%E9%98%B6%E6%AE%B5%E8%8C%83%E5%BC%8F%E7%AB%8B%E8%B5%B7%E6%9D%A5"><span class="toc-number">4.</span> <span class="toc-text">四、GPT-1：把两阶段范式立起来</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81BERT%EF%BC%9A%E6%97%A2%E7%84%B6%E5%B7%A6%E5%8F%B3%E9%83%BD%E7%9C%8B%E5%BE%97%E8%A7%81%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%AA%E7%9C%8B%E4%B8%80%E8%BE%B9"><span class="toc-number">5.</span> <span class="toc-text">五、BERT：既然左右都看得见，为什么只看一边</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81T5%EF%BC%9A%E6%8A%8A%E6%89%80%E6%9C%89%E4%BB%BB%E5%8A%A1%E5%8E%8B%E6%88%90%E3%80%8C%E6%96%87%E6%9C%AC%E8%BF%9B%E3%80%81%E6%96%87%E6%9C%AC%E5%87%BA%E3%80%8D"><span class="toc-number">6.</span> <span class="toc-text">六、T5：把所有任务压成「文本进、文本出」</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81GPT-2%EF%BC%9A%E4%B8%8D%E5%BE%AE%E8%B0%83%EF%BC%8C%E7%94%A8%E4%B8%8A%E4%B8%8B%E6%96%87%E5%91%8A%E8%AF%89%E6%A8%A1%E5%9E%8B%E5%B9%B2%E4%BB%80%E4%B9%88"><span class="toc-number">7.</span> <span class="toc-text">七、GPT-2：不微调，用上下文告诉模型干什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81Scaling-Law%EF%BC%9A%E7%BB%99%E3%80%8C%E5%8A%A0%E9%92%B1%E3%80%8D%E4%B8%80%E4%B8%AA%E6%95%B0%E5%AD%A6%E4%BF%9D%E8%AF%81"><span class="toc-number">8.</span> <span class="toc-text">八、Scaling Law：给「加钱」一个数学保证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81GPT-3%EF%BC%9A1750-%E4%BA%BF%E5%8F%82%E6%95%B0%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E5%AD%A6%E4%B9%A0"><span class="toc-number">9.</span> <span class="toc-text">九、GPT-3：1750 亿参数与上下文学习</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E5%AD%A6%E4%B9%A0-vs-%E5%BE%AE%E8%B0%83"><span class="toc-number">9.1.</span> <span class="toc-text">上下文学习 vs 微调</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81ChatGPT%EF%BC%9A%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E6%88%90%E4%BA%86%E8%B0%83%E7%94%A8%E8%83%BD%E5%8A%9B%E7%9A%84%E5%85%A5%E5%8F%A3"><span class="toc-number">10.</span> <span class="toc-text">十、ChatGPT：自然语言成了调用能力的入口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E9%82%A3%E4%B8%BA%E4%BB%80%E4%B9%88%E5%81%8F%E5%81%8F%E6%98%AF%E6%9C%80%E7%AE%80%E5%8D%95%E7%9A%84%E9%82%A3%E4%B8%AA%E8%B5%A2%E4%BA%86"><span class="toc-number">11.</span> <span class="toc-text">十一、那为什么偏偏是最简单的那个赢了</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%AE%AD%E7%BB%83%E4%BF%A1%E5%8F%B7%E5%87%A0%E4%B9%8E%E5%85%8D%E8%B4%B9"><span class="toc-number">11.1.</span> <span class="toc-text">1. 训练信号几乎免费</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%BB%BB%E5%8A%A1%E5%88%87%E6%8D%A2%E9%9D%A0%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%8C%E4%B8%8D%E9%9D%A0%E5%8F%82%E6%95%B0"><span class="toc-number">11.2.</span> <span class="toc-text">2. 任务切换靠上下文，不靠参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%BB%93%E6%9E%84%E6%9C%80%E7%AE%80%E5%8D%95%EF%BC%8C%E5%B7%A5%E7%A8%8B%E7%BA%A2%E5%88%A9%E6%9C%80%E5%A4%9A"><span class="toc-number">11.3.</span> <span class="toc-text">3. 结构最简单，工程红利最多</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E4%BB%8A%E5%A4%A9%E7%9A%84%E3%80%8CGPT%E3%80%8D%E5%85%B6%E5%AE%9E%E6%98%AF%E5%90%8C%E4%B8%80%E7%A7%8D%E4%B8%9C%E8%A5%BF"><span class="toc-number">12.</span> <span class="toc-text">十二、今天的「GPT」其实是同一种东西</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E5%B0%8F%E7%BB%93"><span class="toc-number">13.</span> <span class="toc-text">十三、小结</span></a></li></ol></div></div></aside></div></main><script defer src="/js/home-hero.js?v=20261116-perf"></script><script defer src="/js/reading-progress.js?v=20261116-perf"></script><canvas id="canvas-dust"></canvas></body></html>
