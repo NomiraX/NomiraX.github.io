@@ -1,0 +1,280 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>手搓 Mini Transformer：用 PyTorch 写一个英译中翻译器 | NomiraX 的博客</title><meta name="keywords" content="Transformer,深度学习,PyTorch"><meta name="description" content="前面几篇把编码器、解码器、注意力、位置编码都拆开看过了，这一篇把它们拼起来，跑一个真能翻出中文的 mini transformer。 整理自 B 站视频：一小时彻底掌握 Transformer  先说清楚简化了什么完整的 Transformer 实现很复杂。为了把注意力放在「原理有没有对上」，这个实现做了几处刻意简化：     简化 后果     每次只训一个句子，不做 batch 不需要 pa">
+<meta property="og:type" content="article">
+<meta property="og:title" content="手搓 Mini Transformer：用 PyTorch 写一个英译中翻译器">
+<meta property="og:url" content="https://nomirax.github.io/2026/09/19/mini-transformer-pytorch/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="前面几篇把编码器、解码器、注意力、位置编码都拆开看过了，这一篇把它们拼起来，跑一个真能翻出中文的 mini transformer。 整理自 B 站视频：一小时彻底掌握 Transformer  先说清楚简化了什么完整的 Transformer 实现很复杂。为了把注意力放在「原理有没有对上」，这个实现做了几处刻意简化：     简化 后果     每次只训一个句子，不做 batch 不需要 pa">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-09-19T03:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-20T11:07:40.449Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="PyTorch">
+<meta property="article:tag" content="Transformer">
+<meta property="article:tag" content="深度学习">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/09/19/mini-transformer-pytorch/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css?v=20261116-no-contrib"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js?v=20261116-perf"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','#home-hero-slot','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide, '#home-hero-slot': Pjax.switches.outerHTML},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div id="reading-progress" role="progressbar" aria-label="文章阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><div id="home-hero-slot"></div><div class="site-content" id="home-content"><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>手搓 Mini Transformer：用 PyTorch 写一个英译中翻译器</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-09-19T03:30:00.000Z" id="date"> 2026-09-19</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>前面几篇把编码器、解码器、注意力、位置编码都拆开看过了，这一篇把它们拼起来，跑一个真能翻出中文的 mini transformer。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV15oYo6TEH1/">一小时彻底掌握 Transformer</a></p>
+</blockquote>
+<h2 id="先说清楚简化了什么"><a href="#先说清楚简化了什么" class="headerlink" title="先说清楚简化了什么"></a>先说清楚简化了什么</h2><p>完整的 Transformer 实现很复杂。为了把注意力放在「原理有没有对上」，这个实现做了几处刻意简化：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>简化</th>
+<th>后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>每次只训一个句子，不做 batch</td>
+<td>不需要 padding，也不需要 padding mask</td>
+</tr>
+<tr>
+<td>用 Python 循环 + 普通矩阵乘</td>
+<td>CPU 就能跑，不需要 GPU / MPS</td>
+</tr>
+<tr>
+<td>超参数全部调小</td>
+<td>D=32、heads=2、层数=2、最长 32</td>
+</tr>
+<tr>
+<td>语料只有 8 句</td>
+<td>几十轮就收敛，方便看效果</td>
+</tr>
+<tr>
+<td>不做 KV cache</td>
+<td>推理时每步重算历史，慢，但对应论文逻辑</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>唯一没简化的是结构</strong>：每一处维度和论文一一对应。这也是为什么手搓一遍之后，读真实模型的代码会顺很多。</p>
+<h2 id="三个符号先约定好"><a href="#三个符号先约定好" class="headerlink" title="三个符号先约定好"></a>三个符号先约定好</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>S</code></td>
+<td>英文输入（source）的 token 数</td>
+</tr>
+<tr>
+<td><code>T</code></td>
+<td>中文前缀（target）的 token 数</td>
+</tr>
+<tr>
+<td><code>D</code></td>
+<td>整个模型统一的维度，也就是 <code>d_model</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="整体分四块"><a href="#整体分四块" class="headerlink" title="整体分四块"></a>整体分四块</h2><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs text">输入处理（embedding + 位置编码 + 分词）<br>    ↓<br>编码器（N 层，每层 = 多头自注意力 + FFN）<br>    ↓<br>解码器（N 层，每层 = 掩码自注意力 + 交叉注意力 + FFN）<br>    ↓<br>输出投影（D → 中文词表大小 → softmax）<br></code></pre></td></tr></table></figure>
+<p>代码最终拆成这些类：<code>PositionalEncoding</code>、<code>TokenEmbedding</code>、<code>attention</code>、<code>MultiHeadAttention</code>、<code>FeedForward</code>、<code>EncoderLayer</code>、<code>Encoder</code>、<code>DecoderLayer</code>、<code>Decoder</code>、<code>MiniTransformer</code>。核心创新部分全部手写，残差和 LayerNorm 直接调 PyTorch API。</p>
+<h2 id="环境和依赖"><a href="#环境和依赖" class="headerlink" title="环境和依赖"></a>环境和依赖</h2><p>用 uv 管环境，CPU 版 PyTorch 就够：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs powershell">uv init mini<span class="hljs-literal">-transformer</span><br><span class="hljs-built_in">cd</span> mini<span class="hljs-literal">-transformer</span><br>uv add torch jupyter<br>uv lock<br>uv run jupyter lab<br></code></pre></td></tr></table></figure>
+<p>先固定随机种子，保证每次跑出来一样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> math, random, torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><span class="hljs-keyword">import</span> torch.nn.functional <span class="hljs-keyword">as</span> F<br><br>seed = <span class="hljs-number">42</span><br>random.seed(seed)<br>torch.manual_seed(seed)<br>torch.set_num_threads(<span class="hljs-number">1</span>)      <span class="hljs-comment"># 单线程，结果可复现</span><br></code></pre></td></tr></table></figure>
+<p>超参数放全局，方便看：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">D     = <span class="hljs-number">32</span>    <span class="hljs-comment"># d_model，论文是 512</span><br>HEADS = <span class="hljs-number">2</span>     <span class="hljs-comment"># 论文是 8</span><br>DFF   = <span class="hljs-number">64</span>    <span class="hljs-comment"># FFN 中间层，论文是 4*D</span><br>N     = <span class="hljs-number">2</span>     <span class="hljs-comment"># 编码器/解码器层数，论文是 6</span><br>MAX_LEN = <span class="hljs-number">32</span>  <span class="hljs-comment"># 位置编码支持的最长序列</span><br></code></pre></td></tr></table></figure>
+<h2 id="语料与词表"><a href="#语料与词表" class="headerlink" title="语料与词表"></a>语料与词表</h2><p>语料就 8 组句子，英文和中文用空格切词（正经分词很复杂，这里故意简化）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">pairs = [<br>    (<span class="hljs-string">&quot;there is a table under the chair&quot;</span>, <span class="hljs-string">&quot;椅子下面有一张桌子&quot;</span>),<br>    (<span class="hljs-string">&quot;i love deep learning&quot;</span>, <span class="hljs-string">&quot;我喜欢深度学习&quot;</span>),<br>    (<span class="hljs-string">&quot;the cat is under the table&quot;</span>, <span class="hljs-string">&quot;猫在桌子下面&quot;</span>),<br>    (<span class="hljs-string">&quot;we study transformer&quot;</span>, <span class="hljs-string">&quot;我们学习transformer&quot;</span>),<br>    (<span class="hljs-string">&quot;hello world&quot;</span>, <span class="hljs-string">&quot;你好世界&quot;</span>),<br>    (<span class="hljs-string">&quot;she reads a book&quot;</span>, <span class="hljs-string">&quot;她在读一本书&quot;</span>),<br>    (<span class="hljs-string">&quot;the dog is running&quot;</span>, <span class="hljs-string">&quot;狗在跑&quot;</span>),<br>    (<span class="hljs-string">&quot;machine learning is fun&quot;</span>, <span class="hljs-string">&quot;机器学习很有趣&quot;</span>),<br>]<br></code></pre></td></tr></table></figure>
+<p>然后对中英分别建词表：先分词、去重、排序，再按下标编号——这个下标就是 <strong>token id</strong>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">build_vocab</span>(<span class="hljs-params">sentences, specials=(<span class="hljs-params"></span>)</span>):<br>    words = <span class="hljs-built_in">sorted</span>(&#123;w <span class="hljs-keyword">for</span> s <span class="hljs-keyword">in</span> sentences <span class="hljs-keyword">for</span> w <span class="hljs-keyword">in</span> s.split()&#125;)<br>    itos = <span class="hljs-built_in">list</span>(specials) + words<br>    stoi = &#123;w: i <span class="hljs-keyword">for</span> i, w <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(itos)&#125;<br>    <span class="hljs-keyword">return</span> itos, stoi<br><br>en_itos, en_stoi = build_vocab([e <span class="hljs-keyword">for</span> e, c <span class="hljs-keyword">in</span> pairs])<br>zh_itos, zh_stoi = build_vocab([c <span class="hljs-keyword">for</span> e, c <span class="hljs-keyword">in</span> pairs], specials=(<span class="hljs-string">&quot;&lt;BOS&gt;&quot;</span>, <span class="hljs-string">&quot;&lt;EOS&gt;&quot;</span>))<br></code></pre></td></tr></table></figure>
+<p>两个关键认知：</p>
+<ul>
+<li><strong>token id 只是一个索引</strong>，不是向量。<code>3</code> 和 <code>4</code> 挨着，不代表这两个词语义接近。</li>
+<li>语义在 embedding 表里：模型拿 id 去那张 <code>[词表大小, D]</code> 的矩阵里查一行。这张表是训练出来的。</li>
+</ul>
+<p><code>&lt;BOS&gt;</code> 和 <code>&lt;EOS&gt;</code> 只加在中文侧，因为只有目标序列需要「开始」和「结束」。这里不做 batch，所以不需要 <code>&lt;PAD&gt;</code>；语料里也没有生词，所以不需要 <code>&lt;UNK&gt;</code>。</p>
+<h2 id="Teacher-forcing：把标签错开一位"><a href="#Teacher-forcing：把标签错开一位" class="headerlink" title="Teacher forcing：把标签错开一位"></a>Teacher forcing：把标签错开一位</h2><p>解码器要学的规律是「给前 n 个词，预测第 n+1 个」。所以一句话要同时变成输入和标签：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">原始：      桌子 下面 有 一张 桌子<br>加特殊符：  &lt;BOS&gt; 桌子 下面 有 一张 桌子 &lt;EOS&gt;<br><br>decoder 输入：&lt;BOS&gt; 桌子 下面 有 一张 桌子<br>标签：        桌子 下面 有 一张 桌子 &lt;EOS&gt;<br></code></pre></td></tr></table></figure>
+<p>也就是 <code>input = target[:-1]</code>、<code>label = target[1:]</code>。这样序列自己就能给自己当监督信号，这种方法叫 teacher forcing。</p>
+<h2 id="位置编码"><a href="#位置编码" class="headerlink" title="位置编码"></a>位置编码</h2><p><code>D</code> 维分成 <code>D/2</code> 组，第 <code>i</code> 组：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">偶数维：sin(pos / 10000^(2i/D))<br>奇数维：cos(pos / 10000^(2i/D))<br></code></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">PositionalEncoding</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model, max_len</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        pe = torch.zeros(max_len, d_model)<br>        pos = torch.arange(max_len).unsqueeze(<span class="hljs-number">1</span>)               <span class="hljs-comment"># [max_len,1]</span><br>        div = torch.exp(torch.arange(<span class="hljs-number">0</span>, d_model, <span class="hljs-number">2</span>) * (-math.log(<span class="hljs-number">10000.0</span>) / d_model))<br>        pe[:, <span class="hljs-number">0</span>::<span class="hljs-number">2</span>] = torch.sin(pos * div)                     <span class="hljs-comment"># 偶数维</span><br>        pe[:, <span class="hljs-number">1</span>::<span class="hljs-number">2</span>] = torch.cos(pos * div)                     <span class="hljs-comment"># 奇数维</span><br>        <span class="hljs-variable language_">self</span>.register_buffer(<span class="hljs-string">&quot;pe&quot;</span>, pe)                         <span class="hljs-comment"># 不参与训练</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):                                      <span class="hljs-comment"># x: [T, D]</span><br>        <span class="hljs-keyword">return</span> x + <span class="hljs-variable language_">self</span>.pe[: x.size(<span class="hljs-number">0</span>)]<br></code></pre></td></tr></table></figure>
+<p><code>register_buffer</code> 这一行很重要：位置编码是算出来的常量，不该被梯度更新。加上它，<code>model.parameters()</code> 自然不会把它混进来。</p>
+<h2 id="Embedding：先乘-√D-再加位置"><a href="#Embedding：先乘-√D-再加位置" class="headerlink" title="Embedding：先乘 √D 再加位置"></a>Embedding：先乘 √D 再加位置</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">TokenEmbedding</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, vocab_size, d_model, max_len</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.embed = nn.Embedding(vocab_size, d_model)<br>        <span class="hljs-variable language_">self</span>.pos = PositionalEncoding(d_model, max_len)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, ids</span>):<br>        x = <span class="hljs-variable language_">self</span>.embed(ids) * math.sqrt(<span class="hljs-variable language_">self</span>.embed.embedding_dim)<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.pos(x)<br></code></pre></td></tr></table></figure>
+<p>为什么乘 <code>√D</code>？位置编码的数值量级固定，如果直接和 embedding 相加，位置信息会盖过语义。乘上 <code>√D</code> 把语义放大，两者量级接近，语义仍然是主角——这是论文里的做法。</p>
+<h2 id="注意力的实现"><a href="#注意力的实现" class="headerlink" title="注意力的实现"></a>注意力的实现</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">attention</span>(<span class="hljs-params">q, k, v, causal=<span class="hljs-literal">False</span></span>):<br>    d_k = q.size(-<span class="hljs-number">1</span>)<br>    scores = q @ k.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>) / math.sqrt(d_k)   <span class="hljs-comment"># [T, T]</span><br><br>    <span class="hljs-keyword">if</span> causal:<br>        T = scores.size(-<span class="hljs-number">1</span>)<br>        mask = torch.tril(torch.ones(T, T)).<span class="hljs-built_in">bool</span>()       <span class="hljs-comment"># 下三角可见</span><br>        scores = scores.masked_fill(~mask, <span class="hljs-built_in">float</span>(<span class="hljs-string">&quot;-inf&quot;</span>))<br><br>    weights = F.softmax(scores, dim=-<span class="hljs-number">1</span>)<br>    <span class="hljs-keyword">return</span> weights @ v<br></code></pre></td></tr></table></figure>
+<p>用 <code>-inf</code> 而不是 <code>0</code> 遮罩的原因：<code>-inf</code> 过 softmax 得到严格 0，未来位置的权重彻底消失；如果填 0，softmax 之后仍然会分到一点权重。</p>
+<h2 id="多头注意力"><a href="#多头注意力" class="headerlink" title="多头注意力"></a>多头注意力</h2><p><code>D</code> 被分成 <code>HEADS</code> 份，每份 <code>d_k = D // HEADS</code>。每个头有<strong>自己的一套</strong> <code>W_Q</code>、<code>W_K</code>、<code>W_V</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">MultiHeadAttention</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model, heads</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.d_k = d_model // heads<br>        <span class="hljs-variable language_">self</span>.heads = nn.ModuleList([<br>            nn.ModuleDict(&#123;<br>                <span class="hljs-string">&quot;wq&quot;</span>: nn.Linear(d_model, <span class="hljs-variable language_">self</span>.d_k),<br>                <span class="hljs-string">&quot;wk&quot;</span>: nn.Linear(d_model, <span class="hljs-variable language_">self</span>.d_k),<br>                <span class="hljs-string">&quot;wv&quot;</span>: nn.Linear(d_model, <span class="hljs-variable language_">self</span>.d_k),<br>            &#125;) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(heads)<br>        ])<br>        <span class="hljs-variable language_">self</span>.wo = nn.Linear(d_model, d_model)     <span class="hljs-comment"># 拼回来之后的融合</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, q, k, v, causal=<span class="hljs-literal">False</span></span>):<br>        outs = [attention(h[<span class="hljs-string">&quot;wq&quot;</span>](q), h[<span class="hljs-string">&quot;wk&quot;</span>](k), h[<span class="hljs-string">&quot;wv&quot;</span>](v), causal) <span class="hljs-keyword">for</span> h <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.heads]<br>        out = torch.cat(outs, dim=-<span class="hljs-number">1</span>)             <span class="hljs-comment"># [T, D]</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.wo(out)                       <span class="hljs-comment"># 再线性融合一次</span><br></code></pre></td></tr></table></figure>
+<p>两个细节：</p>
+<ul>
+<li>拆头<strong>不是把 32 维切成 0–15 和 16–31</strong>，而是各自过投影矩阵。所以拼回来之后必须再过一次 <code>wo</code> 才能恢复正常的表示——顺序本来就不是按位置切的。</li>
+<li>每个头的参数互相独立，这就是「多角度理解同一句话」的来源。</li>
+</ul>
+<h2 id="FFN：先升维，再降维"><a href="#FFN：先升维，再降维" class="headerlink" title="FFN：先升维，再降维"></a>FFN：先升维，再降维</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">FeedForward</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model, d_ff</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.net = nn.Sequential(<br>            nn.Linear(d_model, d_ff),<br>            nn.ReLU(),<br>            nn.Linear(d_ff, d_model),<br>        )<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.net(x)<br></code></pre></td></tr></table></figure>
+<p>对每个位置用<strong>同一套参数</strong>各算各的，所以 FFN 不在 token 之间传信息。</p>
+<h2 id="编码器的一层"><a href="#编码器的一层" class="headerlink" title="编码器的一层"></a>编码器的一层</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">EncoderLayer</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model, heads, d_ff</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.attn = MultiHeadAttention(d_model, heads)<br>        <span class="hljs-variable language_">self</span>.ffn  = FeedForward(d_model, d_ff)<br>        <span class="hljs-variable language_">self</span>.norm1 = nn.LayerNorm(d_model)<br>        <span class="hljs-variable language_">self</span>.norm2 = nn.LayerNorm(d_model)     <span class="hljs-comment"># 两个独立的 LN，参数不同</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        x = <span class="hljs-variable language_">self</span>.norm1(x + <span class="hljs-variable language_">self</span>.attn(x, x, x))       <span class="hljs-comment"># 自注意力，无掩码</span><br>        x = <span class="hljs-variable language_">self</span>.norm2(x + <span class="hljs-variable language_">self</span>.ffn(x))<br>        <span class="hljs-keyword">return</span> x<br></code></pre></td></tr></table></figure>
+<p>这里用的是论文的 <strong>Post-Norm</strong>：先残差相加，再归一化。两个 <code>LayerNorm</code> 必须分别 <code>new</code> 一次，共用一个就等于让两处强行共享参数。</p>
+<h2 id="解码器的一层"><a href="#解码器的一层" class="headerlink" title="解码器的一层"></a>解码器的一层</h2><p>比编码器多两件事：<strong>因果掩码</strong>和<strong>交叉注意力</strong>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">DecoderLayer</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, d_model, heads, d_ff</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.self_attn  = MultiHeadAttention(d_model, heads)<br>        <span class="hljs-variable language_">self</span>.cross_attn = MultiHeadAttention(d_model, heads)<br>        <span class="hljs-variable language_">self</span>.ffn   = FeedForward(d_model, d_ff)<br>        <span class="hljs-variable language_">self</span>.norm1 = nn.LayerNorm(d_model)<br>        <span class="hljs-variable language_">self</span>.norm2 = nn.LayerNorm(d_model)<br>        <span class="hljs-variable language_">self</span>.norm3 = nn.LayerNorm(d_model)<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x, enc_out</span>):<br>        <span class="hljs-comment"># 1. 掩码自注意力：Q/K/V 都来自自己，但只能看前面</span><br>        x = <span class="hljs-variable language_">self</span>.norm1(x + <span class="hljs-variable language_">self</span>.self_attn(x, x, x, causal=<span class="hljs-literal">True</span>))<br>        <span class="hljs-comment"># 2. 交叉注意力：Q 来自解码器，K/V 来自编码器输出</span><br>        x = <span class="hljs-variable language_">self</span>.norm2(x + <span class="hljs-variable language_">self</span>.cross_attn(x, enc_out, enc_out))<br>        <span class="hljs-comment"># 3. FFN</span><br>        x = <span class="hljs-variable language_">self</span>.norm3(x + <span class="hljs-variable language_">self</span>.ffn(x))<br>        <span class="hljs-keyword">return</span> x<br></code></pre></td></tr></table></figure>
+<p>注意交叉注意力<strong>不加因果掩码</strong>——原文整句都是已知信息，没有「未来」可言。</p>
+<h2 id="把层堆起来"><a href="#把层堆起来" class="headerlink" title="把层堆起来"></a>把层堆起来</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">Encoder</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, n, d_model, heads, d_ff</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.layers = nn.ModuleList([EncoderLayer(d_model, heads, d_ff) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(n)])<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>):<br>        <span class="hljs-keyword">for</span> layer <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.layers:<br>            x = layer(x)<br>        <span class="hljs-keyword">return</span> x<br><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Decoder</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, n, d_model, heads, d_ff</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.layers = nn.ModuleList([DecoderLayer(d_model, heads, d_ff) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(n)])<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x, enc_out</span>):<br>        <span class="hljs-keyword">for</span> layer <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.layers:<br>            x = layer(x, enc_out)<br>        <span class="hljs-keyword">return</span> x<br></code></pre></td></tr></table></figure>
+<h2 id="拼成-MiniTransformer"><a href="#拼成-MiniTransformer" class="headerlink" title="拼成 MiniTransformer"></a>拼成 MiniTransformer</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">MiniTransformer</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, en_vocab, zh_vocab</span>):<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.en_embed = TokenEmbedding(en_vocab, D, MAX_LEN)<br>        <span class="hljs-variable language_">self</span>.zh_embed = TokenEmbedding(zh_vocab, D, MAX_LEN)<br>        <span class="hljs-variable language_">self</span>.encoder  = Encoder(N, D, HEADS, DFF)<br>        <span class="hljs-variable language_">self</span>.decoder  = Decoder(N, D, HEADS, DFF)<br>        <span class="hljs-variable language_">self</span>.out_proj = nn.Linear(D, zh_vocab)     <span class="hljs-comment"># 隐藏表示 → 中文词表分数</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">encode</span>(<span class="hljs-params">self, src</span>):<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.encoder(<span class="hljs-variable language_">self</span>.en_embed(src))<br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">decode</span>(<span class="hljs-params">self, tgt_prefix, enc_out</span>):<br>        h = <span class="hljs-variable language_">self</span>.decoder(<span class="hljs-variable language_">self</span>.zh_embed(tgt_prefix), enc_out)<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.out_proj(h)                   <span class="hljs-comment"># logits，还没 softmax</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, src, tgt_prefix</span>):<br>        <span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.decode(tgt_prefix, <span class="hljs-variable language_">self</span>.encode(src))<br></code></pre></td></tr></table></figure>
+<p><code>out_proj</code> 那一层就是「从向量到词」的出口：不管 <code>D</code> 是多少，最后必须映射到中文词表大小，每个数字对应一个候选词的分数（logits）。</p>
+<h2 id="训练"><a href="#训练" class="headerlink" title="训练"></a>训练</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python">model = MiniTransformer(<span class="hljs-built_in">len</span>(en_itos), <span class="hljs-built_in">len</span>(zh_itos))<br>loss_fn = nn.CrossEntropyLoss()<br>optimizer = torch.optim.Adam(model.parameters(), lr=<span class="hljs-number">1e-3</span>)<br><br><span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">100</span>):<br>    random.shuffle(pairs)<br>    <span class="hljs-keyword">for</span> en, zh <span class="hljs-keyword">in</span> pairs:<br>        ids_en = torch.tensor([en_stoi[w] <span class="hljs-keyword">for</span> w <span class="hljs-keyword">in</span> en.split()])<br>        ids_zh = torch.tensor([zh_stoi[<span class="hljs-string">&quot;&lt;BOS&gt;&quot;</span>]] + [zh_stoi[w] <span class="hljs-keyword">for</span> w <span class="hljs-keyword">in</span> zh.split()] + [zh_stoi[<span class="hljs-string">&quot;&lt;EOS&gt;&quot;</span>]])<br><br>        src   = ids_en                    <span class="hljs-comment"># 输入</span><br>        inp   = ids_zh[:-<span class="hljs-number">1</span>]               <span class="hljs-comment"># decoder 输入：去掉 &lt;EOS&gt;</span><br>        label = ids_zh[<span class="hljs-number">1</span>:]                <span class="hljs-comment"># 标签：去掉 &lt;BOS&gt;</span><br><br>        logits = model(src, inp)          <span class="hljs-comment"># [T, zh_vocab]</span><br>        loss = loss_fn(logits, label)<br><br>        optimizer.zero_grad()<br>        loss.backward()<br>        optimizer.step()<br></code></pre></td></tr></table></figure>
+<p>因为 8 个句子实在太简单，<strong>十几轮之后损失就掉到 0.001 量级</strong>，交叉熵几乎为零，说明每个位置都预测对了。</p>
+<h2 id="推理：从-BOS-一个个往外挤"><a href="#推理：从-BOS-一个个往外挤" class="headerlink" title="推理：从 BOS 一个个往外挤"></a>推理：从 BOS 一个个往外挤</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@torch.no_grad()</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">translate</span>(<span class="hljs-params">sentence, max_steps=<span class="hljs-number">16</span></span>):<br>    model.<span class="hljs-built_in">eval</span>()<br>    src = torch.tensor([en_stoi[w] <span class="hljs-keyword">for</span> w <span class="hljs-keyword">in</span> sentence.split()])<br>    enc_out = model.encode(src)<br><br>    prefix = [zh_stoi[<span class="hljs-string">&quot;&lt;BOS&gt;&quot;</span>]]<br>    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(max_steps):<br>        logits = model.decode(torch.tensor(prefix), enc_out)<br>        next_id = logits[-<span class="hljs-number">1</span>].argmax().item()      <span class="hljs-comment"># 贪心：取分数最高的</span><br>        <span class="hljs-keyword">if</span> next_id == zh_stoi[<span class="hljs-string">&quot;&lt;EOS&gt;&quot;</span>]:<br>            <span class="hljs-keyword">break</span><br>        prefix.append(next_id)<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;&quot;</span>.join(zh_itos[i] <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> prefix[<span class="hljs-number">1</span>:])<br><br><span class="hljs-built_in">print</span>(translate(<span class="hljs-string">&quot;there is a table under the chair&quot;</span>))<br></code></pre></td></tr></table></figure>
+<p>两个要点：</p>
+<ul>
+<li>只用 <code>logits[-1]</code>——最后一行对应「下一个 token」。前面各行虽然也算出来了，但推理时不需要。</li>
+<li>推理要 <code>model.eval()</code> + <code>torch.no_grad()</code>：不记梯度，也不需要 dropout（这里没用 dropout，但习惯要养成）。</li>
+</ul>
+<p>逐 token 打印就能看到过程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">输入 &lt;BOS&gt;          → 桌子   (99%)<br>输入 &lt;BOS&gt; 桌子     → 下面   (98%)<br>输入 ... 下面       → 有     ...<br></code></pre></td></tr></table></figure>
+<p>概率这么高是有原因的：语料只有 8 句、模型在训练集上早就过拟合了。</p>
+<h2 id="和真实实现差在哪"><a href="#和真实实现差在哪" class="headerlink" title="和真实实现差在哪"></a>和真实实现差在哪</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>差异</th>
+<th>这个实现</th>
+<th>真实训练</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>batch</td>
+<td>一次一句</td>
+<td><code>[B, N, D]</code>，多一个维度</td>
+</tr>
+<tr>
+<td>padding</td>
+<td>不需要</td>
+<td>句子补齐，另加 padding mask</td>
+</tr>
+<tr>
+<td>计算</td>
+<td>CPU 循环</td>
+<td>GPU 张量运算</td>
+</tr>
+<tr>
+<td>推理</td>
+<td>每步重算全部历史</td>
+<td>KV cache 复用</td>
+</tr>
+<tr>
+<td>词表</td>
+<td>手动切词</td>
+<td>BPE / SentencePiece</td>
+</tr>
+<tr>
+<td>规模</td>
+<td>D=32、2 层</td>
+<td>D=512+、6 层起</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>要实现 batch 版，本质上就是给几乎所有张量加一个 <code>B</code> 维，再处理 padding 的位置——麻烦，但原理没变。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ol>
+<li>整个模型就是「embedding + 位置编码 → 编码器 → 解码器 → 输出投影」四段，中间反复出现的形状是 <code>[N, D]</code>。</li>
+<li>词表负责把词变成 id，embedding 表负责把 id 变成向量，位置编码负责告诉模型「第几位」。</li>
+<li>teacher forcing 把目标序列错开一位，同一句话既是输入又是标签。</li>
+<li>多头注意力的拆分靠投影而不是切片，所以拼回来之后要再过一次线性层。</li>
+<li>解码器比编码器多两样：因果掩码（不许看未来）和交叉注意力（去查原文）。</li>
+<li>训练和推理结构一样，区别在于是否已知答案、是否累计梯度、是否逐 token 循环。</li>
+</ol>
+<blockquote>
+<p>这份代码跑通之后，就具备了读真实模型源码的基础。下一步是看 BERT、T5、GPT 怎么在「编码器 / 解码器 / 训练目标」上做不同的组合与取舍。</p>
+</blockquote>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages"><div class="footer-link" style="width: 50%;text-align:right;border-right:1px #fe2 solid"><a href="/2026/10/22/mihoyo-ai-turn-2026/">← 下一篇 米哈游的 1000 亿赌局：砍掉 AI 游戏，去手搓大模型</a></div><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/09/11/decoder-workflow/">解码器工作流程：掩码、交叉注意力，和逐 token 的代价 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E8%AF%B4%E6%B8%85%E6%A5%9A%E7%AE%80%E5%8C%96%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-number">1.</span> <span class="toc-text">先说清楚简化了什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E4%B8%AA%E7%AC%A6%E5%8F%B7%E5%85%88%E7%BA%A6%E5%AE%9A%E5%A5%BD"><span class="toc-number">2.</span> <span class="toc-text">三个符号先约定好</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E5%88%86%E5%9B%9B%E5%9D%97"><span class="toc-number">3.</span> <span class="toc-text">整体分四块</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E5%92%8C%E4%BE%9D%E8%B5%96"><span class="toc-number">4.</span> <span class="toc-text">环境和依赖</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%AD%E6%96%99%E4%B8%8E%E8%AF%8D%E8%A1%A8"><span class="toc-number">5.</span> <span class="toc-text">语料与词表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Teacher-forcing%EF%BC%9A%E6%8A%8A%E6%A0%87%E7%AD%BE%E9%94%99%E5%BC%80%E4%B8%80%E4%BD%8D"><span class="toc-number">6.</span> <span class="toc-text">Teacher forcing：把标签错开一位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81"><span class="toc-number">7.</span> <span class="toc-text">位置编码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Embedding%EF%BC%9A%E5%85%88%E4%B9%98-%E2%88%9AD-%E5%86%8D%E5%8A%A0%E4%BD%8D%E7%BD%AE"><span class="toc-number">8.</span> <span class="toc-text">Embedding：先乘 √D 再加位置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E5%8A%9B%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">9.</span> <span class="toc-text">注意力的实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E5%A4%B4%E6%B3%A8%E6%84%8F%E5%8A%9B"><span class="toc-number">10.</span> <span class="toc-text">多头注意力</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FFN%EF%BC%9A%E5%85%88%E5%8D%87%E7%BB%B4%EF%BC%8C%E5%86%8D%E9%99%8D%E7%BB%B4"><span class="toc-number">11.</span> <span class="toc-text">FFN：先升维，再降维</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%96%E7%A0%81%E5%99%A8%E7%9A%84%E4%B8%80%E5%B1%82"><span class="toc-number">12.</span> <span class="toc-text">编码器的一层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E7%A0%81%E5%99%A8%E7%9A%84%E4%B8%80%E5%B1%82"><span class="toc-number">13.</span> <span class="toc-text">解码器的一层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%8A%E5%B1%82%E5%A0%86%E8%B5%B7%E6%9D%A5"><span class="toc-number">14.</span> <span class="toc-text">把层堆起来</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%BC%E6%88%90-MiniTransformer"><span class="toc-number">15.</span> <span class="toc-text">拼成 MiniTransformer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83"><span class="toc-number">16.</span> <span class="toc-text">训练</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A8%E7%90%86%EF%BC%9A%E4%BB%8E-BOS-%E4%B8%80%E4%B8%AA%E4%B8%AA%E5%BE%80%E5%A4%96%E6%8C%A4"><span class="toc-number">17.</span> <span class="toc-text">推理：从 BOS 一个个往外挤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%92%8C%E7%9C%9F%E5%AE%9E%E5%AE%9E%E7%8E%B0%E5%B7%AE%E5%9C%A8%E5%93%AA"><span class="toc-number">18.</span> <span class="toc-text">和真实实现差在哪</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">19.</span> <span class="toc-text">小结</span></a></li></ol></div></div></aside></div></main><script defer src="/js/home-hero.js?v=20261116-perf"></script><script defer src="/js/reading-progress.js?v=20261116-perf"></script><canvas id="canvas-dust"></canvas></body></html>
