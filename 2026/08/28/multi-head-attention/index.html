@@ -1,0 +1,278 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>多头注意力：把一个 512 维空间切成八个 64 维 | NomiraX 的博客</title><meta name="keywords" content="注意力机制,Transformer,深度学习"><meta name="description" content="架构图上那三个方框写的其实是 Multi-Head Attention，不是 Self-Attention——这个缩写骗过不少人。多头的全部秘密就两件事：八套独立的投影矩阵，和切片而不是复制。 整理自 B 站视频：Muti-Head Attention：多个角度提取特征  一句话概括多头注意力就是把同一份输入用 8 套独立的 QKV 投影各算一遍注意力，再把结果拼起来——不是为了更准，是为了从更">
+<meta property="og:type" content="article">
+<meta property="og:title" content="多头注意力：把一个 512 维空间切成八个 64 维">
+<meta property="og:url" content="https://nomirax.github.io/2026/08/28/multi-head-attention/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="架构图上那三个方框写的其实是 Multi-Head Attention，不是 Self-Attention——这个缩写骗过不少人。多头的全部秘密就两件事：八套独立的投影矩阵，和切片而不是复制。 整理自 B 站视频：Muti-Head Attention：多个角度提取特征  一句话概括多头注意力就是把同一份输入用 8 套独立的 QKV 投影各算一遍注意力，再把结果拼起来——不是为了更准，是为了从更">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-08-28T03:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-20T10:54:36.001Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="Transformer">
+<meta property="article:tag" content="注意力机制">
+<meta property="article:tag" content="深度学习">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/08/28/multi-head-attention/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css?v=20261116-no-contrib"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js?v=20261116-perf"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','#home-hero-slot','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide, '#home-hero-slot': Pjax.switches.outerHTML},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div id="reading-progress" role="progressbar" aria-label="文章阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><div id="home-hero-slot"></div><div class="site-content" id="home-content"><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>多头注意力：把一个 512 维空间切成八个 64 维</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-08-28T03:00:00.000Z" id="date"> 2026-08-28</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>架构图上那三个方框写的其实是 Multi-Head Attention，不是 Self-Attention——这个缩写骗过不少人。多头的全部秘密就两件事：八套独立的投影矩阵，和切片而不是复制。</p>
+<p>整理自 B 站视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1yH8r6PEzB/">Muti-Head Attention：多个角度提取特征</a></p>
+</blockquote>
+<h2 id="一句话概括"><a href="#一句话概括" class="headerlink" title="一句话概括"></a>一句话概括</h2><p>多头注意力就是把同一份输入用 8 套独立的 QKV 投影各算一遍注意力，再把结果拼起来——<strong>不是为了更准，是为了从更多角度去看</strong>。</p>
+<h2 id="先看架构图上的字"><a href="#先看架构图上的字" class="headerlink" title="先看架构图上的字"></a>先看架构图上的字</h2><p>上一节讲的注意力，公式是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">Attention(Q, K, V) = softmax(Q·Kᵀ / √d_k) · V<br></code></pre></td></tr></table></figure>
+<p>其中 <code>W_Q</code>、<code>W_K</code>、<code>W_V</code> 是训练出来的投影矩阵。</p>
+<p>但如果仔细看 Transformer 论文的架构图，方框里写的不是 “Self-Attention”，而是 <strong>“Multi-Head Attention”</strong>。注意力只是缩写，实际跑的是多头版本。</p>
+<h2 id="八个头，就是八套投影"><a href="#八个头，就是八套投影" class="headerlink" title="八个头，就是八套投影"></a>八个头，就是八套投影</h2><p>所谓多头，就是同一份输入、同一套运算，<strong>做 8 遍</strong>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">head_i = Attention(X·W_Q^i, X·W_K^i, X·W_V^i)<br>MultiHead(X) = Concat(head_1, ..., head_8) · W_O<br></code></pre></td></tr></table></figure>
+<p>要点有三：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>事实</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>每个头有自己的一套 WQ/WK/WV</td>
+<td>参数互不共享，独立训练</td>
+</tr>
+<tr>
+<td>每个头做的事和单头注意力完全一样</td>
+<td>没有新公式</td>
+</tr>
+<tr>
+<td>最后 Concat 再乘一个 W_O</td>
+<td>拼接不够，还要融合</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>论文里是 8 个头；模型做大以后可以更多，这只是一个可调的超参。</p>
+<h2 id="为什么要多个角度"><a href="#为什么要多个角度" class="headerlink" title="为什么要多个角度"></a>为什么要多个角度</h2><p>一个头只有一套投影，意味着<strong>所有类型的关系都被挤在同一个表示空间里</strong>。</p>
+<p>还是那句话：</p>
+<blockquote>
+<p>The animal didn’t cross the street because <strong>it</strong> was too tired.</p>
+</blockquote>
+<p>在同一个 <code>it</code> 上，不同的头可能盯住完全不同的东西：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>头</th>
+<th>最关注</th>
+<th>学到的关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>head 1</td>
+<td><code>animal</code></td>
+<td>指代关系——it 到底指谁</td>
+</tr>
+<tr>
+<td>head 2</td>
+<td><code>was</code></td>
+<td>句法结构——这个句子怎么组织起来的</td>
+</tr>
+<tr>
+<td>head 3</td>
+<td><code>tired</code></td>
+<td>语义——这个动物最后是什么状态</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>三件事都重要，但一个 64 维的投影空间塞不下全部的区分度。多套投影等于多套坐标系，各自在自己的空间里判断「谁和我最相关」，最后把三种理解拼起来。</p>
+<h2 id="和-CNN-是同一个思路"><a href="#和-CNN-是同一个思路" class="headerlink" title="和 CNN 是同一个思路"></a>和 CNN 是同一个思路</h2><p>这种做法在深度学习里并不新鲜，最典型的就是卷积：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>CNN</th>
+<th>多头注意力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>一份输入</td>
+<td>一张特征图</td>
+<td>一个序列矩阵</td>
+</tr>
+<tr>
+<td>多套参数</td>
+<td>多个卷积核</td>
+<td>多个 head</td>
+</tr>
+<tr>
+<td>每组只提取一类特征</td>
+<td>是</td>
+<td>是</td>
+</tr>
+<tr>
+<td>最后合并</td>
+<td>通道拼接</td>
+<td>Concat + 线性层</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一个卷积核只认一种模式，一层里放多个核就能同时看纹理、看边缘、看颜色。多头注意力是同一个逻辑换个场景。</p>
+<p><strong>但别过度解读。</strong> 说某个 head 负责「指代」、某个负责「语法」，那是人类的比喻；实际训练出来的每个头学什么，是模型内部自己决定的，不一定有可解释的人类语义。上面那张表是为了讲清楚「不同空间看不同东西」，不是论文结论。</p>
+<h2 id="参数量怎么没爆：是切片，不是复制"><a href="#参数量怎么没爆：是切片，不是复制" class="headerlink" title="参数量怎么没爆：是切片，不是复制"></a>参数量怎么没爆：是切片，不是复制</h2><p>这是最容易误解的地方。8 个头并不意味着要把 512 维变成 <code>8 × 512</code>，那样计算量直接翻八倍。</p>
+<p>Transformer 的做法是<strong>切分表示空间</strong>：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>单头</th>
+<th>8 头</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>d_model</td>
+<td>512</td>
+<td>512</td>
+</tr>
+<tr>
+<td>每个头看到的维度</td>
+<td>512</td>
+<td>64（= 512 / 8）</td>
+</tr>
+<tr>
+<td>每个头算出的注意力矩阵</td>
+<td>N × N</td>
+<td>N × N</td>
+</tr>
+<tr>
+<td>输出拼接后</td>
+<td>512</td>
+<td>8 × 64 = 512</td>
+</tr>
+<tr>
+<td>再乘 W_O</td>
+<td>—</td>
+<td>变回 512</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>关键点：</p>
+<ul>
+<li><strong>序列长度没变</strong>。原来是 N 个 token，现在还是 N 个 token，注意力矩阵仍然是 N×N，描述的还是这 N 个位置彼此的关系。</li>
+<li><strong>变的是每个 token 的表示维度</strong>，从 512 变成每个头 64。</li>
+<li>每个头只看 64 维，相当于把「一次看全部」换成「八次各看一部分」，总计算量和单头基本持平——这本身就是一种并行。</li>
+</ul>
+<p>维度账本可以这么记：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs text">输入          [batch, N, 512]<br>拆头          [batch, N, 8, 64]     # 512 = 8 × 64<br>换轴          [batch, 8, N, 64]     # 把 head 挪到前面，方便并行<br>每个头算注意力  [batch, 8, N, N]     # 注意力矩阵还是 N×N<br>加权求和      [batch, 8, N, 64]<br>拼接          [batch, N, 512]<br>乘 W_O        [batch, N, 512]        # 维度不变，信息融合<br></code></pre></td></tr></table></figure>
+<p>写代码时维度变来变去，看着吓人，其实就是 <code>512 → 8×64 → 拼接回 512</code> 这一趟来回。</p>
+<h2 id="拼接之后为什么还要乘-W-O"><a href="#拼接之后为什么还要乘-W-O" class="headerlink" title="拼接之后为什么还要乘 W_O"></a>拼接之后为什么还要乘 W_O</h2><p>理论上拼完就有 512 维了，为什么还要多做一次线性变换？</p>
+<p>因为 Concat 只是<strong>把八段并排放</strong>：第 1–64 维是 head 1 的信息，第 65–128 维是 head 2 的，各管各的区间。段与段之间没有任何交互，信息并没有真正混在一起。</p>
+<p>加一层 <code>W_O</code> 之后，输出的<strong>每一个维度都同时组合了所有 head 的信息</strong>，八种理解这才被融合成一个整体。</p>
+<p>打个比方：Concat 是把八份报告装订成一册，<code>W_O</code> 才是把它们综合成一份结论。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ol>
+<li>架构图方框里写的是 Multi-Head Attention，单头只是它的一个组成部分。</li>
+<li>8 个头 = 8 套独立的 WQ/WK/WV，各自算一遍普通注意力。</li>
+<li>目的是多角度看同一句话：指代、句法、语义可以分别在不同空间里被捕捉。</li>
+<li>计算量没翻八倍的关键是<strong>切片</strong>：512 维切成 8 个 64 维，而不是复制八份。</li>
+<li>注意力矩阵始终是 N×N，变的是 token 的表示维度，不是序列长度。</li>
+<li>Concat 只是并排，<code>W_O</code> 才让八路信息真正融合。</li>
+</ol>
+<blockquote>
+<p>到这里，注意力的三种形态和多头都通了，架构图基本能自己讲出来了。下一节是位置编码——那个「加号」到底加了什么。</p>
+</blockquote>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages"><div class="footer-link" style="width: 50%;text-align:right;border-right:1px #fe2 solid"><a href="/2026/10/22/mihoyo-ai-turn-2026/">← 下一篇 米哈游的 1000 亿赌局：砍掉 AI 游戏，去手搓大模型</a></div><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/08/22/transformer-attention-in-detail/">注意力到底在算些什么：三种注意力，一套公式 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%A6%82%E6%8B%AC"><span class="toc-number">1.</span> <span class="toc-text">一句话概括</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E7%9C%8B%E6%9E%B6%E6%9E%84%E5%9B%BE%E4%B8%8A%E7%9A%84%E5%AD%97"><span class="toc-number">2.</span> <span class="toc-text">先看架构图上的字</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E4%B8%AA%E5%A4%B4%EF%BC%8C%E5%B0%B1%E6%98%AF%E5%85%AB%E5%A5%97%E6%8A%95%E5%BD%B1"><span class="toc-number">3.</span> <span class="toc-text">八个头，就是八套投影</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%A4%9A%E4%B8%AA%E8%A7%92%E5%BA%A6"><span class="toc-number">4.</span> <span class="toc-text">为什么要多个角度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%92%8C-CNN-%E6%98%AF%E5%90%8C%E4%B8%80%E4%B8%AA%E6%80%9D%E8%B7%AF"><span class="toc-number">5.</span> <span class="toc-text">和 CNN 是同一个思路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E9%87%8F%E6%80%8E%E4%B9%88%E6%B2%A1%E7%88%86%EF%BC%9A%E6%98%AF%E5%88%87%E7%89%87%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%A4%8D%E5%88%B6"><span class="toc-number">6.</span> <span class="toc-text">参数量怎么没爆：是切片，不是复制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%BC%E6%8E%A5%E4%B9%8B%E5%90%8E%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E8%A6%81%E4%B9%98-W-O"><span class="toc-number">7.</span> <span class="toc-text">拼接之后为什么还要乘 W_O</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">8.</span> <span class="toc-text">小结</span></a></li></ol></div></div></aside></div></main><script defer src="/js/home-hero.js?v=20261116-perf"></script><script defer src="/js/reading-progress.js?v=20261116-perf"></script><canvas id="canvas-dust"></canvas></body></html>
