@@ -1,0 +1,879 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MiniMax-H3 底层原理（二）：帧网格、Token 打包与 50 层 DiT | NomiraX 的博客</title><meta name="keywords" content="MiniMax H3,视频生成,ComfyUI,模型架构,扩散模型"><meta name="description" content="第一集讲的是「节点怎么接」：把参考图、提示词、采样器串起来就能出片。这一集讲的是「张量怎么变」：一段 15 秒的 24 fps 视频，最后是怎么变成 109,574 行 token，进入一条 50 层的 Transformer，再在 20 步里一步步降噪回来的。 这一篇的写法跟前一篇不同：每个数字都标注来源。来源只有三类——MiniMax 官方的 HuggingFace 模型卡、ComfyUI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MiniMax-H3 底层原理（二）：帧网格、Token 打包与 50 层 DiT">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/22/minimax-h3-internals/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="第一集讲的是「节点怎么接」：把参考图、提示词、采样器串起来就能出片。这一集讲的是「张量怎么变」：一段 15 秒的 24 fps 视频，最后是怎么变成 109,574 行 token，进入一条 50 层的 Transformer，再在 20 步里一步步降噪回来的。 这一篇的写法跟前一篇不同：每个数字都标注来源。来源只有三类——MiniMax 官方的 HuggingFace 模型卡、ComfyUI">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-01.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-02.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-03.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-04.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-05.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-06.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-07.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-08.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-09.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3b-fig-10.png">
+<meta property="article:published_time" content="2026-11-21T19:20:00.000Z">
+<meta property="article:modified_time" content="2026-11-21T19:00:50.534Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="ComfyUI">
+<meta property="article:tag" content="MiniMax H3">
+<meta property="article:tag" content="扩散模型">
+<meta property="article:tag" content="模型架构">
+<meta property="article:tag" content="视频生成">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nomirax.github.io/images/h3b-fig-01.png"><link rel="canonical" href="https://nomirax.github.io/2026/11/22/minimax-h3-internals/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css?v=20261116-no-contrib"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js?v=20261116-perf"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','#home-hero-slot','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide, '#home-hero-slot': Pjax.switches.outerHTML},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div id="reading-progress" role="progressbar" aria-label="文章阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><div id="home-hero-slot"></div><div class="site-content" id="home-content"><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>MiniMax-H3 底层原理（二）：帧网格、Token 打包与 50 层 DiT</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-21T19:20:00.000Z" id="date"> 2026-11-22</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>第一集讲的是「节点怎么接」：把参考图、提示词、采样器串起来就能出片。这一集讲的是「张量怎么变」：一段 15 秒的 24 fps 视频，最后是怎么变成 109,574 行 token，进入一条 50 层的 Transformer，再在 20 步里一步步降噪回来的。</p>
+<p>这一篇的写法跟前一篇不同：<strong>每个数字都标注来源</strong>。来源只有三类——MiniMax 官方的 HuggingFace 模型卡、ComfyUI 里的 H3 参考实现（逐行可查）、以及第三方论文里的实测值。视频里讲得对的地方我照用，讲得和实现不一致的地方，我在第十一节单列了一张校对表，并且把第一篇里沿用的一个错误一并改正。</p>
+<p>一句话版本：<strong>这模型慢，不是因为它有 50 层，而是因为它的序列有 10 万行；它贵，不是因为采样器复杂，而是因为每一步都要把这 10 万行过一遍 33B 参数。</strong></p>
+</blockquote>
+<span id="more"></span>
+<h2 id="一、先把口径说清楚"><a href="#一、先把口径说清楚" class="headerlink" title="一、先把口径说清楚"></a>一、先把口径说清楚</h2><h3 id="1-1-为什么是这三份资料"><a href="#1-1-为什么是这三份资料" class="headerlink" title="1.1 为什么是这三份资料"></a>1.1 为什么是这三份资料</h3><p>H3 没有发布传统的 arXiv 技术报告。翻遍 arXiv，标题里带 MiniMax-H3 的只有衍生工作（H3Remover、Spark-H3、PCRG 等），没有官方那篇。所以「官方技术文章」在当下只能落到两份材料上：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>来源</th>
+<th>性质</th>
+<th>本文用它验证什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://huggingface.co/MiniMaxAI/MiniMax-H3">HuggingFace 模型卡</a></td>
+<td>MiniMax 官方发布，含架构章节</td>
+<td>VAE 压缩率、通道数、编码器层数、Transformer 规模、输入输出规格</td>
+</tr>
+<tr>
+<td>ComfyUI 参考实现（<code>comfy/ldm/minimax/</code>）</td>
+<td>可执行代码，逐行可复查</td>
+<td>每个张量的形状、层数、头数、阈值、公式</td>
+</tr>
+<tr>
+<td>第三方实测论文</td>
+<td>独立复现</td>
+<td>权重实际参数量（20.38B）、常用工作点（1344×768、20 步）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>代码路径我在正文里都写全了（例如 <code>comfy/ldm/minimax/vae.py</code>），你可以直接在自己的 ComfyUI 安装目录里打开对照。这是我敢把每个数字写死的底气：<strong>数字不是从视频里抄的，是从实现里读的。</strong></p>
+<h3 id="1-2-三个词"><a href="#1-2-三个词" class="headerlink" title="1.2 三个词"></a>1.2 三个词</h3><p>后面会反复出现三个词，先把它们钉死：</p>
+<ul>
+<li><strong>像素帧</strong>：解码器输出的一帧画面，<code>1344 × 768</code> 个像素。</li>
+<li><strong>latent 位置</strong>：VAE 编码后的一个时间切片，空间上是 <code>84 × 48</code>，带 24 个通道。</li>
+<li><strong>token（行）</strong>：真正进入 Transformer 的一行向量。一个视频 token 由 <code>1 × 2 × 2</code> 个 latent 单元拼成（<code>24 × 4 = 96</code> 维），一个音频 token 就是某个声道某个时刻的 32 维特征。</li>
+</ul>
+<p>「15 秒视频 = 109,574 个 token」这句话里，109,574 是<strong>行数</strong>，不是像素数，也不是参数量。</p>
+<h3 id="1-3-记号"><a href="#1-3-记号" class="headerlink" title="1.3 记号"></a>1.3 记号</h3><ul>
+<li><code>B</code> = 十亿参数；权重按 bf16 计，<strong>每参数 2 字节</strong>。</li>
+<li><code>S</code> = packed 序列的行数（token 数）。</li>
+<li><code>σ</code> = 采样器给出的噪声强度，从 1 降到 0。</li>
+<li>所有「×」都是精确乘法，不是约数；只有明确写「≈」的地方才是估算。</li>
+</ul>
+<h2 id="二、帧网格：为什么是-17N-5，而不是-4N-1"><a href="#二、帧网格：为什么是-17N-5，而不是-4N-1" class="headerlink" title="二、帧网格：为什么是 17N+5，而不是 4N+1"></a>二、帧网格：为什么是 17N+5，而不是 4N+1</h2><h3 id="2-1-视频规格"><a href="#2-1-视频规格" class="headerlink" title="2.1 视频规格"></a>2.1 视频规格</h3><p>官方给的输出规格是：<strong>4–15 秒、24 FPS、32 kHz 立体声</strong>，短边默认 768 像素。</p>
+<p>24 fps 下：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>时长</th>
+<th>帧数</th>
+<th>ComfyUI 默认</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>约 5 秒</td>
+<td>124</td>
+<td><code>length</code> 默认值</td>
+</tr>
+<tr>
+<td>约 8.7 秒</td>
+<td>209</td>
+<td></td>
+</tr>
+<tr>
+<td>约 11.5 秒</td>
+<td>277</td>
+<td></td>
+</tr>
+<tr>
+<td>15.08 秒</td>
+<td>362</td>
+<td>训练覆盖的上界</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>参考实现的节点注释写得很直白：<code>trained range is ~124-362, longer is untested</code>。所以「15 秒」在帧数上是 362 帧，<code>362 ÷ 24 = 15.08 s</code>。</p>
+<h3 id="2-2-为什么帧数必须是-17N-5"><a href="#2-2-为什么帧数必须是-17N-5" class="headerlink" title="2.2 为什么帧数必须是 17N+5"></a>2.2 为什么帧数必须是 17N+5</h3><p>视频 VAE 是 <strong>temporally causal</strong>（时间因果）的：它按 clip 处理，一个 clip 固定 <strong>17 帧</strong>，编成 <strong>5 个 latent 位置</strong>。参考实现里两个常量说明了这件事：</p>
+<ul>
+<li><code>vae.py</code> 的 <code>clip_length = 17</code></li>
+<li><code>vae.py</code> 的 <code>token_drop = 3</code>（每个 clip 末尾丢 3 个 token）</li>
+</ul>
+<p>一个 17 帧的 clip 里，第 1 帧单独占一个位置，后面 16 帧每 4 帧压成 1 个位置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">1 + 4 × 4 = 5 个 latent 位置<br></code></pre></td></tr></table></figure>
+<p>也就是 <code>FRAME_PER_TOKEN = (1, 4, 4, 4, 4)</code>——这个元组在 <code>model.py</code> 里原样存在，它的含义是「第 0 个位置对应 1 帧，第 1 到第 4 个位置各对应 4 帧」。</p>
+<p>于是整段帧数 <code>n</code> 到 latent 位置数 <code>L</code> 的换算是一个闭式（<code>comfy_extras/nodes_minimax_h3.py</code> 的 <code>video_latent_t</code>）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">L(n) = 2                                  (n ≤ 5)<br>L(n) = ((n − 5) // 17) × 5 + 2            (n &gt; 5)<br></code></pre></td></tr></table></figure>
+<p>代入四个常用帧数：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>帧数 n</th>
+<th>计算</th>
+<th>latent 位置 L</th>
+<th>有效时间压缩</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>124</td>
+<td>(119 // 17) × 5 + 2 = 7 × 5 + 2</td>
+<td><strong>37</strong></td>
+<td>3.35×</td>
+</tr>
+<tr>
+<td>209</td>
+<td>(204 // 17) × 5 + 2 = 12 × 5 + 2</td>
+<td><strong>62</strong></td>
+<td>3.37×</td>
+</tr>
+<tr>
+<td>277</td>
+<td>(272 // 17) × 5 + 2 = 16 × 5 + 2</td>
+<td><strong>82</strong></td>
+<td>3.38×</td>
+</tr>
+<tr>
+<td>362</td>
+<td>(357 // 17) × 5 + 2 = 21 × 5 + 2</td>
+<td><strong>107</strong></td>
+<td>3.38×</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>这里有个容易误读的点：模型卡说时间压缩是 <strong>4×</strong>，但 362 帧只压到 107 个位置，比值是 3.38，不是 4。两个说法都对，只是层级不同：4× 是 <strong>clip 内部</strong>的压缩率，整段的平均压缩率还要算上「每个 clip 末尾丢 3 个 token」和边界帧，所以永远小于 4。写文章、算显存，要用 107 这个真实值，不要用 <code>362 ÷ 4 = 90.5</code>。</p>
+<p class='item-img' data-src='/images/h3b-fig-01.png'><img src="/images/h3b-fig-01.png" alt="帧网格：17 帧一个 clip，编成 5 个 latent 位置；362 帧 = 21 个 clip + 5 帧尾巴 = 107 个位置"></p>
+<p><em>图 1：帧数不是简单的除以 4。17 帧一个 clip，clip 内 1 + 4×4，整段再补尾巴。</em></p>
+<h2 id="三、视频-VAE：f16t4d24-与再一次-patchify"><a href="#三、视频-VAE：f16t4d24-与再一次-patchify" class="headerlink" title="三、视频 VAE：f16t4d24 与再一次 patchify"></a>三、视频 VAE：f16t4d24 与再一次 patchify</h2><h3 id="3-1-模型卡给的名字"><a href="#3-1-模型卡给的名字" class="headerlink" title="3.1 模型卡给的名字"></a>3.1 模型卡给的名字</h3><p>官方对 H3-VisualVAE 的描述是：spatial compression <strong>16×</strong>、temporal compression <strong>4×</strong>、<strong>24</strong> latent channels，记作 <strong>f16t4d24</strong>。</p>
+<p>参考实现里能对上：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>值</th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>space_down</code></td>
+<td><code>(2,2,2,2,1,1)</code> → 16×</td>
+<td><code>comfy/ldm/minimax/vae.py</code></td>
+</tr>
+<tr>
+<td><code>time_down</code></td>
+<td><code>(1,2,2,1,1,1)</code> → 4×</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>z_channels</code> / <code>embed_dim</code></td>
+<td>24</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>ch_mult</code></td>
+<td><code>(1,2,2,4,4,8)</code></td>
+<td>同上</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>解码侧不是对称的卷积堆，而是一个 <strong>ViT 式解码器</strong>：<code>num_layers=36</code>、<code>heads=32</code>、<code>dim_head=64</code>、<code>patch_size=16</code>、<code>patch_size_t=4</code>、输入 24 通道。模型卡里对应一句「我们额外训练了一个 ViT 解码器，以降低解码成本并提升重建质量」。</p>
+<h3 id="3-2-送进-Transformer-之前还要再-patchify-一次"><a href="#3-2-送进-Transformer-之前还要再-patchify-一次" class="headerlink" title="3.2 送进 Transformer 之前还要再 patchify 一次"></a>3.2 送进 Transformer 之前还要再 patchify 一次</h3><p>这是第二集最关键的一步，也是很多人看漏的一步：<strong>VAE 的 16× 不是终点</strong>。视觉 latent 在进入 Transformer 前还要按 <code>1 × 2 × 2</code>（沿 t、h、w）再 patchify 一次。</p>
+<p>于是：</p>
+<ul>
+<li>空间等效下采样变成 <code>16 × 2 = 32×</code></li>
+<li>时间仍是 <code>4×</code>（patch 的 t 维是 1）</li>
+<li>每个 token 的维度是 <code>24 × 1 × 2 × 2 = 96</code></li>
+</ul>
+<p>在参考实现里这就是一行乘法（<code>model.py</code> 第 497 行）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">video_patch_dim = latents_dim * pt * ph * pw   <span class="hljs-comment"># 24 * 1 * 2 * 2 = 96</span><br></code></pre></td></tr></table></figure>
+<h3 id="3-3-一张-15-秒-16-9-视频到底有多少-token"><a href="#3-3-一张-15-秒-16-9-视频到底有多少-token" class="headerlink" title="3.3 一张 15 秒 16:9 视频到底有多少 token"></a>3.3 一张 15 秒 16:9 视频到底有多少 token</h3><p>以官方 16:9 画布 <code>1344 × 768</code>、362 帧为例：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>计算</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>latent 空间尺寸</td>
+<td>1344 / 16，768 / 16</td>
+<td>84 × 48</td>
+</tr>
+<tr>
+<td>每帧 latent 单元数</td>
+<td>84 × 48</td>
+<td>4,032</td>
+</tr>
+<tr>
+<td>patchify 后每帧 token 数</td>
+<td>(84/2) × (48/2) = 42 × 24</td>
+<td><strong>1,008</strong></td>
+</tr>
+<tr>
+<td>视频 total token 数</td>
+<td>1,008 × 107</td>
+<td><strong>107,856</strong></td>
+</tr>
+<tr>
+<td>每个 token 维度</td>
+<td>24 × 4</td>
+<td><strong>96</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>107,856 行 × 96 维</strong>，这就是视频那一半的序列长度。注意它和像素数没有线性关系：换成 720p 会少一半左右，换成 2K 会翻倍，但都远大于「一万」这个量级。H3 的慢，根子在这里。</p>
+<h3 id="3-4-一个必须说清的画布问题"><a href="#3-4-一个必须说清的画布问题" class="headerlink" title="3.4 一个必须说清的画布问题"></a>3.4 一个必须说清的画布问题</h3><p>视频里用的例子是 <code>1376 × 768</code>。这个尺寸有两个问题：</p>
+<ol>
+<li><code>1376 × 768 = 1,056,768</code> 像素，<strong>超过</strong>参考实现节点里写死的面积上限 <code>768 × 1344 = 1,032,192</code>（<code>nodes_minimax_h3.py</code> 的 <code>MAX_PIXELS</code>）。</li>
+<li>官方 16:9 的原生画布是 <strong><code>1344 × 768</code></strong>（第三方论文里的工作点也是 1344×768）。</li>
+</ol>
+<p>按 1376 算，会是 <code>107 × 24 × 43 = 110,424</code> 个 token，和 107,856 差 2,568 行。差异不大，但既然要求「每个数据都要对得上」，本文统一用 <strong>1344 × 768</strong>，并在需要时把 1376 的数字作为对照列出。</p>
+<p class='item-img' data-src='/images/h3b-fig-02.png'><img src="/images/h3b-fig-02.png" alt="视频侧三级压缩：像素 → latent → token"></p>
+<p><em>图 2：16× 空间压缩、4× 时间压缩、24 通道，再 patchify 1×2×2，最后每个 token 96 维。</em></p>
+<h2 id="四、音频-VAE：32-kHz-进，40-Hz-出"><a href="#四、音频-VAE：32-kHz-进，40-Hz-出" class="headerlink" title="四、音频 VAE：32 kHz 进，40 Hz 出"></a>四、音频 VAE：32 kHz 进，40 Hz 出</h2><h3 id="4-1-五级下采样，hop-是-800"><a href="#4-1-五级下采样，hop-是-800" class="headerlink" title="4.1 五级下采样，hop 是 800"></a>4.1 五级下采样，hop 是 800</h3><p>模型卡说：每个声道把 <strong>32 kHz</strong> 音频压成时间率 <strong>40 Hz</strong> 的 latent 序列。40 Hz 意味着每 25 毫秒一个位置，也就是 <strong>800 个采样点</strong>。</p>
+<p>参考实现里的 strides 是 <code>(2, 4, 4, 5, 5)</code>（<code>comfy/ldm/minimax/audio_vae.py</code>）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">2 × 4 × 4 × 5 × 5 = 800<br>32,000 ÷ 800 = 40 Hz<br></code></pre></td></tr></table></figure>
+<p>这里要纠正一个流传很广的说法：「5 级下采样，每级 2×」。如果每级都是 2×，<code>2^5 = 32</code>，位置率会变成 <code>32,000 ÷ 32 = 1,000 Hz</code>，与 40 Hz 差 25 倍。正确的读法是：<strong>五级、级率不等、总 hop = 800</strong>。</p>
+<h3 id="4-2-立体声是「两条独立的序列」"><a href="#4-2-立体声是「两条独立的序列」" class="headerlink" title="4.2 立体声是「两条独立的序列」"></a>4.2 立体声是「两条独立的序列」</h3><p>H3-AudioVAE 对左右声道用同一套编解码器，但<strong>各自独立处理</strong>，解码后再组合。所以打包时，一个时间位置不是 1 行，而是 <strong>2 行</strong>（左声道一行、右声道一行），每行 32 维。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">15.08 s × 40 Hz = 603.3 → round = 603 个位置<br>603 × 2 声道 = 1,206 个音频 token（每 token 32 维）<br></code></pre></td></tr></table></figure>
+<p>参考实现里的 <code>pack_audio</code> 注释写得很明确：<code>[B, C=32, ch=2, T] -&gt; [ch*T, 32] channel-major</code>，先排完 603 个左声道，再排 603 个右声道。</p>
+<h3 id="4-3-音频这一半有多小"><a href="#4-3-音频这一半有多小" class="headerlink" title="4.3 音频这一半有多小"></a>4.3 音频这一半有多小</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>视频</th>
+<th>音频</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>token 行数</td>
+<td>107,856</td>
+<td>1,206</td>
+</tr>
+<tr>
+<td>每行维度</td>
+<td>96</td>
+<td>32</td>
+</tr>
+<tr>
+<td>占比</td>
+<td>98.9%</td>
+<td>1.1%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>这就是为什么「H3 是音视频联合模型」并不代表音频很贵：音频 token 只占 1.1%，但它是原生立体声、40 Hz，和画面严格对齐。</p>
+<p class='item-img' data-src='/images/h3b-fig-03.png'><img src="/images/h3b-fig-03.png" alt="音频侧：32 kHz → 40 Hz latent → 立体声 token"></p>
+<p><em>图 3：strides 是 (2,4,4,5,5)，总 hop 800；603 个位置 × 2 声道 = 1,206 个 token。</em></p>
+<h2 id="五、打包序列：一条序列里塞下四种东西"><a href="#五、打包序列：一条序列里塞下四种东西" class="headerlink" title="五、打包序列：一条序列里塞下四种东西"></a>五、打包序列：一条序列里塞下四种东西</h2><h3 id="5-1-顺序是固定的"><a href="#5-1-顺序是固定的" class="headerlink" title="5.1 顺序是固定的"></a>5.1 顺序是固定的</h3><p><code>comfy/ldm/minimax/model.py</code> 的文件头注释直接写了打包顺序：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">[text | cond rows | audio | video]        # t2va / fl2va<br>[text | reference blocks | audio | video] # ref2va<br></code></pre></td></tr></table></figure>
+<p>注意 <strong>audio 在 video 前面</strong>。这不是理论推导出来的顺序，是实现里 <code>PackedLayout</code> 拼装 segment 的顺序：先文本、再条件/参考块、再音频目标、最后视频目标。它影响两件事：位置编码的连续性，以及注意力补丁（chunk、稀疏注意力）按段落切分的边界。</p>
+<h3 id="5-2-每段的长度"><a href="#5-2-每段的长度" class="headerlink" title="5.2 每段的长度"></a>5.2 每段的长度</h3><p>以「512 个文本 token、无参考文件、1344×768、362 帧」为例：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>段</th>
+<th>行数</th>
+<th>每行维度</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>text</td>
+<td>512（示例值）</td>
+<td>5,376</td>
+<td>Qwen3-VL-32B 第 50 层隐状态，经投影与 TokenRefiner</td>
+</tr>
+<tr>
+<td>参考块</td>
+<td>0</td>
+<td>—</td>
+<td>ref2va 时按图片/视频/音频块依次插入</td>
+</tr>
+<tr>
+<td>audio</td>
+<td>1,206</td>
+<td>32</td>
+<td>603 位置 × 2 声道</td>
+</tr>
+<tr>
+<td>video</td>
+<td>107,856</td>
+<td>96</td>
+<td>107 位置 × 1,008</td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td><strong>109,574</strong></td>
+<td>—</td>
+<td>每行进入 Transformer 前都投影到 5,376</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>文本那 512 是示例，不是规格；实际由提示词长度决定。但即使文本有 2,000 行，占比也不到 2%——<strong>序列长度基本由视频 token 决定</strong>。</p>
+<h3 id="5-3-每个-token-带着自己的「时间」"><a href="#5-3-每个-token-带着自己的「时间」" class="headerlink" title="5.3 每个 token 带着自己的「时间」"></a>5.3 每个 token 带着自己的「时间」</h3><p>同一层里，不同段的 token 走的是<strong>不同的时间步</strong>：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>段</th>
+<th>时间步 t</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>video</td>
+<td><code>1 − σ_video</code></td>
+</tr>
+<tr>
+<td>audio</td>
+<td><code>1 − σ_audio</code></td>
+</tr>
+<tr>
+<td>text</td>
+<td>跟随 video</td>
+</tr>
+<tr>
+<td>参考/条件行</td>
+<td>钉在 <code>0.999</code>（视觉）或 <code>1.0</code>（音频）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>参考实现里 <code>seg_t</code> 这个字典就是这个映射。所以「一个 timestep 喂给整个模型」是不准确的：喂进去的是 σ，模型内部按段换算出各段自己的 t，再算 AdaLN 调制。</p>
+<p class='item-img' data-src='/images/h3b-fig-04.png'><img src="/images/h3b-fig-04.png" alt="打包序列：一条序列装下文本、参考、音频、视频"></p>
+<p><em>图 4：109,574 行里 107,856 行是视频。audio 段排在 video 段前面，是实现的拼装顺序。</em></p>
+<h2 id="六、输入投影与位置编码"><a href="#六、输入投影与位置编码" class="headerlink" title="六、输入投影与位置编码"></a>六、输入投影与位置编码</h2><h3 id="6-1-三种宽度，一个-hidden"><a href="#6-1-三种宽度，一个-hidden" class="headerlink" title="6.1 三种宽度，一个 hidden"></a>6.1 三种宽度，一个 hidden</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>输入</th>
+<th>原始维度</th>
+<th>投影</th>
+<th>目标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>视频 patch</td>
+<td>96</td>
+<td><code>video_patch_proj</code></td>
+<td>5,376</td>
+</tr>
+<tr>
+<td>音频位置</td>
+<td>32</td>
+<td><code>audio_patch_proj</code></td>
+<td>5,376</td>
+</tr>
+<tr>
+<td>文本</td>
+<td>5,120（Qwen3-VL-32B 隐状态）</td>
+<td><code>condition_proj</code> + TokenRefiner × 2 层</td>
+<td>5,376</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>文本这条路上多一个组件：<strong>TokenRefiner</strong>（2 层，每层 RMSNorm + 自注意力 + SwiGLU，没有 AdaLN）。它的作用是先把「给语言模型用的」隐状态，调成「给扩散模型用的」条件向量。这也解释了为什么文本 token 不是简单地线性投影就完事。</p>
+<h3 id="6-2-文本编码器不是-CLIP"><a href="#6-2-文本编码器不是-CLIP" class="headerlink" title="6.2 文本编码器不是 CLIP"></a>6.2 文本编码器不是 CLIP</h3><p>这是本篇必须明确的一处更正：<strong>H3 的文本编码器是 Qwen3-VL-32B，取第 50 层 hidden states</strong>（模型卡原文）。不是 CLIP，不是 T5，也不是双塔。</p>
+<p>第一篇里我沿用了视频的说法写成「CLIP 编码 positive」，那是错的。正确表述是：positive 由 Qwen3-VL-32B 第 50 层隐状态（5,120 维）经投影与 TokenRefiner 得到。对工作流的影响：换提示词、加参考图，走的是同一个 32B 的 VLM，所以它对「图里有什么」的理解远强于 CLIP——这也是 H3 在参考生视频上明显更强的原因之一。</p>
+<h3 id="6-3-3D-MM-RoPE：48-个频率，旋转-96-维"><a href="#6-3-3D-MM-RoPE：48-个频率，旋转-96-维" class="headerlink" title="6.3 3D MM-RoPE：48 个频率，旋转 96 维"></a>6.3 3D MM-RoPE：48 个频率，旋转 96 维</h3><p>位置编码是三维多模态 RoPE，坐标是 <code>(t, h, w)</code>。参考实现的构造（<code>model.py</code> 的 <code>rope_freqs</code>）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">每轴 16 个频率 × 3 轴 = 48 个频率<br>复制成 96 维（split-half 的写法：cat(half, half)）<br>作用在 head_dim = 128 的前 96 维，后 32 维不旋转<br></code></pre></td></tr></table></figure>
+<p>时间轴的坐标不是帧号，而是 <strong>latent 时间</strong>：像素帧坐标乘 <code>5.0/3.0</code>（<code>FRAME_RESCALE</code>）映射过去，每个 latent 位置跨 1、4、4、4、4 帧（对应 <code>FRAME_PER_TOKEN</code>）。这个 5/3 不是随手取的常数，它让「17 帧一个 clip」的离散网格在连续坐标上仍然均匀——否则相邻 clip 之间会出现位置跳变。</p>
+<p class='item-img' data-src='/images/h3b-fig-05.png'><img src="/images/h3b-fig-05.png" alt="三类输入如何变成同一条 5,376 维序列"></p>
+<p><em>图 5：96 / 32 / 5,120 三条路都投到 5,376；文本多走 2 层 TokenRefiner；位置编码是 48 频率、96 维旋转。</em></p>
+<h2 id="七、一层-DiT-里到底有什么"><a href="#七、一层-DiT-里到底有什么" class="headerlink" title="七、一层 DiT 里到底有什么"></a>七、一层 DiT 里到底有什么</h2><h3 id="7-1-形状账"><a href="#7-1-形状账" class="headerlink" title="7.1 形状账"></a>7.1 形状账</h3><p><code>model.py</code> 里 <code>MiniMaxH3Model.__init__</code> 的默认值，就是这一层的全部规格：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>形状</th>
+<th>参数量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>qkv_proj</code></td>
+<td>5,376 → 21,504（56 头 × 128 维 × 3）</td>
+<td>115.6 M</td>
+</tr>
+<tr>
+<td><code>out_proj</code></td>
+<td>7,168 → 5,376</td>
+<td>38.5 M</td>
+</tr>
+<tr>
+<td><code>fc1</code></td>
+<td>5,376 → 28,672（门控翻倍）</td>
+<td>154.1 M</td>
+</tr>
+<tr>
+<td><code>fc2</code></td>
+<td>14,336 → 5,376</td>
+<td>77.1 M</td>
+</tr>
+<tr>
+<td>两个 RMSNorm + q/k norm</td>
+<td>—</td>
+<td>可忽略</td>
+</tr>
+<tr>
+<td><strong>主干小计</strong></td>
+<td></td>
+<td><strong>≈ 385 M</strong></td>
+</tr>
+<tr>
+<td><code>AdalnProj</code></td>
+<td>2,688 → 6 × 5,376 × 3</td>
+<td><strong>260.1 M</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>这里有两个反直觉的点，值得单独说：</p>
+<p><strong>第一，qkv 的宽度不是 hidden。</strong> 56 个头 × 128 维 = <strong>7,168</strong>，比 hidden 的 5,376 大。所以 <code>qkv_proj</code> 是 <code>5,376 → 21,504</code>，<code>out_proj</code> 是 <code>7,168 → 5,376</code>。多头注意力的「头维度总和」可以大于 hidden，这在 DiT 里不常见，但 H3 就是这么设的。</p>
+<p><strong>第二，AdaLN 的参数量比 FFN 还大。</strong> 一个 <code>Linear(2688 → 6 × 5376 × 3)</code> 就是 2.6 亿参数，比整层主干的一半还多。它输出 6 个调制量（shift/scale/gate 各两份，分别给 attn 和 FFN），并对 3 种模态各出一套。</p>
+<h3 id="7-2-前向怎么走"><a href="#7-2-前向怎么走" class="headerlink" title="7.2 前向怎么走"></a>7.2 前向怎么走</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">x ← x + gate_attn · Attn( norm(x) )      # q/k 先做 RMSNorm(128)，再叠 RoPE<br>x ← x + gate_ffn  · FFN( norm(x) )       # SwiGLU: 5376 → 28672 → 14336 → 5376<br></code></pre></td></tr></table></figure>
+<p>调制量不是标量，是<strong>逐段不同</strong>的向量：同一个 batch 里 text 段用 text 那一套、audio 段用 audio 那一套、video 段用 video 那一套（<code>_mod_scale_shift</code> 按 segment 切片应用）。这就是「单流 Transformer 却没有模态专属结构」的实现方式——注意力层和 FFN 层对所有模态共享，模态差异全部塞进输入输出层和 AdaLN 分支。</p>
+<p class='item-img' data-src='/images/h3b-fig-06.png'><img src="/images/h3b-fig-06.png" alt="一层 DiT 的形状账"></p>
+<p><em>图 6：主干 385 M + AdaLN 260 M。21,504 = 56×128×3，28,672 = 14,336×2。</em></p>
+<h2 id="八、50-层叠起来：33B-里只有-20B-要显存"><a href="#八、50-层叠起来：33B-里只有-20B-要显存" class="headerlink" title="八、50 层叠起来：33B 里只有 20B 要显存"></a>八、50 层叠起来：33B 里只有 20B 要显存</h2><h3 id="8-1-手算一遍"><a href="#8-1-手算一遍" class="headerlink" title="8.1 手算一遍"></a>8.1 手算一遍</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>计算</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单层主干</td>
+<td>385.35 M</td>
+<td>385.35 M</td>
+</tr>
+<tr>
+<td>单层 AdaLN</td>
+<td>2,688 × 6 × 5,376 × 3</td>
+<td>260.11 M</td>
+</tr>
+<tr>
+<td>单层合计</td>
+<td></td>
+<td>645.46 M</td>
+</tr>
+<tr>
+<td>50 层主干</td>
+<td>385.35 × 50</td>
+<td>19.27 B</td>
+</tr>
+<tr>
+<td>50 层 AdaLN</td>
+<td>260.11 × 50</td>
+<td>13.01 B</td>
+</tr>
+<tr>
+<td>文本 TokenRefiner</td>
+<td>2 层主干（无 AdaLN）</td>
+<td>0.77 B</td>
+</tr>
+<tr>
+<td>文本投影 + 输入输出层</td>
+<td>5,120×5,376 等</td>
+<td>≈ 0.06 B</td>
+</tr>
+<tr>
+<td><strong>总计</strong></td>
+<td></td>
+<td><strong>≈ 33.1 B</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>这个手算结果和官方口径对得上：模型卡说 <strong>33B dense、单流</strong>，其中<strong>约 13B 在 AdaLN 相关分支</strong>。手算的 AdaLN 是 13.01B，误差在 0.1% 量级。</p>
+<h3 id="8-2-为什么推理只需要-20B"><a href="#8-2-为什么推理只需要-20B" class="headerlink" title="8.2 为什么推理只需要 20B"></a>8.2 为什么推理只需要 20B</h3><p>模型卡紧接着说了一句关键的话：<strong>AdaLN 的调制输出可以预计算并缓存，所以纯推理部署不需要加载这部分参数。</strong></p>
+<p>于是：</p>
+<ul>
+<li>官方总量：33B（含 AdaLN）</li>
+<li>推理实际加载：33.1 − 13.01 ≈ <strong>20.1B</strong></li>
+<li>第三方实测：<strong>20.38B</strong>（arXiv 2611.00843，从 Q8 safetensors header 数的）</li>
+</ul>
+<p>20.1 与 20.38 的 0.28B 差值来自时间嵌入、PDD 头等边角，属于正常范围。<strong>结论：看到「20B 视频模型」和「33B 参数」都不算错，但要知道它们说的是两件事。</strong> 显存预算按 20.38B × 每参数字节算，再加激活。</p>
+<p class='item-img' data-src='/images/h3b-fig-07.png'><img src="/images/h3b-fig-07.png" alt="50 层与参数构成"></p>
+<p><em>图 7：33.1B 总量 = 20.1B 主干（要加载）+ 13.0B AdaLN（可缓存）。</em></p>
+<h2 id="九、采样：两套噪声表，一步加法"><a href="#九、采样：两套噪声表，一步加法" class="headerlink" title="九、采样：两套噪声表，一步加法"></a>九、采样：两套噪声表，一步加法</h2><h3 id="9-1-视频和音频各有自己的-shift"><a href="#9-1-视频和音频各有自己的-shift" class="headerlink" title="9.1 视频和音频各有自己的 shift"></a>9.1 视频和音频各有自己的 shift</h3><p>采样的 σ 表不是线性的，而是 flow matching 的 shift 形式（<code>model.py</code> 的 <code>time_shift_sigma</code>）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">σ = s · b / (1 + (s − 1) · b),   b ∈ [0, 1]<br></code></pre></td></tr></table></figure>
+<ul>
+<li>视频：<code>s = 12.0</code></li>
+<li>音频：<code>s = 3.0</code></li>
+</ul>
+<p>在同一个 <code>b = 0.5</code> 处：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>流</th>
+<th>σ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>video</td>
+<td>12 × 0.5 / (1 + 11 × 0.5) = <strong>0.923</strong></td>
+</tr>
+<tr>
+<td>audio</td>
+<td>3 × 0.5 / (1 + 2 × 0.5) = <strong>0.750</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>shift 越大，σ 在高噪声区停留越久。所以视频的步数更多花在「结构」阶段（先定轮廓），音频更多花在「细节」阶段（音色、齿音、瞬态）。这不是调出来的偏好，是两个模态的噪声尺度本来就不一样。</p>
+<h3 id="9-2-采样器里还藏了一个缩放"><a href="#9-2-采样器里还藏了一个缩放" class="headerlink" title="9.2 采样器里还藏了一个缩放"></a>9.2 采样器里还藏了一个缩放</h3><p>因为两条流共用一条 σ 表，采样器会把音频 latent 临时乘上 <code>σ_v / σ_a</code>（<code>ModelSamplingAV.audio_scale</code>），让它在数值上跟视频 latent 同尺度；模型内部的 <code>forward</code> 再把这个缩放还原，并把预测的 velocity 换算回音频自己的尺度。</p>
+<p>这也是「LATENT 里视频和音频拼在一起」的具体实现：<strong>拼的是同一条序列，但两条流各自带着自己的噪声表，靠一个闭式换算粘在一起。</strong></p>
+<h3 id="9-3-Euler-一步只有一次加法"><a href="#9-3-Euler-一步只有一次加法" class="headerlink" title="9.3 Euler 一步只有一次加法"></a>9.3 Euler 一步只有一次加法</h3><p>k-diffusion 的 Euler 实现（<code>comfy/k_diffusion/sampling.py</code>）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">d = (x − x̂₀) / σ          # 换算成 velocity<br>x ← x + d · (σ_next − σ)  # 一次乘加<br></code></pre></td></tr></table></figure>
+<p>20 步就是 20 次加法。真正的成本在 <code>d</code> 里：每一步都要把 109,574 行 token 过一遍 50 层 DiT。所以「采样器开销」这个词在 H3 上几乎不成立——<strong>采样器的开销是 0，模型的开销是全部</strong>。</p>
+<p>另外，官方发布的 checkpoint 是 <strong>CFG-distilled</strong> 的，20 步不需要 classifier-free guidance 的双前向。这就是为什么 20 步能出片，而同样的步数在非蒸馏模型上通常不够。</p>
+<p class='item-img' data-src='/images/h3b-fig-08.png'><img src="/images/h3b-fig-08.png" alt="两套 σ 表与一步加法"></p>
+<p><em>图 8：video shift 12、audio shift 3；b=0.5 处分别是 0.923 与 0.750。每步只做一次加法，贵的是 DiT 前向。</em></p>
+<h2 id="十、显存到底被谁吃掉"><a href="#十、显存到底被谁吃掉" class="headerlink" title="十、显存到底被谁吃掉"></a>十、显存到底被谁吃掉</h2><h3 id="10-1-FFN-的中间激活"><a href="#10-1-FFN-的中间激活" class="headerlink" title="10.1 FFN 的中间激活"></a>10.1 FFN 的中间激活</h3><p>以 <code>S = 107,856</code> 行、bf16（每元素 2 字节）计，SwiGLU 第一层的输出缓冲是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs plaintext">107,856 × 28,672 × 2 B = 6.18 GB<br></code></pre></td></tr></table></figure>
+<p>这还只是<strong>一层、一次</strong>的中间量，不含权重、不含注意力。H3 之所以「第一步就 OOM」，通常不是注意力先炸，而是这个 FFN 缓冲先炸。</p>
+<p><code>MiniMaxChunkFeedForward</code>（KJNodes）的做法是按 token 轴切块：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>chunks</th>
+<th>每块行数</th>
+<th>峰值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1（不切）</td>
+<td>107,856</td>
+<td>6.18 GB</td>
+</tr>
+<tr>
+<td>2</td>
+<td>53,928</td>
+<td>3.09 GB</td>
+</tr>
+<tr>
+<td>4</td>
+<td>26,964</td>
+<td><strong>1.55 GB</strong></td>
+</tr>
+<tr>
+<td>8</td>
+<td>13,482</td>
+<td>0.77 GB</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>阈值参数是 <code>seq_threshold = 4096</code>：只有 <code>S &gt; 4096</code> 才切，<strong>等于 4096 仍走一次原生 FFN</strong>。H3 的实际序列几乎永远大于这个阈值（10 万行 vs 4 千行），所以这个节点在 H3 上基本总是生效。</p>
+<p>关键性质：<strong>输出与未打补丁完全一致</strong>。因为 FFN 对每行独立计算，逐行切块不改变任何一行的结果，量化也是逐 token 的。省的是峰值，不是精度。</p>
+<h3 id="10-2-注意力按头分组"><a href="#10-2-注意力按头分组" class="headerlink" title="10.2 注意力按头分组"></a>10.2 注意力按头分组</h3><p><code>MiniMaxLowVRAMAttention</code> 用 <code>head_chunks = 4</code>，把 56 个头分成最多 4 组（每组 14 头），每组单独调用同一个 attention 后端。头与头之间本来就不交互，所以数学上等价，只改变内核调用形状和浮点舍入。</p>
+<p>代价是调用次数变多：4 组就是 4 次内核启动。省的是单次内核的临时量，不是 FLOPs。</p>
+<h3 id="10-3-两个节点都只改峰值"><a href="#10-3-两个节点都只改峰值" class="headerlink" title="10.3 两个节点都只改峰值"></a>10.3 两个节点都只改峰值</h3><p>把这两件事放在一起看：chunk 切的是 <strong>FFN 的行</strong>，头分组切的是 <strong>attention 的列</strong>。两者都不改变计算总量（FLOPs 一模一样），只改变「同一时刻要同时存在多少中间量」。这就是为什么它们能同时开，而且可以和「8 步 LoRA」「二采」叠加——前者省峰值，后者省步数/降 S。</p>
+<p class='item-img' data-src='/images/h3b-fig-09.png'><img src="/images/h3b-fig-09.png" alt="显存峰值：FFN 激活与头分组"></p>
+<p><em>图 9：6.18 GB 的 FFN 缓冲切 4 块变 1.55 GB；注意力 56 头分 4 组，输出完全一致。</em></p>
+<h2 id="十一、校对表：视频说法-vs-权威实现"><a href="#十一、校对表：视频说法-vs-权威实现" class="headerlink" title="十一、校对表：视频说法 vs 权威实现"></a>十一、校对表：视频说法 vs 权威实现</h2><p>这一节是这篇文章存在的理由。下面每一行都给出「视频怎么说」「实现/模型卡怎么说」「影响」。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>视频说法</th>
+<th>权威值（本文采用）</th>
+<th>出处</th>
+<th>影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文本编码器</td>
+<td>CLIP</td>
+<td><strong>Qwen3-VL-32B，第 50 层隐状态</strong></td>
+<td>HF 模型卡 · H3-Encoder</td>
+<td>决定提示词理解力；第一篇此处需更正</td>
+</tr>
+<tr>
+<td>16:9 画布</td>
+<td>1376 × 768</td>
+<td><strong>1344 × 768</strong>（面积上限 768×1344）</td>
+<td><code>nodes_minimax_h3.py</code></td>
+<td>token 数差 2,568 行</td>
+</tr>
+<tr>
+<td>音频时间下采样</td>
+<td>5 级，每级 2×</td>
+<td><strong>strides (2,4,4,5,5)，hop 800 → 40 Hz</strong></td>
+<td><code>audio_vae.py</code></td>
+<td>若每级 2× 会得 1000 Hz，与 40 Hz 矛盾</td>
+</tr>
+<tr>
+<td>latent 通道数</td>
+<td>24</td>
+<td><strong>24</strong>（f16t4d24）</td>
+<td>HF 模型卡</td>
+<td>一致</td>
+</tr>
+<tr>
+<td>DiT 规模</td>
+<td>50 层 / 56 头</td>
+<td><strong>50 层，56 头 × 128 维</strong></td>
+<td><code>model.py</code></td>
+<td>一致；注意 inner 7168 ≠ hidden 5376</td>
+</tr>
+<tr>
+<td>采样步数</td>
+<td>20 步</td>
+<td><strong>20 步</strong>（KSampler 默认）</td>
+<td><code>nodes_custom_sampler.py</code></td>
+<td>一致</td>
+</tr>
+<tr>
+<td>token 数变化</td>
+<td>输入输出不变</td>
+<td><strong>输出同型，只换数值</strong>（v = 降噪方向）</td>
+<td><code>model.py</code> forward</td>
+<td>一致</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>三处修正里，第一处（CLIP → Qwen3-VL-32B）是概念性错误，会误导对提示词的理解；第二处是示例值与节点上限不一致，不影响机制但影响算数；第三处是把「五级下采样」脑补成「每级 2×」，会让整个音频 token 数错 25 倍。<strong>这三处都不影响视频的教学价值，但影响你按它算显存。</strong></p>
+<p class='item-img' data-src='/images/h3b-fig-10.png'><img src="/images/h3b-fig-10.png" alt="严谨校对表"></p>
+<p><em>图 10：七行对照。绿色为一致，红色为需修正，琥珀为口径差异。</em></p>
+<h2 id="十二、把数字用在选型上"><a href="#十二、把数字用在选型上" class="headerlink" title="十二、把数字用在选型上"></a>十二、把数字用在选型上</h2><h3 id="12-1-三条结论"><a href="#12-1-三条结论" class="headerlink" title="12.1 三条结论"></a>12.1 三条结论</h3><ol>
+<li><strong>序列长度由分辨率和时长共同决定</strong>：<code>S ≈ (W/32) × (H/32) × L(帧数)</code>。1344×768 的 15 秒是 107,856 行；换成 5 秒是 37,296 行；换成 720p 大约减半。</li>
+<li><strong>S 决定两件事</strong>：FFN 峰值（<code>S × 28,672 × 2 B</code>）和注意力成本（<code>S²</code>）。前者用 chunk 降，后者用头分组降，都不改 FLOPs。</li>
+<li><strong>20 步是默认，不是上限</strong>：官方 20 步配 CFG 蒸馏；少于 20 步要靠步数 LoRA 补（第一篇讲的加速层 1），多于 20 步通常没有收益。</li>
+</ol>
+<h3 id="12-2-和第一集的对应关系"><a href="#12-2-和第一集的对应关系" class="headerlink" title="12.2 和第一集的对应关系"></a>12.2 和第一集的对应关系</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>第一篇的加速层</th>
+<th>这一篇里对应什么</th>
+<th>改的是</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>步数 LoRA（8/4 步）</td>
+<td>采样循环的 20 步</td>
+<td><code>steps</code></td>
+</tr>
+<tr>
+<td>二采 / SelfLift</td>
+<td>前段小分辨率 → S 变小</td>
+<td><code>S</code> 随时间变化</td>
+</tr>
+<tr>
+<td>sigma 微调（Sigma Refiner）</td>
+<td>两套 σ 表 + 末步过渡</td>
+<td>σ 曲线</td>
+</tr>
+<tr>
+<td>chunk / 头分组 / 稀疏注意力</td>
+<td>FFN 行切块、attention 头分组</td>
+<td>显存峰值</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>换句话说：<strong>第一篇的四个旋钮，在这一篇里全部对应到具体的张量或循环上。</strong> 看懂这一篇，再回看那些工作流，你会知道每个节点动的是哪一行代码。</p>
+<h2 id="十三、术语速查"><a href="#十三、术语速查" class="headerlink" title="十三、术语速查"></a>十三、术语速查</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>17N+5</td>
+<td>帧数网格：每个 clip 17 帧，全段补到 17N+5</td>
+</tr>
+<tr>
+<td>5N+2</td>
+<td>latent 位置网格：17N+5 帧对应 5N+2 个位置</td>
+</tr>
+<tr>
+<td>f16t4d24</td>
+<td>VAE 规格缩写：空间 16×、时间 4×、24 通道</td>
+</tr>
+<tr>
+<td>patchify 1×2×2</td>
+<td>进 Transformer 前的二次切块，等效空间 32×</td>
+</tr>
+<tr>
+<td>packed sequence</td>
+<td>文本/参考/音频/视频拼成的单条序列</td>
+</tr>
+<tr>
+<td>TokenRefiner</td>
+<td>文本条件的 2 层精炼器，无 AdaLN</td>
+</tr>
+<tr>
+<td>AdaLN</td>
+<td>自适应层归一化，6 个调制量 × 3 模态；13B 参数在此</td>
+</tr>
+<tr>
+<td>shift</td>
+<td>flow matching 的 σ 表偏移，视频 12、音频 3</td>
+</tr>
+<tr>
+<td>v̂</td>
+<td>模型预测的 velocity，<code>(x − x̂₀)/σ</code></td>
+</tr>
+<tr>
+<td>CFG-distilled</td>
+<td>已蒸馏掉无分类器引导，20 步无需双前向</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="十四、参考"><a href="#十四、参考" class="headerlink" title="十四、参考"></a>十四、参考</h2><ul>
+<li>视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1WNWz61ES4">抽丝剥茧！全网最详细讲解 MiniMaxH3 底层工作原理【第二集】</a>（UP：SevnFading）</li>
+<li>官方模型卡：<a target="_blank" rel="noopener" href="https://huggingface.co/MiniMaxAI/MiniMax-H3">MiniMaxAI/MiniMax-H3</a>（架构章节、VAE 规格、输入限制）</li>
+<li>参考实现：ComfyUI 的 <code>comfy/ldm/minimax/model.py</code>、<code>vae.py</code>、<code>audio_vae.py</code>，以及 <code>comfy_extras/nodes_minimax_h3.py</code></li>
+<li>第三方实测：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2611.00843">Running a 20B Video Diffusion Transformer on Consumer Hardware (arXiv 2611.00843)</a>——20.38B 参数量与 768×1344 工作点</li>
+<li>工作点佐证：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2611.24256">Spark-H3 (arXiv 2611.24256)</a>——1344×768、20 步的示例</li>
+<li>显存节点：KJNodes 的 <code>MiniMaxChunkFeedForward</code> 与 <code>MiniMaxLowVRAMAttention</code></li>
+<li>同系列：<a href="/2026/11/22/minimax-h3-workflow-anatomy/">MiniMax-H3 工作流拆解：显存、速度、画质的三重取舍</a>——那篇讲怎么接、为什么快；这篇讲每一步到底在算什么。</li>
+</ul>
+<blockquote>
+<p>最后记一句：<strong>一个视频模型慢，先看它的序列长度，再看它的层数。</strong> 50 层只是把账乘了 50 遍，真正让账变大的是那 107,856 行。</p>
+</blockquote>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/22/minimax-h3-workflow-anatomy/">MiniMax-H3 工作流拆解：显存、速度、画质的三重取舍 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%85%88%E6%8A%8A%E5%8F%A3%E5%BE%84%E8%AF%B4%E6%B8%85%E6%A5%9A"><span class="toc-number">1.</span> <span class="toc-text">一、先把口径说清楚</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E8%BF%99%E4%B8%89%E4%BB%BD%E8%B5%84%E6%96%99"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 为什么是这三份资料</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E4%B8%89%E4%B8%AA%E8%AF%8D"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 三个词</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E8%AE%B0%E5%8F%B7"><span class="toc-number">1.3.</span> <span class="toc-text">1.3 记号</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%B8%A7%E7%BD%91%E6%A0%BC%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF-17N-5%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-4N-1"><span class="toc-number">2.</span> <span class="toc-text">二、帧网格：为什么是 17N+5，而不是 4N+1</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E8%A7%86%E9%A2%91%E8%A7%84%E6%A0%BC"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 视频规格</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%B8%A7%E6%95%B0%E5%BF%85%E9%A1%BB%E6%98%AF-17N-5"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 为什么帧数必须是 17N+5</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E8%A7%86%E9%A2%91-VAE%EF%BC%9Af16t4d24-%E4%B8%8E%E5%86%8D%E4%B8%80%E6%AC%A1-patchify"><span class="toc-number">3.</span> <span class="toc-text">三、视频 VAE：f16t4d24 与再一次 patchify</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E6%A8%A1%E5%9E%8B%E5%8D%A1%E7%BB%99%E7%9A%84%E5%90%8D%E5%AD%97"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 模型卡给的名字</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E9%80%81%E8%BF%9B-Transformer-%E4%B9%8B%E5%89%8D%E8%BF%98%E8%A6%81%E5%86%8D-patchify-%E4%B8%80%E6%AC%A1"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 送进 Transformer 之前还要再 patchify 一次</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E4%B8%80%E5%BC%A0-15-%E7%A7%92-16-9-%E8%A7%86%E9%A2%91%E5%88%B0%E5%BA%95%E6%9C%89%E5%A4%9A%E5%B0%91-token"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 一张 15 秒 16:9 视频到底有多少 token</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E4%B8%80%E4%B8%AA%E5%BF%85%E9%A1%BB%E8%AF%B4%E6%B8%85%E7%9A%84%E7%94%BB%E5%B8%83%E9%97%AE%E9%A2%98"><span class="toc-number">3.4.</span> <span class="toc-text">3.4 一个必须说清的画布问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%9F%B3%E9%A2%91-VAE%EF%BC%9A32-kHz-%E8%BF%9B%EF%BC%8C40-Hz-%E5%87%BA"><span class="toc-number">4.</span> <span class="toc-text">四、音频 VAE：32 kHz 进，40 Hz 出</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E4%BA%94%E7%BA%A7%E4%B8%8B%E9%87%87%E6%A0%B7%EF%BC%8Chop-%E6%98%AF-800"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 五级下采样，hop 是 800</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E7%AB%8B%E4%BD%93%E5%A3%B0%E6%98%AF%E3%80%8C%E4%B8%A4%E6%9D%A1%E7%8B%AC%E7%AB%8B%E7%9A%84%E5%BA%8F%E5%88%97%E3%80%8D"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 立体声是「两条独立的序列」</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E9%9F%B3%E9%A2%91%E8%BF%99%E4%B8%80%E5%8D%8A%E6%9C%89%E5%A4%9A%E5%B0%8F"><span class="toc-number">4.3.</span> <span class="toc-text">4.3 音频这一半有多小</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%89%93%E5%8C%85%E5%BA%8F%E5%88%97%EF%BC%9A%E4%B8%80%E6%9D%A1%E5%BA%8F%E5%88%97%E9%87%8C%E5%A1%9E%E4%B8%8B%E5%9B%9B%E7%A7%8D%E4%B8%9C%E8%A5%BF"><span class="toc-number">5.</span> <span class="toc-text">五、打包序列：一条序列里塞下四种东西</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E9%A1%BA%E5%BA%8F%E6%98%AF%E5%9B%BA%E5%AE%9A%E7%9A%84"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 顺序是固定的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E6%AF%8F%E6%AE%B5%E7%9A%84%E9%95%BF%E5%BA%A6"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 每段的长度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E6%AF%8F%E4%B8%AA-token-%E5%B8%A6%E7%9D%80%E8%87%AA%E5%B7%B1%E7%9A%84%E3%80%8C%E6%97%B6%E9%97%B4%E3%80%8D"><span class="toc-number">5.3.</span> <span class="toc-text">5.3 每个 token 带着自己的「时间」</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E8%BE%93%E5%85%A5%E6%8A%95%E5%BD%B1%E4%B8%8E%E4%BD%8D%E7%BD%AE%E7%BC%96%E7%A0%81"><span class="toc-number">6.</span> <span class="toc-text">六、输入投影与位置编码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E4%B8%89%E7%A7%8D%E5%AE%BD%E5%BA%A6%EF%BC%8C%E4%B8%80%E4%B8%AA-hidden"><span class="toc-number">6.1.</span> <span class="toc-text">6.1 三种宽度，一个 hidden</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E6%96%87%E6%9C%AC%E7%BC%96%E7%A0%81%E5%99%A8%E4%B8%8D%E6%98%AF-CLIP"><span class="toc-number">6.2.</span> <span class="toc-text">6.2 文本编码器不是 CLIP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-3D-MM-RoPE%EF%BC%9A48-%E4%B8%AA%E9%A2%91%E7%8E%87%EF%BC%8C%E6%97%8B%E8%BD%AC-96-%E7%BB%B4"><span class="toc-number">6.3.</span> <span class="toc-text">6.3 3D MM-RoPE：48 个频率，旋转 96 维</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E4%B8%80%E5%B1%82-DiT-%E9%87%8C%E5%88%B0%E5%BA%95%E6%9C%89%E4%BB%80%E4%B9%88"><span class="toc-number">7.</span> <span class="toc-text">七、一层 DiT 里到底有什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-%E5%BD%A2%E7%8A%B6%E8%B4%A6"><span class="toc-number">7.1.</span> <span class="toc-text">7.1 形状账</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-%E5%89%8D%E5%90%91%E6%80%8E%E4%B9%88%E8%B5%B0"><span class="toc-number">7.2.</span> <span class="toc-text">7.2 前向怎么走</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%8150-%E5%B1%82%E5%8F%A0%E8%B5%B7%E6%9D%A5%EF%BC%9A33B-%E9%87%8C%E5%8F%AA%E6%9C%89-20B-%E8%A6%81%E6%98%BE%E5%AD%98"><span class="toc-number">8.</span> <span class="toc-text">八、50 层叠起来：33B 里只有 20B 要显存</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#8-1-%E6%89%8B%E7%AE%97%E4%B8%80%E9%81%8D"><span class="toc-number">8.1.</span> <span class="toc-text">8.1 手算一遍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-2-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%8E%A8%E7%90%86%E5%8F%AA%E9%9C%80%E8%A6%81-20B"><span class="toc-number">8.2.</span> <span class="toc-text">8.2 为什么推理只需要 20B</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E9%87%87%E6%A0%B7%EF%BC%9A%E4%B8%A4%E5%A5%97%E5%99%AA%E5%A3%B0%E8%A1%A8%EF%BC%8C%E4%B8%80%E6%AD%A5%E5%8A%A0%E6%B3%95"><span class="toc-number">9.</span> <span class="toc-text">九、采样：两套噪声表，一步加法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-%E8%A7%86%E9%A2%91%E5%92%8C%E9%9F%B3%E9%A2%91%E5%90%84%E6%9C%89%E8%87%AA%E5%B7%B1%E7%9A%84-shift"><span class="toc-number">9.1.</span> <span class="toc-text">9.1 视频和音频各有自己的 shift</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-%E9%87%87%E6%A0%B7%E5%99%A8%E9%87%8C%E8%BF%98%E8%97%8F%E4%BA%86%E4%B8%80%E4%B8%AA%E7%BC%A9%E6%94%BE"><span class="toc-number">9.2.</span> <span class="toc-text">9.2 采样器里还藏了一个缩放</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-3-Euler-%E4%B8%80%E6%AD%A5%E5%8F%AA%E6%9C%89%E4%B8%80%E6%AC%A1%E5%8A%A0%E6%B3%95"><span class="toc-number">9.3.</span> <span class="toc-text">9.3 Euler 一步只有一次加法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E6%98%BE%E5%AD%98%E5%88%B0%E5%BA%95%E8%A2%AB%E8%B0%81%E5%90%83%E6%8E%89"><span class="toc-number">10.</span> <span class="toc-text">十、显存到底被谁吃掉</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#10-1-FFN-%E7%9A%84%E4%B8%AD%E9%97%B4%E6%BF%80%E6%B4%BB"><span class="toc-number">10.1.</span> <span class="toc-text">10.1 FFN 的中间激活</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-2-%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%8C%89%E5%A4%B4%E5%88%86%E7%BB%84"><span class="toc-number">10.2.</span> <span class="toc-text">10.2 注意力按头分组</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-3-%E4%B8%A4%E4%B8%AA%E8%8A%82%E7%82%B9%E9%83%BD%E5%8F%AA%E6%94%B9%E5%B3%B0%E5%80%BC"><span class="toc-number">10.3.</span> <span class="toc-text">10.3 两个节点都只改峰值</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%A0%A1%E5%AF%B9%E8%A1%A8%EF%BC%9A%E8%A7%86%E9%A2%91%E8%AF%B4%E6%B3%95-vs-%E6%9D%83%E5%A8%81%E5%AE%9E%E7%8E%B0"><span class="toc-number">11.</span> <span class="toc-text">十一、校对表：视频说法 vs 权威实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E6%8A%8A%E6%95%B0%E5%AD%97%E7%94%A8%E5%9C%A8%E9%80%89%E5%9E%8B%E4%B8%8A"><span class="toc-number">12.</span> <span class="toc-text">十二、把数字用在选型上</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#12-1-%E4%B8%89%E6%9D%A1%E7%BB%93%E8%AE%BA"><span class="toc-number">12.1.</span> <span class="toc-text">12.1 三条结论</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-2-%E5%92%8C%E7%AC%AC%E4%B8%80%E9%9B%86%E7%9A%84%E5%AF%B9%E5%BA%94%E5%85%B3%E7%B3%BB"><span class="toc-number">12.2.</span> <span class="toc-text">12.2 和第一集的对应关系</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%9C%AF%E8%AF%AD%E9%80%9F%E6%9F%A5"><span class="toc-number">13.</span> <span class="toc-text">十三、术语速查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E5%8F%82%E8%80%83"><span class="toc-number">14.</span> <span class="toc-text">十四、参考</span></a></li></ol></div></div></aside></div></main><script defer src="/js/home-hero.js?v=20261116-perf"></script><script defer src="/js/reading-progress.js?v=20261116-perf"></script><canvas id="canvas-dust"></canvas></body></html>
