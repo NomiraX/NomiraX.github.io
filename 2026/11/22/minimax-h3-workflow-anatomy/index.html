@@ -1,0 +1,503 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MiniMax-H3 工作流拆解：显存、速度、画质的三重取舍 | NomiraX 的博客</title><meta name="keywords" content="MiniMax H3,视频生成,ComfyUI,工作流"><meta name="description" content="社区里的 H3 工作流一天一个版本，名字越起越长，但改动其实只发生在四个地方：走几步、每一步算多大的图、sigma 怎么收尾、模型本身怎么算。看懂这四个旋钮，任何一条新工作流你都能一眼拆开。 这篇笔记按 BV1Cq4h6aERN 这条视频的讲解顺序重写了一遍，补上了节点名、数据流和我自己的成本核算。九张示意图覆盖了从官方 Ref2VA 到低显存兼容版的全部环节。 一句话版本：官方 20 步是画质">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MiniMax-H3 工作流拆解：显存、速度、画质的三重取舍">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/22/minimax-h3-workflow-anatomy/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="社区里的 H3 工作流一天一个版本，名字越起越长，但改动其实只发生在四个地方：走几步、每一步算多大的图、sigma 怎么收尾、模型本身怎么算。看懂这四个旋钮，任何一条新工作流你都能一眼拆开。 这篇笔记按 BV1Cq4h6aERN 这条视频的讲解顺序重写了一遍，补上了节点名、数据流和我自己的成本核算。九张示意图覆盖了从官方 Ref2VA 到低显存兼容版的全部环节。 一句话版本：官方 20 步是画质">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-01.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-02.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-03.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-04.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-05.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-06.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-07.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-08.png">
+<meta property="og:image" content="https://nomirax.github.io/images/h3-fig-09.png">
+<meta property="article:published_time" content="2026-11-21T18:50:00.000Z">
+<meta property="article:modified_time" content="2026-11-21T18:46:34.755Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="ComfyUI">
+<meta property="article:tag" content="MiniMax H3">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="视频生成">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://nomirax.github.io/images/h3-fig-01.png"><link rel="canonical" href="https://nomirax.github.io/2026/11/22/minimax-h3-workflow-anatomy/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css?v=20261116-no-contrib"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js?v=20261116-perf"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','#home-hero-slot','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide, '#home-hero-slot': Pjax.switches.outerHTML},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div id="reading-progress" role="progressbar" aria-label="文章阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><div id="home-hero-slot"></div><div class="site-content" id="home-content"><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>MiniMax-H3 工作流拆解：显存、速度、画质的三重取舍</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-21T18:50:00.000Z" id="date"> 2026-11-22</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>社区里的 H3 工作流一天一个版本，名字越起越长，但改动其实只发生在四个地方：<strong>走几步、每一步算多大的图、sigma 怎么收尾、模型本身怎么算</strong>。看懂这四个旋钮，任何一条新工作流你都能一眼拆开。</p>
+<p>这篇笔记按 <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Cq4h6aERN">BV1Cq4h6aERN</a> 这条视频的讲解顺序重写了一遍，补上了节点名、数据流和我自己的成本核算。九张示意图覆盖了从官方 Ref2VA 到低显存兼容版的全部环节。</p>
+<p>一句话版本：<strong>官方 20 步是画质上限，4 步 LoRA 是速度下限，二采是「前半段先跑小图」的纯提速手段，模型侧加速只是让每一步更便宜。</strong></p>
+</blockquote>
+<span id="more"></span>
+<h2 id="一、先划清范围：这里讲的是参考生视频"><a href="#一、先划清范围：这里讲的是参考生视频" class="headerlink" title="一、先划清范围：这里讲的是参考生视频"></a>一、先划清范围：这里讲的是参考生视频</h2><p>H3 的官方开源权重有两个方向：<strong>FL2VA</strong>（首尾帧生视频）和 <strong>Ref2VA</strong>（参考生视频）。视频里只讲后者，理由是两条：</p>
+<ol>
+<li>首尾帧工作流<strong>本质上可以用参考生视频的工作流实现</strong>——把首帧、尾帧当作两张参考图喂进去，流程不变。</li>
+<li>真正拿 H3 做正经创作时，很少靠首尾帧：通常是<strong>先出资产参考图</strong>（角色三视图、场景概念图、道具），再用参考图 + 提示词让模型把镜头演出来。这样角色一致性、场景连续性才控得住。</li>
+</ol>
+<p>所以后面所有讨论都锚在 Ref2VA 上。你看到的「首尾帧专用工作流」，多半只是把参考节点换了个接法。</p>
+<h2 id="二、四步骨架：所有工作流都是这四步"><a href="#二、四步骨架：所有工作流都是这四步" class="headerlink" title="二、四步骨架：所有工作流都是这四步"></a>二、四步骨架：所有工作流都是这四步</h2><p>不管节点摆得多花，任何一条 H3 工作流都能拆成四步。这也是判断「某条新工作流改了什么」的坐标系。</p>
+<p class='item-img' data-src='/images/h3-fig-01.png'><img src="/images/h3-fig-01.png" alt="任何一条 H3 工作流都只有四步"></p>
+<p><em>图 1：输入 → 编码 → 采样 → 解码保存。社区的所有改动都只在这四步内部。</em></p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>干什么</th>
+<th>对应节点</th>
+<th>产出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① 输入</td>
+<td>给素材、给意图、定画幅</td>
+<td>图片输入、提示词输入、分辨率/时长设置</td>
+<td>原图、prompt、尺寸</td>
+</tr>
+<tr>
+<td>② 编码</td>
+<td>把素材翻译成模型内部语言</td>
+<td>CLIP 编码、Video VAE、Audio VAE、参考节点</td>
+<td><code>positive</code>、<code>LATENT</code></td>
+</tr>
+<tr>
+<td>③ 采样</td>
+<td>从纯噪声一步步逼近目标</td>
+<td>采样器（KSampler）</td>
+<td>干净的 latent</td>
+</tr>
+<tr>
+<td>④ 解码</td>
+<td>把 latent 还原成能看的视频</td>
+<td>VAE Decode、视频合成保存</td>
+<td>mp4</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>两个名词先记住，后面反复出现：</p>
+<ul>
+<li><strong>一采 / 二采</strong>：这里的「采」是<strong>采样</strong>，不是「采集」。一采 = 整条流程只采样一次（官方默认），二采 = 采样分两段跑（社区主流）。</li>
+<li><strong>positive</strong>：CLIP 把提示词和参考图编码成的条件向量，采样时每一步都要看它。可以把它理解成「要什么」。</li>
+</ul>
+<h2 id="三、第一步：喂料"><a href="#三、第一步：喂料" class="headerlink" title="三、第一步：喂料"></a>三、第一步：喂料</h2><p>三个输入决定了后面所有的成本：</p>
+<ul>
+<li><strong>提示词</strong>：写清楚主体、动作、镜头、光线、声音。</li>
+<li><strong>参考素材</strong>：参考图（角色/场景/风格）、参考音频（音色/台词/环境声）。</li>
+<li><strong>分辨率与时长</strong>：这两个数不是审美选择，是<strong>成本开关</strong>——它们直接决定 latent 的张量大小。</li>
+</ul>
+<p>官方 Ref2VA 的分辨率按「百万像素」（MP）计，社区常用 0.5MP 和 1.0MP 两档；时长按秒。经验上，<strong>分辨率和时长一起放大，latent 的 token 数是相乘增长的</strong>，而 attention 的代价又随 token 数超线性上涨，所以「把分辨率提一档、时长加两秒」带来的耗时增长，远不止 20%。</p>
+<h2 id="四、第二步：让模型看懂素材"><a href="#四、第二步：让模型看懂素材" class="headerlink" title="四、第二步：让模型看懂素材"></a>四、第二步：让模型看懂素材</h2><p class='item-img' data-src='/images/h3-fig-02.png'><img src="/images/h3-fig-02.png" alt="官方 Ref2VA：一条数据流，两次压缩"></p>
+<p><em>图 2：CLIP 负责「要什么」，VAE 负责「在哪画」，两者在 LATENT 里合流。</em></p>
+<h3 id="CLIP：图文-→-positive"><a href="#CLIP：图文-→-positive" class="headerlink" title="CLIP：图文 → positive"></a>CLIP：图文 → positive</h3><p><code>MiniMax-H3 Reference to Video</code> 这个节点内部，CLIP 模型先干活：把你输入的参考图和提示词一起编码成 H3 能理解的条件表示，输出 <code>positive</code>。</p>
+<p>这里有个容易忽略的点：<strong>参考图不是「贴」进画面的，它也是被编码成条件的一部分</strong>。所以参考图的质量、构图、光照会实质影响生成结果，不只是「给个长相」。</p>
+<h3 id="VAE：像素-→-latent"><a href="#VAE：像素-→-latent" class="headerlink" title="VAE：像素 → latent"></a>VAE：像素 → latent</h3><p>为什么不直接把视频像素丢给模型？因为<strong>太大、太吃显存</strong>。一段 1.0MP、几秒的视频，展开成 RGB 像素是上亿个数；DiT 每一步都要对全部 token 做 attention，根本跑不动。</p>
+<p>所以先用 Video VAE 把像素<strong>压缩</strong>成低维 latent：</p>
+<ul>
+<li>压缩 = <strong>编码</strong>（encode）</li>
+<li>解压 = <strong>解码</strong>（decode）</li>
+</ul>
+<p>latent 的具体大小由你设置的<strong>分辨率 × 时长</strong>决定。这一步是后面所有「分辨率影响速度」的根源。</p>
+<h3 id="音频也走一遍-VAE"><a href="#音频也走一遍-VAE" class="headerlink" title="音频也走一遍 VAE"></a>音频也走一遍 VAE</h3><p>如果输入了参考音频，Audio VAE 会把它编码成 <code>audio latent</code>，大小由音频时长决定。最后<strong>视频 latent 与音频 latent 拼在一起</strong>，组成大写的 <code>LATENT</code>，一起进采样器。</p>
+<blockquote>
+<p>所以 H3 是<strong>音画同生成</strong>的：声音不是后期配的，是在同一次降噪里跟画面一起长出来的。这也是它对口型、环境声对齐比较自然的原因。</p>
+</blockquote>
+<p>顺带说明：<code>positive</code> 和 <code>LATENT</code> 都是 <code>MiniMax-H3 Reference to Video</code> 这个节点的输出——CLIP 和 VAE 的活都封装在它内部，你在画布上只看到一个节点。</p>
+<h2 id="五、第三步：采样就是降噪"><a href="#五、第三步：采样就是降噪" class="headerlink" title="五、第三步：采样就是降噪"></a>五、第三步：采样就是降噪</h2><p class='item-img' data-src='/images/h3-fig-03.png'><img src="/images/h3-fig-03.png" alt="采样 = 20 轮整理噪点"></p>
+<p><em>图 3：从纯噪声到清晰画面，前一半定轮廓，后一半补细节。</em></p>
+<p>采样（sampling）的本质是<strong>降噪</strong>（denoising）。所有扩散模型——包括新出的 Qwen-Image 2.1、MOSS 这些图片模型——底层都是这套机制：</p>
+<ol>
+<li>起点是一张<strong>纯噪声</strong> latent（看不出任何内容）。</li>
+<li>每一步，模型看一遍 <code>positive</code>（提示词 + 素材），预测「这一步该往哪个方向去掉多少噪声」。</li>
+<li>走完设定的步数，latent 收敛到「符合描述的画面」。</li>
+</ol>
+<p>以官方 20 步为例，画面演化大致是：<strong>前几步只有色块 → 中段轮廓出现 → 后段五官、材质、光影补齐</strong>。第 1 步到第 20 步，每一步都让结果更靠近 <code>positive</code> 描述的样子。</p>
+<p>这解释了两件事：</p>
+<ul>
+<li><strong>步数越多，模型「整理」的次数越多</strong>，细节通常更好，但线性更慢。</li>
+<li><strong>前一半和后一半干的是不同的活</strong>：前半段在决定「画什么」（构图、主体、姿态），后半段在决定「画多细」（纹理、边缘、光影）。后面二采的整个思路就建立在这一点上。</li>
+</ul>
+<p>运行工作流时你会发现，<strong>耗时几乎全在采样</strong>。影响采样时长的三个量：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>变量</th>
+<th>为什么影响耗时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>步数</td>
+<td>每一步都是一次完整的前向</td>
+</tr>
+<tr>
+<td>分辨率</td>
+<td>latent 更大 → 每步计算量更大</td>
+</tr>
+<tr>
+<td>时长</td>
+<td>帧数更多 → latent 序列更长</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>至于 <code>KSamplerSelect</code>（采样器）和 <code>BasicScheduler</code>（调度器）这两个节点，它们决定「用哪种数值方法走这 20 步」，不影响对整体流程的理解，这里按下不表。</p>
+<h2 id="六、第四步：解码与保存"><a href="#六、第四步：解码与保存" class="headerlink" title="六、第四步：解码与保存"></a>六、第四步：解码与保存</h2><p>采样结束时，手里还是一个 latent。最后用 VAE 把它<strong>解压回 sRGB 的图像、视频和音频</strong>，再由合成节点拼成一段完整视频、保存成文件。</p>
+<p>到这里，官方 Ref2VA 的完整链路就走完了。<strong>看懂这四步，你已经超过 80% 的使用者</strong>——剩下的都是在这四步里做优化。</p>
+<h2 id="七、加速第一层：8-步-4-步-LoRA"><a href="#七、加速第一层：8-步-4-步-LoRA" class="headerlink" title="七、加速第一层：8 步 / 4 步 LoRA"></a>七、加速第一层：8 步 / 4 步 LoRA</h2><p>官方的 20 步太慢，最直觉的想法是「把步数调成 8 甚至 4」。直接改会得到什么？<strong>模糊、鬼影、拖影</strong>，基本不可用。</p>
+<p>原因不在采样器，在<strong>训练分布</strong>：MiniMax 训练这个模型时用的就是 20 步的采样状态。你只走 8 步，模型「记得」自己在训练时第 8 步还是糊的，于是忠实地输出一张糊图。</p>
+<p class='item-img' data-src='/images/h3-fig-04.png'><img src="/images/h3-fig-04.png" alt="加速 LoRA = 把 20 步的样子压缩进 8 步"></p>
+<p><em>图 4：用 20 步的输出当标准答案，逼模型在 8 步内到位；再把那 1% 的差异抠成 LoRA。</em></p>
+<p>正确的做法是<strong>重训</strong>：</p>
+<ol>
+<li>用官方模型跑 20 步，把结果当作<strong>目标</strong>（target）。</li>
+<li>训练时只跑 8 步，让模型的输出去逼近这个 20 步的结果。</li>
+<li>训练完成后，模型在 8 步就能给出接近官方的清晰度，多数场景下质量损失可以忽略。</li>
+</ol>
+<p>关键在最后一步：重训后的模型和官方模型<strong>几乎一模一样，只差 1% 左右</strong>。于是把这 1% 的权重差<strong>提取出来</strong>，就是一个 LoRA。用户不需要下载几十 GB 的新模型，只要在官方模型上挂这个几百 MB 的补丁，就得到了「8 步加速版」。</p>
+<blockquote>
+<p><strong>LoRA 像游戏 mod</strong>：游戏本体不动，挂一个模组就换了行为。风格 LoRA、武打 LoRA、胶片质感 LoRA 全是这个原理——区别只在于训练时喂进去的是什么数据。</p>
+</blockquote>
+<p>严格说，LoRA 不是主模型的一部分，而是一个<strong>外挂的低秩增量</strong>：推理时把它的权重加到指定层上。这一点视频作者在结尾专门做了更正，值得记住——它决定了你能不能同时挂多个 LoRA、以及挂了之后显存涨多少。</p>
+<h2 id="八、加速第二层：二采（SelfLift）"><a href="#八、加速第二层：二采（SelfLift）" class="headerlink" title="八、加速第二层：二采（SelfLift）"></a>八、加速第二层：二采（SelfLift）</h2><p>第二层的动机来自上一节的前提：<strong>分辨率越大，latent 越大，每一步越慢</strong>。想要 1.0MP 的清晰度，又不想全程按 1.0MP 付费，怎么办？</p>
+<p>答案是：<strong>前半段用 0.5MP 跑，后半段再回到 1.0MP</strong>。因为前半段本来就在定轮廓，画面本身就是糊的，这时候分辨率低一点，对最终结果几乎没影响。</p>
+<p class='item-img' data-src='/images/h3-fig-05.png'><img src="/images/h3-fig-05.png" alt="二采 = 前 10 步用 0.5MP 跑，再放大 latent 跑完后 10 步"></p>
+<p><em>图 5：同一条 20 步的时间轴，前半段矮一格、后半段满格。省的是前半段的计算量。</em></p>
+<p>具体三步：</p>
+<ol>
+<li><strong>前 10 步</strong>：分辨率设成 0.5MP，latent 小、每步快。</li>
+<li><strong>Latent 放大</strong>：用一个专门训练的 latent 放大模型，把第 10 步的 latent 从 0.5MP 尺寸放大到 1.0MP 尺寸。注意这一步是<strong>在 latent 空间放大</strong>，不是解码后放大图片。</li>
+<li><strong>后 10 步</strong>：在 1.0MP 下继续采样，把细节补完。</li>
+</ol>
+<p>这就是「二采」。<strong>第二次采样本来就是目标分辨率</strong>，只是把第一次采样的前半段降级提速了。</p>
+<h3 id="一个必须澄清的误解：二采不是超分"><a href="#一个必须澄清的误解：二采不是超分" class="headerlink" title="一个必须澄清的误解：二采不是超分"></a>一个必须澄清的误解：二采不是超分</h3><p>很多人把二采理解成「先出小图再放大」，于是和超分混为一谈。区别很硬：</p>
+<p class='item-img' data-src='/images/h3-fig-06.png'><img src="/images/h3-fig-06.png" alt="二采和超分，根本不是一件事"></p>
+<p><em>图 6：判定标准只有一条——它吃不吃你的 positive。</em></p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>判定项</th>
+<th>二采（SelfLift）</th>
+<th>超分（Upscaler）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最终目标分辨率</td>
+<td>就是目标分辨率，全程不变</td>
+<td>先低分辨率生成，再放大</td>
+</tr>
+<tr>
+<td>吃不吃 positive</td>
+<td><strong>吃</strong>，每一步都看提示词和素材</td>
+<td><strong>不吃</strong>，只认像素</td>
+</tr>
+<tr>
+<td>省下来的是什么</td>
+<td>前半段 10 步的计算量</td>
+<td>大分辨率生成的那部分算力</td>
+</tr>
+<tr>
+<td>什么时候用</td>
+<td>目标 ≥ 1.0MP，且硬件吃紧</td>
+<td>想要更高像素、且不介意丢细节</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>超分是<strong>另一套体系</strong>：它不看 prompt、不看参考图，只根据像素做重建。所以它能把 1MP 变 4MP，但不能让画面「更符合你的描述」。二采相反——它从头到尾都在 <code>positive</code> 的约束下，只是前半段少算了点像素。</p>
+<h3 id="什么时候不需要二采"><a href="#什么时候不需要二采" class="headerlink" title="什么时候不需要二采"></a>什么时候<strong>不</strong>需要二采</h3><p>两个边界，来自实际收益核算：</p>
+<ul>
+<li><strong>目标就是 0.5MP 时，不需要二采。</strong> 这时全程已经比较快，你把前半段降得更低，省下的时间抵不上质量损失。</li>
+<li><strong>低于 0.4MP 时，降分辨率会污染后续采样。</strong> 前半段虽然「糊」，但它决定了构图与主体的落点；压得太狠，后面 10 步再努力也救不回来。</li>
+</ul>
+<blockquote>
+<p>二采是<strong>硬件条件有限时的合理提速</strong>，不是无条件的优化。分辨率本来就是目标值时，它没有意义。</p>
+</blockquote>
+<h3 id="SelfLift-节点"><a href="#SelfLift-节点" class="headerlink" title="SelfLift 节点"></a>SelfLift 节点</h3><p>把「降分辨率 → 放大 latent → 回目标分辨率」这一串包装成一个节点，就是社区里的 <strong>SelfLift</strong> 节点。它的本意其实是一种叫 SelfLift 的<strong>加速采样算法</strong>，但在 ComfyUI 里实际启用时又慢、效果又不好，所以大多数人把里面的 <code>rho</code> 设成 0，<strong>功能关掉，只留下二采流程</strong>。</p>
+<p>换句话说：<strong>你今天用的「SelfLift 二采」，绝大多数时候就是普通二采套了个 SelfLift 的壳。</strong></p>
+<h2 id="九、加速第三层：把后段也压到-4-步-sigma-收尾"><a href="#九、加速第三层：把后段也压到-4-步-sigma-收尾" class="headerlink" title="九、加速第三层：把后段也压到 4 步 + sigma 收尾"></a>九、加速第三层：把后段也压到 4 步 + sigma 收尾</h2><p>二采之后，瓶颈转移到后半段：即使是 1.0MP，跑满 10 步还是慢。于是把 8 步 LoRA 接进来：</p>
+<ul>
+<li>前半段 0.5MP，只跑 8 步里的前 4 步；</li>
+<li>后半段 1.0MP，只跑后 4 步；</li>
+<li>总共 8 步，其中只有 4 步在满分辨率下跑。</li>
+</ul>
+<p>再加上 sigma 的处理，就得到社区最常见的「SelfLift 二采 + 8 步」配置。</p>
+<p class='item-img' data-src='/images/h3-fig-07.png'><img src="/images/h3-fig-07.png" alt="sigma 曲线：前 80% 本来就模糊"></p>
+<p><em>图 7：不是谁把曲线调低了，是扩散模型的 sigma 本来就这么排。</em></p>
+<p>关于 sigma，视频里有一段重要的<strong>自我更正</strong>，很多二手教程恰恰抄错了：</p>
+<ul>
+<li><strong>「前 80% 的步数 sigma 很大、画面模糊」，不是我们调出来的</strong>，而是基础调度器本来的形状——扩散过程就是从高噪声走到低噪声。</li>
+<li><strong><code>H3 Sigma Refiner</code> 也不是在「调整 sigma 曲线」</strong>，它只是在采样的末尾<strong>多插一步</strong>，让 sigma 的过渡更平滑一点，收尾更稳。</li>
+<li>所以这类节点的收益是「最后一步不跳变」，不是「全程变清晰」。指望它救画质，方向就错了。</li>
+</ul>
+<h2 id="十、加速第四层：模型侧（不改步数，改单步成本）"><a href="#十、加速第四层：模型侧（不改步数，改单步成本）" class="headerlink" title="十、加速第四层：模型侧（不改步数，改单步成本）"></a>十、加速第四层：模型侧（不改步数，改单步成本）</h2><p>前三层都在「减少步数 / 减小每步的图」，第四层换了个方向：<strong>让每一步本身算得更便宜</strong>。</p>
+<p class='item-img' data-src='/images/h3-fig-08.png'><img src="/images/h3-fig-08.png" alt="三种模型侧加速"></p>
+<p><em>图 8：换 attention 实现、稀疏化、切块——都不改进度条，只降单步成本。</em></p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>手段</th>
+<th>节点</th>
+<th>原理</th>
+<th>代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>换 attention 后端</td>
+<td><code>Model Attention Backend</code></td>
+<td>用 SageAttention / Sol-Attention 之类的高效实现替换原生 attention</td>
+<td>要装对应后端，个别卡不兼容</td>
+</tr>
+<tr>
+<td>稀疏 attention</td>
+<td><code>Model Sparse Attention</code></td>
+<td>只计算重要的连接，跳过贡献小的部分</td>
+<td>极端情况下细节略掉</td>
+</tr>
+<tr>
+<td>模型切块</td>
+<td>KJNodes 的两个 chunk 节点</td>
+<td>把模型切成小块，每次只算一块，<strong>降低激活值峰值</strong></td>
+<td>块数越多，来回搬运越多，速度可能反降</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>两个细节：</p>
+<ul>
+<li>chunk 节点的 <code>chunks</code> 参数就是切几块，<strong>等于 1 就是不切</strong>。</li>
+<li>这几个节点都<strong>接在模型加载之后、采样器之前</strong>。它们不改 latent、不改步数，只是换了「算」的方式，因此可以和 LoRA、二采<strong>叠加</strong>，互不冲突。</li>
+</ul>
+<p>为什么切块能救显存？因为显存峰值不只来自权重，还来自<strong>前向过程中的中间激活</strong>。把模型分段算，激活不用同时全部驻留，峰值就被摊平了。代价是段与段之间的数据搬运——所以 <code>chunks</code> 不是越大越好，通常在「刚好不 OOM」的值附近最优。</p>
+<h2 id="十一、把四层旋钮拼起来"><a href="#十一、把四层旋钮拼起来" class="headerlink" title="十一、把四层旋钮拼起来"></a>十一、把四层旋钮拼起来</h2><p class='item-img' data-src='/images/h3-fig-09.png'><img src="/images/h3-fig-09.png" alt="四层旋钮，三种成品"></p>
+<p><em>图 9：认得出旋钮，就能判断一条新工作流到底改了什么。</em></p>
+<p>四层旋钮与三种成品工作流的对应关系：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>工作流</th>
+<th>用了哪几层</th>
+<th>适用场景</th>
+<th>代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>官方 Ref2VA · 20 步</strong></td>
+<td>无</td>
+<td>终稿、画质优先</td>
+<td>最慢</td>
+</tr>
+<tr>
+<td><strong>SelfLift 二采 + 8 步 LoRA</strong></td>
+<td>步数 + 二采 + sigma</td>
+<td>日常主力，速度与画质均衡</td>
+<td>极低分辨率下收益变差</td>
+</tr>
+<tr>
+<td><strong>低分辨率 + 4 步 LoRA</strong></td>
+<td>步数（更狠）</td>
+<td>极速出草稿、显存不足</td>
+<td>细节与稳定性下降</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>选型的判断顺序，我建议这样走：</p>
+<ol>
+<li><strong>先定目标分辨率。</strong> 这是成本的主开关。≥1.0MP 才值得上二采；0.5MP 及以下直接一采。</li>
+<li><strong>再看显存。</strong> 能完整加载就只挂 LoRA；会 OOM 才加 chunk，<code>chunks</code> 从 2 试起。</li>
+<li><strong>最后调步数。</strong> 8 步是通用解，4 步适合草稿；不要在没有对应 LoRA 的情况下硬砍步数。</li>
+<li><strong>sigma refiner 当「收尾润色」</strong>：画质已经够、只差最后一两步跳变时再加，不要指望它救糊图。</li>
+</ol>
+<h2 id="十二、容易踩的误解清单"><a href="#十二、容易踩的误解清单" class="headerlink" title="十二、容易踩的误解清单"></a>十二、容易踩的误解清单</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>说法</th>
+<th>实际情况</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>「二采就是超分」</td>
+<td>二采全程吃 positive、目标是目标分辨率；超分不吃 positive，是另一套体系</td>
+</tr>
+<tr>
+<td>「LoRA 是模型的一部分」</td>
+<td>LoRA 是外挂的低秩增量，不下载完整模型，也不等于模型本体</td>
+</tr>
+<tr>
+<td>「把 sigma 前段调低会更清晰」</td>
+<td>前段 sigma 本来就大，那是扩散在找构图，不是缺陷</td>
+</tr>
+<tr>
+<td>「SelfLift 一定比二采强」</td>
+<td>它的算法部分在 ComfyUI 里又慢又差，<code>rho=0</code> 时就是普通二采</td>
+</tr>
+<tr>
+<td>「步数越少越划算」</td>
+<td>没有配套重训的 LoRA，砍步数只会换来糊图与鬼影</td>
+</tr>
+<tr>
+<td>「分辨率越高越好」</td>
+<td>分辨率与时长共同决定 latent 规模，成本是相乘关系，先算账再调</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="十三、术语速查"><a href="#十三、术语速查" class="headerlink" title="十三、术语速查"></a>十三、术语速查</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ref2VA / FL2VA</td>
+<td>参考生视频 / 首尾帧生视频，两个官方 checkpoint 方向</td>
+</tr>
+<tr>
+<td>positive</td>
+<td>CLIP 编码出的条件向量，采样每一步都参考它</td>
+</tr>
+<tr>
+<td>latent</td>
+<td>VAE 压缩后的低维表示；视频 latent + 音频 latent 拼成 LATENT</td>
+</tr>
+<tr>
+<td>编码 / 解码</td>
+<td>像素 → latent / latent → 像素</td>
+</tr>
+<tr>
+<td>一采 / 二采</td>
+<td>采样一次 / 分两段采样（前半段低分辨率提速）</td>
+</tr>
+<tr>
+<td>sigma</td>
+<td>每步的噪声强度；由调度器给出，前段大、末段趋近 0</td>
+</tr>
+<tr>
+<td>LoRA</td>
+<td>低秩权重增量，挂在主模型上改变行为（加速、风格等）</td>
+</tr>
+<tr>
+<td>SelfLift</td>
+<td>一种加速采样算法；社区工作流里通常只保留它的二采封装</td>
+</tr>
+<tr>
+<td>chunks</td>
+<td>模型切块数，1 = 不切</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="十四、参考"><a href="#十四、参考" class="headerlink" title="十四、参考"></a>十四、参考</h2><ul>
+<li>视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Cq4h6aERN">抽丝剥茧！全网最详细讲解 MiniMaxH3 底层工作原理</a>（UP：SevnFading）</li>
+<li>视频里提到的三条工作流（基础 / SelfLift 二采 / SelfLift 二采低显存兼容版）作者放在了评论区置顶，建议下载对照本文的九张图逐个看一遍。</li>
+<li>同系列：<a href="/2026/11/22/minimax-h3-prompt-notes/">MiniMax H3 提示词工程笔记</a>——这篇讲提示词该怎么写，这篇讲工作流为什么这么快，两篇合起来才算把 H3 用顺手。</li>
+</ul>
+<blockquote>
+<p>最后记一句：<strong>工作流的名字会骗人，数据流不会。</strong> 看到一条新工作流，先问它动的是「步数、每步的图、sigma、还是模型」，答案通常一句话就能说清。</p>
+</blockquote>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/22/minimax-h3-prompt-notes/">MiniMax H3 提示词工程笔记：两种写法、六段结构与一套可复现模板 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%85%88%E5%88%92%E6%B8%85%E8%8C%83%E5%9B%B4%EF%BC%9A%E8%BF%99%E9%87%8C%E8%AE%B2%E7%9A%84%E6%98%AF%E5%8F%82%E8%80%83%E7%94%9F%E8%A7%86%E9%A2%91"><span class="toc-number">1.</span> <span class="toc-text">一、先划清范围：这里讲的是参考生视频</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%9B%9B%E6%AD%A5%E9%AA%A8%E6%9E%B6%EF%BC%9A%E6%89%80%E6%9C%89%E5%B7%A5%E4%BD%9C%E6%B5%81%E9%83%BD%E6%98%AF%E8%BF%99%E5%9B%9B%E6%AD%A5"><span class="toc-number">2.</span> <span class="toc-text">二、四步骨架：所有工作流都是这四步</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%96%82%E6%96%99"><span class="toc-number">3.</span> <span class="toc-text">三、第一步：喂料</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E8%AE%A9%E6%A8%A1%E5%9E%8B%E7%9C%8B%E6%87%82%E7%B4%A0%E6%9D%90"><span class="toc-number">4.</span> <span class="toc-text">四、第二步：让模型看懂素材</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#CLIP%EF%BC%9A%E5%9B%BE%E6%96%87-%E2%86%92-positive"><span class="toc-number">4.1.</span> <span class="toc-text">CLIP：图文 → positive</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#VAE%EF%BC%9A%E5%83%8F%E7%B4%A0-%E2%86%92-latent"><span class="toc-number">4.2.</span> <span class="toc-text">VAE：像素 → latent</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9F%B3%E9%A2%91%E4%B9%9F%E8%B5%B0%E4%B8%80%E9%81%8D-VAE"><span class="toc-number">4.3.</span> <span class="toc-text">音频也走一遍 VAE</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E9%87%87%E6%A0%B7%E5%B0%B1%E6%98%AF%E9%99%8D%E5%99%AA"><span class="toc-number">5.</span> <span class="toc-text">五、第三步：采样就是降噪</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E8%A7%A3%E7%A0%81%E4%B8%8E%E4%BF%9D%E5%AD%98"><span class="toc-number">6.</span> <span class="toc-text">六、第四步：解码与保存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E5%8A%A0%E9%80%9F%E7%AC%AC%E4%B8%80%E5%B1%82%EF%BC%9A8-%E6%AD%A5-4-%E6%AD%A5-LoRA"><span class="toc-number">7.</span> <span class="toc-text">七、加速第一层：8 步 &#x2F; 4 步 LoRA</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E5%8A%A0%E9%80%9F%E7%AC%AC%E4%BA%8C%E5%B1%82%EF%BC%9A%E4%BA%8C%E9%87%87%EF%BC%88SelfLift%EF%BC%89"><span class="toc-number">8.</span> <span class="toc-text">八、加速第二层：二采（SelfLift）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E5%BF%85%E9%A1%BB%E6%BE%84%E6%B8%85%E7%9A%84%E8%AF%AF%E8%A7%A3%EF%BC%9A%E4%BA%8C%E9%87%87%E4%B8%8D%E6%98%AF%E8%B6%85%E5%88%86"><span class="toc-number">8.1.</span> <span class="toc-text">一个必须澄清的误解：二采不是超分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BA%8C%E9%87%87"><span class="toc-number">8.2.</span> <span class="toc-text">什么时候不需要二采</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SelfLift-%E8%8A%82%E7%82%B9"><span class="toc-number">8.3.</span> <span class="toc-text">SelfLift 节点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E5%8A%A0%E9%80%9F%E7%AC%AC%E4%B8%89%E5%B1%82%EF%BC%9A%E6%8A%8A%E5%90%8E%E6%AE%B5%E4%B9%9F%E5%8E%8B%E5%88%B0-4-%E6%AD%A5-sigma-%E6%94%B6%E5%B0%BE"><span class="toc-number">9.</span> <span class="toc-text">九、加速第三层：把后段也压到 4 步 + sigma 收尾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E5%8A%A0%E9%80%9F%E7%AC%AC%E5%9B%9B%E5%B1%82%EF%BC%9A%E6%A8%A1%E5%9E%8B%E4%BE%A7%EF%BC%88%E4%B8%8D%E6%94%B9%E6%AD%A5%E6%95%B0%EF%BC%8C%E6%94%B9%E5%8D%95%E6%AD%A5%E6%88%90%E6%9C%AC%EF%BC%89"><span class="toc-number">10.</span> <span class="toc-text">十、加速第四层：模型侧（不改步数，改单步成本）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%8A%8A%E5%9B%9B%E5%B1%82%E6%97%8B%E9%92%AE%E6%8B%BC%E8%B5%B7%E6%9D%A5"><span class="toc-number">11.</span> <span class="toc-text">十一、把四层旋钮拼起来</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E5%AE%B9%E6%98%93%E8%B8%A9%E7%9A%84%E8%AF%AF%E8%A7%A3%E6%B8%85%E5%8D%95"><span class="toc-number">12.</span> <span class="toc-text">十二、容易踩的误解清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%9C%AF%E8%AF%AD%E9%80%9F%E6%9F%A5"><span class="toc-number">13.</span> <span class="toc-text">十三、术语速查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E5%8F%82%E8%80%83"><span class="toc-number">14.</span> <span class="toc-text">十四、参考</span></a></li></ol></div></div></aside></div></main><script defer src="/js/home-hero.js?v=20261116-perf"></script><script defer src="/js/reading-progress.js?v=20261116-perf"></script><canvas id="canvas-dust"></canvas></body></html>
