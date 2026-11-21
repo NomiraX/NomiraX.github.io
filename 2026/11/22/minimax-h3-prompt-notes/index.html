@@ -1,0 +1,645 @@
+<!DOCTYPE html><html lang="zh-cn" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MiniMax H3 提示词工程笔记：两种写法、六段结构与一套可复现模板 | NomiraX 的博客</title><meta name="keywords" content="MiniMax H3,视频生成,提示词工程,AI 工具"><meta name="description" content="H3 的提示词坑，九成来自同一个误解：以为只有一种写法。实际上「走官网&#x2F;API」和「跑本地开源权重」是两套语言——前者有 Context-IR 在环内，后者没有。混着写，就是镜头翻倍、台词乱语、参考失效的来源。 这篇笔记把官方规范、开源实测和几篇有数据的社区文章并到一起，目标是：先知道自己在哪一岔，再拿到一套能直接套用的结构。 主要来源：官方 skill 仓库与 HF 模型卡、ComfyUI 官">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MiniMax H3 提示词工程笔记：两种写法、六段结构与一套可复现模板">
+<meta property="og:url" content="https://nomirax.github.io/2026/11/22/minimax-h3-prompt-notes/index.html">
+<meta property="og:site_name" content="NomiraX 的博客">
+<meta property="og:description" content="H3 的提示词坑，九成来自同一个误解：以为只有一种写法。实际上「走官网&#x2F;API」和「跑本地开源权重」是两套语言——前者有 Context-IR 在环内，后者没有。混着写，就是镜头翻倍、台词乱语、参考失效的来源。 这篇笔记把官方规范、开源实测和几篇有数据的社区文章并到一起，目标是：先知道自己在哪一岔，再拿到一套能直接套用的结构。 主要来源：官方 skill 仓库与 HF 模型卡、ComfyUI 官">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-11-21T17:20:00.000Z">
+<meta property="article:modified_time" content="2026-11-21T17:15:23.535Z">
+<meta property="article:author" content="NomiraX">
+<meta property="article:tag" content="AI 工具">
+<meta property="article:tag" content="MiniMax H3">
+<meta property="article:tag" content="提示词工程">
+<meta property="article:tag" content="视频生成">
+<meta name="twitter:card" content="summary"><link rel="canonical" href="https://nomirax.github.io/2026/11/22/minimax-h3-prompt-notes/"><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css?v=20261116-no-contrib"><style>@font-face {
+  font-family: Bender;
+  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
+}
+@font-face {
+  font-family: BenderLight;
+  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}
+</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
+var page_config = {
+  code_fold: null
+};
+function updatePageConfig() {
+  var newPageConfig = document.querySelector('meta[name="page-config"]');
+  if (newPageConfig) {
+    page_config = JSON.parse(newPageConfig.content);
+  }
+}
+document.addEventListener('pjax:complete', function() { updatePageConfig(); });
+updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@11.12.2/dist/mermaid.min.js"></script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+ menuSettings: {
+   zoom: "None"
+ },
+ showMathMenu: false,
+ jax: ["input/TeX","output/CommonHTML"],
+ extensions: ["tex2jax.js"],
+ TeX: {
+   extensions: ["AMSmath.js","AMSsymbols.js"],
+   equationNumbers: {
+     autoNumber: "AMS"
+   }
+ },
+ tex2jax: {
+   inlineMath: [["\\(", "\\)"]],
+   displayMath: [["\\[", "\\]"]]
+ }
+});</script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
+ document.documentElement.setAttribute('theme-mode', 'light')
+if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
+ document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
+ font-family: BenderLight;
+ src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
+}
+@font-face {
+ font-family: 'JetBrains Mono';
+ src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
+}</style><style>:root {
+ --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
+ --light-background: url('/img/bk.jpg');
+ --theme-encrypt-confirm: '确认'
+}</style><script defer src="/js/arknights.js?v=20261116-perf"></script><script defer src="/js/search.js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
+window.mermaid = mermaid;
+code.paintMermaid();
+</script><script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.1/MathJax.js"></script><script>MathJax.Hub.Config({
+  menuSettings: {
+    zoom: "None"
+  },
+  showMathMenu: false,
+  jax: ["input/TeX","output/CommonHTML"],
+  extensions: ["tex2jax.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js"],
+    equationNumbers: {
+      autoNumber: "AMS"
+    }
+  },
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]]
+  }
+});
+</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {MathJax.Hub.Queue(["Typeset", MathJax.Hub]);document.querySelector('.lg-container')?.remove()
+const postBg = document.querySelector('#post-bg');
+if (postBg) lightGallery(postBg, {
+  plugins: [lgZoom,lgThumbnail],
+  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
+ cacheBust: false,
+ selectors: ['title','#home-hero-slot','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
+ switches: {'article': Pjax.switches.sideBySide, '#home-hero-slot': Pjax.switches.outerHTML},
+ switchesOptions: {
+   'article': {
+     classNames: {
+       remove: "pjax-out",
+       add: "pjax-in"
+     }
+   }
+ }
+});
+document.addEventListener("pjax:complete", reset);reset()})</script><meta name="generator" content="Hexo 8.1.2"></head><body><div id="reading-progress" role="progressbar" aria-label="文章阅读进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><div id="home-hero-slot"></div><div class="site-content" id="home-content"><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>MiniMax H3 提示词工程笔记：两种写法、六段结构与一套可复现模板</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2026-11-21T17:20:00.000Z" id="date"> 2026-11-22</time></div></span></div></div><hr><div id="post-content"><blockquote>
+<p>H3 的提示词坑，九成来自同一个误解：以为只有一种写法。实际上「走官网/API」和「跑本地开源权重」是两套语言——前者有 Context-IR 在环内，后者没有。混着写，就是镜头翻倍、台词乱语、参考失效的来源。</p>
+<p>这篇笔记把官方规范、开源实测和几篇有数据的社区文章并到一起，目标是：先知道自己在哪一岔，再拿到一套能直接套用的结构。</p>
+<p>主要来源：官方 skill 仓库与 HF 模型卡、ComfyUI 官方文档、sceneworks 开源权重实测、阿里云《问道无极》制作实测、Kapwing 方法论、海螺官方知识库。文末给了分档的教程清单。</p>
+</blockquote>
+<span id="more"></span>
+<h2 id="一、系统分三步，写法因此分成两岔"><a href="#一、系统分三步，写法因此分成两岔" class="headerlink" title="一、系统分三步，写法因此分成两岔"></a>一、系统分三步，写法因此分成两岔</h2><p>完整的 H3 不是「一个模型」，而是三段流水线：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>职责</th>
+<th>是否开源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>H3-Context-IR</strong></td>
+<td>理解自由多模态输入，把意图与素材关系重写成结构化表示（就是下面那些字段），并补全欠明确处</td>
+<td>否，仅托管 API</td>
+</tr>
+<tr>
+<td><strong>H3-Base</strong></td>
+<td>依据结构化表示生成 768p 有声视频</td>
+<td>是（FL2VA / Ref2VA 两个 checkpoint）</td>
+</tr>
+<tr>
+<td><strong>H3-Regenerate-2K</strong></td>
+<td>把 768p 结果连同原始上下文一起回炉，重生成 2K</td>
+<td>否，仅托管 API</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>官方在模型卡里说得很直白：<strong>Context-IR 对最终质量至关重要，强烈建议纳入管线</strong>。这句话直接决定了两种写法：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>你的环境</th>
+<th>正确写法</th>
+<th>写错的后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>官网 / 开放平台 API</td>
+<td>中文自然语言，只补决策（时长、画幅、谁在做什么、怎么拍、有什么声音）</td>
+<td>手工套英文结构化模板 → 和 Context-IR 打架，镜头数翻倍、时间码错位</td>
+</tr>
+<tr>
+<td>本地 ComfyUI / SGLang / diffusers</td>
+<td>完整英文结构化格式，字段名与标签逐字精确</td>
+<td>写散文自由文本 → 台词乱语、角色漂移、音效错位</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一句话记：<strong>有 Context-IR 时，你写的是「拍摄需求」；没有时，你写的是「Context-IR 的输出」。</strong></p>
+<h2 id="二、先记住这张硬约束表"><a href="#二、先记住这张硬约束表" class="headerlink" title="二、先记住这张硬约束表"></a>二、先记住这张硬约束表</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>规格</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>时长</td>
+<td>4–15 秒（整数秒）</td>
+</tr>
+<tr>
+<td>帧率</td>
+<td>24 FPS，写不写都一样</td>
+</tr>
+<tr>
+<td>分辨率</td>
+<td>短边默认 768；2K 需走 Regenerate-2K</td>
+</tr>
+<tr>
+<td>音频</td>
+<td>32 kHz 立体声，与画面同一次生成</td>
+</tr>
+<tr>
+<td>宽高比</td>
+<td>21:9 / 16:9 / 4:3 / 1:1 / 3:4 / 9:16（+ adaptive）</td>
+</tr>
+<tr>
+<td>参考图</td>
+<td>≤ 9 张</td>
+</tr>
+<tr>
+<td>参考视频</td>
+<td>≤ 3 段，每段 2–15 秒，合计 ≤ 15 秒</td>
+</tr>
+<tr>
+<td>参考音频</td>
+<td>≤ 3 段，每段 2–15 秒，合计 ≤ 15 秒</td>
+</tr>
+<tr>
+<td>文件总数</td>
+<td>所有类型合计 ≤ 12</td>
+</tr>
+<tr>
+<td>对白语言</td>
+<td>稳定支持 11 种：中、英、日、韩、法、德、意、葡、俄、阿、西</td>
+</tr>
+<tr>
+<td>首尾帧 vs 参考素材</td>
+<td><strong>不能放在同一个请求里</strong>，只能二选一</td>
+</tr>
+<tr>
+<td>纯文生</td>
+<td>必须指定具体 ratio，不能 adaptive</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>两个流传很广的误区，顺手记一下：</p>
+<ul>
+<li>「采样步数 28–32、CFG 7–8」是 Stable Diffusion 的概念，托管 API 根本没有这两项，填了不生效。</li>
+<li>「必须写 24fps」没有意义，帧率是固定的；竖屏要选 <code>ratio: 9:16</code>，不是填像素尺寸。</li>
+</ul>
+<h2 id="三、base-模式：一条对齐指令-三个字段"><a href="#三、base-模式：一条对齐指令-三个字段" class="headerlink" title="三、base 模式：一条对齐指令 + 三个字段"></a>三、base 模式：一条对齐指令 + 三个字段</h2><p>base 覆盖 T2VA / I2VA / FL2VA / L2VA 四种模式。结构永远是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">&lt;对齐指令&gt;<br><br>integrated_multimodal_description: ...<br>overall_soundscape: ...<br>non_diegetic_music: ...<br></code></pre></td></tr></table></figure>
+<p>对齐指令是固定句式，不要改写：</p>
+<ul>
+<li><strong>I2VA</strong>：<code>For the target video, at 0.00 seconds into the target video, &lt;Picture 1&gt; (from [Shot 1]) is fully referenced.</code></li>
+<li><strong>FL2VA / L2VA</strong>：<code>How the reference pictures align with the target video — Picture 1 (from Shot 1) aligns with the 0.00-second mark of the target video; Picture 2 (from Shot N) aligns with the S.SS-second mark of the target video.</code></li>
+</ul>
+<p>其中 S.SS 必须两位小数，且等于成片时长；N 是实际最后一个镜头的编号。</p>
+<p>四个模式的区别只在「从哪出发」：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>输入</th>
+<th>提示词该写什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T2VA</td>
+<td>纯文本</td>
+<td>从零构建完整音画时间线</td>
+</tr>
+<tr>
+<td>I2VA</td>
+<td>一张首帧</td>
+<td>从这一帧往后发展，别重复描述已经定下的长相</td>
+</tr>
+<tr>
+<td>FL2VA</td>
+<td>首帧 + 尾帧</td>
+<td>描述两者之间的连续路径，写清「什么在变、什么不变」</td>
+</tr>
+<tr>
+<td>L2VA</td>
+<td>一张尾帧</td>
+<td>反推一个合理开头，逐步收敛到给定尾帧</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 id="四、分镜与时间码"><a href="#四、分镜与时间码" class="headerlink" title="四、分镜与时间码"></a>四、分镜与时间码</h2><p>这是 H3 相对上一代最实质的变化：<strong>一条提示词可以写多个镜头，模型自己切</strong>。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">[Shot 1] Cinematic, live-action. A woman stands at the window, back to camera...<br>[Shot 2] At 00:03.500, the camera cuts to a close-up of her hand tightening on the frame...<br></code></pre></td></tr></table></figure>
+<p>规则：</p>
+<ul>
+<li><code>[Shot 1]</code> 不带时间码；从 <code>[Shot 2]</code> 起每个镜头都必须带，且<strong>严格递增</strong>、不超出时长。</li>
+<li>切镜动词只有这几个：<code>the camera cuts to</code> / <code>the shot cuts to</code> / <code>transitions to</code> / <code>changes to</code> / <code>switches to</code>。</li>
+<li>只是景别或轻微角度变化，<strong>优先用运镜，不要切镜</strong>。</li>
+<li>每次切镜都要带来新信息（主体、空间、状态、视角、时间），否则就是废镜头。</li>
+</ul>
+<p>这不是风格偏好，是有实测支撑的。sceneworks 在同一 seed、同一 geometry 下做过 A/B：结构化写法里的 <code>[Shot 2] At 00:03.000, the shot cuts to a closer low-angle view...</code> 能在 3.000 秒 ±1 帧处硬切；改成散文描述则完全不切。附带效果是画面更锐、运动更多、声轨更响更宽。</p>
+<blockquote>
+<p>镜头数有个甜区：一条提示词塞 8–12 个镜头还算稳，超过就开始丢镜头，该拆成分段生成了。</p>
+</blockquote>
+<h2 id="五、运镜词表"><a href="#五、运镜词表" class="headerlink" title="五、运镜词表"></a>五、运镜词表</h2><p>官方把运镜拆成三个维度：<strong>类型 + 幅度 + 速度</strong>。中等幅度与常速省略不写。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zoom In / Out</td>
+<td>变焦，机身不动</td>
+</tr>
+<tr>
+<td>Push In / Pull Out</td>
+<td>机身前后移动</td>
+</tr>
+<tr>
+<td>Pan Left / Right</td>
+<td>水平摇</td>
+</tr>
+<tr>
+<td>Truck Left / Right</td>
+<td>水平平移</td>
+</tr>
+<tr>
+<td>Tilt Up / Down</td>
+<td>俯仰摇</td>
+</tr>
+<tr>
+<td>Pedestal Up / Down</td>
+<td>升降</td>
+</tr>
+<tr>
+<td>Arc Shot</td>
+<td>环绕</td>
+</tr>
+<tr>
+<td>Tracking Shot</td>
+<td>跟随</td>
+</tr>
+<tr>
+<td>Static Shot</td>
+<td>固定机位</td>
+</tr>
+<tr>
+<td>Shake Slightly / Strongly</td>
+<td>抖动</td>
+</tr>
+<tr>
+<td>POV</td>
+<td>主观视角</td>
+</tr>
+<tr>
+<td>Roll Clockwise / Counterclockwise</td>
+<td>滚转</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>幅度写 <code>with small amplitude</code> / <code>with large amplitude</code>；速度写 <code>at slow speed</code> / <code>at fast speed</code>。</p>
+<p>要写成镜头内的自然英文句子，不要句尾堆标签：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">The camera pushes in with small amplitude at slow speed toward the folded letter in her hands.<br></code></pre></td></tr></table></figure>
+<p>两条容易踩的：</p>
+<ul>
+<li><strong>不写运镜 = 固定机位死镜头</strong>。模型不会替你加运动。</li>
+<li><strong>一条提示词只给一个主导运动</strong>。同时写「先加速再减速」「推+摇+跟」，结果是抖动与物理幻觉——这是海螺官方知识库里明确点出的 token 干扰问题。</li>
+</ul>
+<h2 id="六、台词、说话人与声音"><a href="#六、台词、说话人与声音" class="headerlink" title="六、台词、说话人与声音"></a>六、台词、说话人与声音</h2><h3 id="说话人"><a href="#说话人" class="headerlink" title="说话人"></a>说话人</h3><ul>
+<li>稳定 ID：<code>(S1)</code>、<code>(S2)</code>；两人同时说话写 <code>(S1,S2)</code>。</li>
+<li>首次出现要交代：年龄、性别、是否在画、音高、音色、语速、口音。</li>
+<li>台词放在 <code>&lt;d&gt;</code> 里，<strong><code>&lt;d&gt;</code> 内只放 <code>[语言]</code> + 逐字原文</strong>，不改写、不翻译。识别短语、ID、动作、语气都放外面：</li>
+</ul>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">Mia (S1) leans toward the window and says softly, &lt;d&gt;[English] I&#x27;m not leaving.&lt;/d&gt;<br></code></pre></td></tr></table></figure>
+<ul>
+<li>旁白固定短语 <code>says in an off-screen voiceover</code>，且 <code>&lt;d&gt;</code> 后必须紧跟 <code>while her lips remain completely closed</code>。</li>
+<li>台词跨切镜用 <code>&lt;scenetrans&gt;</code> 并说明音频连续；被片尾截断用 <code>&lt;cutoff&gt;</code>。</li>
+<li>画面内可见文字用英文双引号原样保留，例如 <code>&quot;营业中&quot;</code>。</li>
+<li>听不清写 <code>[unclear]</code>，不要猜。只拿音色参考时，不要搬用原台词的语义。</li>
+</ul>
+<h3 id="三条声音线别写混"><a href="#三条声音线别写混" class="headerlink" title="三条声音线别写混"></a>三条声音线别写混</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>写什么</th>
+<th>不写什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>integrated_multimodal_description</code></td>
+<td>画面内、角色能听到的声音（diegetic）</td>
+<td>配乐</td>
+</tr>
+<tr>
+<td><code>overall_soundscape</code></td>
+<td>1–4 句：环境底噪 + 物理动作音 + 非语言人声（喘息、脚步）</td>
+<td>台词、歌声、剧内音乐（已在主描述里）</td>
+</tr>
+<tr>
+<td><code>non_diegetic_music</code></td>
+<td>1–3 句：乐器、速度、节奏、力度变化</td>
+<td>抽象情绪词、解释配乐功能</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>只有用户明确要求全片静音，<code>overall_soundscape</code> 才写 <code>N/A</code>；没有配乐，<code>non_diegetic_music</code> 写 <code>N/A</code>。</p>
+<p>「不写声音」是最常见的底噪来源：H3 音画一次生成，你不交代，它自己发挥。</p>
+<h2 id="七、Ref2VA：六段式与四种标签"><a href="#七、Ref2VA：六段式与四种标签" class="headerlink" title="七、Ref2VA：六段式与四种标签"></a>七、Ref2VA：六段式与四种标签</h2><p>多素材参考（图 / 视频 / 音频混合）走 Ref2VA，段落顺序固定，不可调换：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">subject_definitions:<br>summary:<br>retention_analysis:<br>detailed_description:<br>overall_soundscape:<br>non_diegetic_music:<br></code></pre></td></tr></table></figure>
+<h3 id="四种标签，各管一件事"><a href="#四种标签，各管一件事" class="headerlink" title="四种标签，各管一件事"></a>四种标签，各管一件事</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>标签</th>
+<th>用在</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;Subject N&gt;</code></td>
+<td>可复用的可见内容：人、动物、物、场景、服装、道具、界面、风格、动作、表情、姿势。可由多个素材共同定义</td>
+</tr>
+<tr>
+<td><code>&lt;Picture N&gt;</code></td>
+<td>只有当它被当作<strong>具体帧 / 关键帧 / 构图锚点</strong>时才单列；仅用于定义角色、场景、风格时，写进 Subject 定义里</td>
+</tr>
+<tr>
+<td><code>&lt;Video N&gt;</code></td>
+<td>整段视频关系：编辑源、续写起点、运镜 / 剪辑 / 节奏结构</td>
+</tr>
+<tr>
+<td><code>&lt;Audio N&gt;</code></td>
+<td>音频信号：复制、风格、音色、台词、节拍</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>&lt;Video N&gt;</code> 与 <code>&lt;Audio N&gt;</code> 独立编号，同一素材可以是 Video 1 + Audio 2。</p>
+<h3 id="summary-与-retention"><a href="#summary-与-retention" class="headerlink" title="summary 与 retention"></a>summary 与 retention</h3><p><code>summary</code> 以方括号任务类型开头，多种关系用 <code>+</code> 连接且不重复：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">[video editing + audio reference + audio reuse] The target video is an edited version of &lt;Video 1&gt;. ...<br></code></pre></td></tr></table></figure>
+<p><code>retention_analysis</code> 用固定英文枚举，一个标签一行，格式为「标签 + 出现镜头 + 标记 + 理由」：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>合法取值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>视觉</td>
+<td><code>fully_preserved</code> / <code>partially_preserved</code> / <code>attribute_transfer</code> / <code>weak_reference</code></td>
+</tr>
+<tr>
+<td>音频</td>
+<td><code>fully_copy</code> / <code>partially_copy</code> / <code>reference</code> / <code>weak_reference</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">&lt;Subject 1&gt; (appears in [Shot 1]): fully_preserved - the man retains identity, hair, suit and the lamb he holds.<br>&lt;Audio 1&gt;: partially_copy - the atmospheric music is reused, mixed beneath new dialogue.<br></code></pre></td></tr></table></figure>
+<h3 id="detailed-description"><a href="#detailed-description" class="headerlink" title="detailed_description"></a>detailed_description</h3><p>生成任务通常 <strong>350–500 英文词</strong>。台词密集时，以「装得下完整台词时间线」为优先，可以超；视频编辑则按源素材复杂度伸缩。</p>
+<p>写法要点：</p>
+<ul>
+<li>说话人写成 <code>&lt;Subject 2&gt; (S1) turns toward...</code></li>
+<li>音色参考写成 <code>&lt;Audio 1&gt; is the voice-timbre reference for &lt;Subject 1&gt; (S1).</code></li>
+<li>风格独立成句，放在 <code>[Shot 1]</code> 之前。</li>
+</ul>
+<p><strong>格式错误里最高频的一种是悬空标签</strong>：正文引用了 <code>&lt;Picture 3&gt;</code>，但 <code>subject_definitions</code> 里从没定义过它。标签编号必须等于实际附件顺序（<code>ref_image_0..8</code> → <code>&lt;Picture 1..9&gt;</code>），错位等于参考完全失效。</p>
+<h2 id="八、托管端：人话六模块"><a href="#八、托管端：人话六模块" class="headerlink" title="八、托管端：人话六模块"></a>八、托管端：人话六模块</h2><p>走官网/API 时不要手工结构化，按这六块写中文就行：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">规格（时长/画幅/类型）<br>+ 素材分工（图1/视频1/音频1 各管什么）<br>+ 主体与动作（可见的过程）<br>+ 镜头语言（景别/运镜）<br>+ 质感与情绪<br>+ 声音（台词/环境音/要不要配乐）<br></code></pre></td></tr></table></figure>
+<p>要点全是踩过坑的：</p>
+<ul>
+<li><strong>动作写过程，不写结论。</strong>「她很伤心」是结论，模型拍不出来；「微微低头，缓缓抬眸，眼底含泪，肩膀随呼吸轻轻起伏」才是可拍的。</li>
+<li><strong>图生视频只写「接下来发生什么」。</strong> 首帧已经定了长相、场景、画幅，再描述外貌会和图打架。</li>
+<li><strong>首尾帧只改一两个要素</strong>（光线、服装），并写清「什么在变、什么不变」——比只写「自然过渡、画面连贯」有用得多。</li>
+<li><strong>多主体先写站位</strong>：谁面对谁、谁在画面左/右侧、镜头站在谁身后。只写「人物近景，背景里有野猪」，野猪就会跑到人背后。</li>
+<li><strong>长打斗一次生成、内部按时间分镜</strong>，各段时长之和等于 duration：</li>
+</ul>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">15秒，16:9，3D国漫CG质感。全程保持：少年在画面左侧，野猪从右侧冲来。<br>镜头1（0-3秒）：低机位近景，野猪加速冲锋，泥土飞溅。<br>镜头2（3-6秒）：正面急推，少年眼神一凛，侧身扑倒贴地滑过。<br>镜头3（6-11秒）：侧面全景慢动作，野猪擦身而过撞进石堆，碎石四散。<br>镜头4（11-15秒）：少年单膝撑地起身，握刀回望，镜头缓慢拉远。<br>声音：蹄声、撞击声、碎石声、少年喘息，不要背景音乐。<br></code></pre></td></tr></table></figure>
+<ul>
+<li><strong>防崩后缀一句就够</strong>：<code>画面稳定，人物五官和服饰前后一致，光影统一，动作自然流畅。</code> 接口没有独立负面提示词参数，这话只是普通描述，解决不了提示词本身的问题。</li>
+</ul>
+<h2 id="九、减法式：只给一个主导速度向量"><a href="#九、减法式：只给一个主导速度向量" class="headerlink" title="九、减法式：只给一个主导速度向量"></a>九、减法式：只给一个主导速度向量</h2><p>海螺官方知识库的思路和上面互补，值得单独记一笔。它主张<strong>做减法</strong>：一条片子只给一个主导的速度性格。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>速度向量</th>
+<th>关键词</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Explosive Acceleration</td>
+<td>sudden burst / rapid acceleration / FPV dive</td>
+</tr>
+<tr>
+<td>Constant Kineticism</td>
+<td>steady tracking / consistent glide / uniform drift</td>
+</tr>
+<tr>
+<td>Decelerating Impact</td>
+<td>gradual slow-down / settling into a stop / cinematic deceleration</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>同时写「先加速再减速」会产生 token 干扰，落地表现是抖动和物理幻觉。真正需要复杂 speed ramp 时，正解是在 NLE 里用两条片段（稳定跟拍 + 高速冲刺）拼接，而不是一句提示词许愿。</p>
+<p>另外两条同源经验：I2V 先出高质量静帧再给运动向量；单条片子按 3–5 条 reroll 预算算成本。</p>
+<h2 id="十、翻车对照表"><a href="#十、翻车对照表" class="headerlink" title="十、翻车对照表"></a>十、翻车对照表</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>症状</th>
+<th>病因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>台词乱语、念错</td>
+<td>没给逐字原文，或 <code>&lt;d&gt;</code> 里被改写</td>
+</tr>
+<tr>
+<td>角色不像、越动越漂</td>
+<td>身份没锁；参考职责冲突；参考图与首尾帧混用</td>
+</tr>
+<tr>
+<td>音色不对</td>
+<td>没给音色参考 <code>&lt;Audio N&gt;</code>，或标签顺序与附件顺序不一致</td>
+</tr>
+<tr>
+<td>音效错位</td>
+<td>声音没绑到时间点</td>
+</tr>
+<tr>
+<td>参考完全没生效</td>
+<td>标签编号 ≠ 附件顺序；出现悬空标签</td>
+</tr>
+<tr>
+<td>镜头乱晃</td>
+<td>一条提示词写了多种运镜</td>
+</tr>
+<tr>
+<td>莫名底噪、自带 BGM</td>
+<td>声音完全没交代</td>
+</tr>
+<tr>
+<td>9 张图互相打架</td>
+<td>没给每张图派活，也没写它该忽略什么</td>
+</tr>
+<tr>
+<td>运镜复刻了但人变了</td>
+<td>没区分不变量与变量</td>
+</tr>
+<tr>
+<td>身份锁不住</td>
+<td>脸部占画面太小 → 用广角交代场景、近景/中景演戏</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>「给参考派活」的正确写法，要连<strong>忽略什么</strong>一起写：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">Video 1 defines the hand trajectory and movement timing only. Do not copy its actor, wardrobe, setting, lighting, or camera movement.<br></code></pre></td></tr></table></figure>
+<p>「锁定不变项」则是把变量与不变量分开：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">Preserve the same facial identity, half-up dark hair, gold hoop earrings, and cream blazer throughout the clip.<br></code></pre></td></tr></table></figure>
+<h2 id="十一、成本与迭代纪律"><a href="#十一、成本与迭代纪律" class="headerlink" title="十一、成本与迭代纪律"></a>十一、成本与迭代纪律</h2><div class="table-container">
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>价格（以账单为准）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>H3 768P</td>
+<td>0.5 元/秒</td>
+</tr>
+<tr>
+<td>H3 2K</td>
+<td>0.8 元/秒</td>
+</tr>
+<tr>
+<td>2K 再生成</td>
+<td>0.3 元/秒</td>
+</tr>
+<tr>
+<td>Context-IR 增强</td>
+<td>按 token 计费，一次约几分钱</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>所以标准流程是：<strong>768P 试 → 满意再升 2K</strong>。一条 5 秒镜头，768P 是 2.5 元；先出 768P 再转 2K 合计约 4 元，和直接出 2K 同价，好处是不满意的镜头在便宜阶段就被淘汰。</p>
+<p>成本的大头从来不是单价，是返工次数。</p>
+<p>本地权重还有几条自己的约束（来自 sceneworks 实测，非厂商口径）：</p>
+<ul>
+<li>合法时长只有 14 个档位：5.17 / 5.88 / 6.58 / 7.29 / 8.00 / 8.71 / 9.42 / 10.13 / 10.83 / 11.54 / 12.25 / 12.96 / 13.67 / 14.38 秒（帧格 17n+5）。<strong>宣称的 15 秒落在档位之间，渲染不出来。</strong></li>
+<li>画布按约 1.03MP 的面积预算算，1344×768 是默认全尺寸。</li>
+<li>没有 guidance、没有负面提示词参数 → 只能正面表述（不说 blurry，说 <code>sharp, crisp focus</code>；不说 no music，说 <code>no non-diegetic music, room tone only</code>）。</li>
+<li><code>&lt;d&gt;</code>、<code>&lt;cutoff&gt;</code>、<code>&lt;lyrics_start|end&gt;</code> 这些标记在开源权重里是无效 token，台词得改写成普通文本。</li>
+<li>Turbo 4-step 适配器能把 1344×768 / 5.17 秒从约 2 小时 25 分压到 12.6 分钟，但那是另一次采样，不是同一画面的加速。</li>
+</ul>
+<h2 id="十二、资源清单"><a href="#十二、资源清单" class="headerlink" title="十二、资源清单"></a>十二、资源清单</h2><h3 id="一手资料（其它基本都是转述）"><a href="#一手资料（其它基本都是转述）" class="headerlink" title="一手资料（其它基本都是转述）"></a>一手资料（其它基本都是转述）</h3><ul>
+<li>官方 skill 仓库：<a target="_blank" rel="noopener" href="https://github.com/MiniMax-AI/MiniMax-H3/tree/main/skills/h3-prompt-writing">https://github.com/MiniMax-AI/MiniMax-H3/tree/main/skills/h3-prompt-writing</a><ul>
+<li>base 规范原文：<a target="_blank" rel="noopener" href="https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/base-en.txt">https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/base-en.txt</a></li>
+<li>Ref2VA 规范原文：<a target="_blank" rel="noopener" href="https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/ref-en.txt">https://raw.githubusercontent.com/MiniMax-AI/MiniMax-H3/main/skills/h3-prompt-writing/references/ref-en.txt</a></li>
+</ul>
+</li>
+<li>HF 模型卡（含完整 Prompting Guidance）：<a target="_blank" rel="noopener" href="https://huggingface.co/MiniMaxAI/MiniMax-H3">https://huggingface.co/MiniMaxAI/MiniMax-H3</a></li>
+<li>官方仓库 README 里的三个可复现案例（T2VA / I2VA / Ref2VA 的 Context-IR 实际输出原文 + 768p/2K/API 三方对照成片）：<a target="_blank" rel="noopener" href="https://github.com/MiniMax-AI/MiniMax-H3">https://github.com/MiniMax-AI/MiniMax-H3</a></li>
+<li>ComfyUI 官方文档 H3 专区：<a target="_blank" rel="noopener" href="https://docs.comfy.org/tutorials/video/minimax/minimax-h3">https://docs.comfy.org/tutorials/video/minimax/minimax-h3</a><ul>
+<li>原生工作流：<a target="_blank" rel="noopener" href="https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native">https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native</a></li>
+<li>多帧参考：<a target="_blank" rel="noopener" href="https://docs.comfy.org/tutorials/video/minimax/minimax-h3-multiframe">https://docs.comfy.org/tutorials/video/minimax/minimax-h3-multiframe</a></li>
+<li>提示词指南：<a target="_blank" rel="noopener" href="https://docs.comfy.org/tutorials/video/minimax/minimax-h3-prompt-guide">https://docs.comfy.org/tutorials/video/minimax/minimax-h3-prompt-guide</a></li>
+</ul>
+</li>
+<li>部署 cookbook：<a target="_blank" rel="noopener" href="https://docs.sglang.io/cookbook/diffusion/MiniMax/MiniMax-H3">https://docs.sglang.io/cookbook/diffusion/MiniMax/MiniMax-H3</a> · <a target="_blank" rel="noopener" href="https://recipes.vllm.ai/MiniMaxAI/MiniMax-H3">https://recipes.vllm.ai/MiniMaxAI/MiniMax-H3</a></li>
+<li>海螺官方知识库：<a target="_blank" rel="noopener" href="https://hailuoai.video/pages/knowledge">https://hailuoai.video/pages/knowledge</a></li>
+</ul>
+<h3 id="有实测数据的长文"><a href="#有实测数据的长文" class="headerlink" title="有实测数据的长文"></a>有实测数据的长文</h3><ul>
+<li>阿里云《MiniMax H3 提示词实战：一条公式、11 个场景模板与真实参数》——真实生产（《问道无极》第 3、4 集）+ 参数纠错 + 11 条模板：<a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/1780365">https://developer.aliyun.com/article/1780365</a></li>
+<li>sceneworks 开源权重实测：时长档位、显存、A/B 对照：<a target="_blank" rel="noopener" href="https://github.com/sceneworks/sceneworks/blob/5e88855d6c3890524f0ec4989a90115b14e1a2fe/apps/web/public/prompt-guides/minimax-h3.md">https://github.com/sceneworks/sceneworks/blob/5e88855d6c3890524f0ec4989a90115b14e1a2fe/apps/web/public/prompt-guides/minimax-h3.md</a></li>
+<li>Kapwing 方法论（七段式 + 7 条技巧，署名作者）：<a target="_blank" rel="noopener" href="https://www.kapwing.com/resources/how-to-prompt-minimax-h3-hailuo-3-0-a-guide-for-ai-video-creators/">https://www.kapwing.com/resources/how-to-prompt-minimax-h3-hailuo-3-0-a-guide-for-ai-video-creators/</a></li>
+<li>中文提示词指南：<a target="_blank" rel="noopener" href="https://minimax3.com/zh/blog/minimax-h3-prompt-guide">https://minimax3.com/zh/blog/minimax-h3-prompt-guide</a></li>
+</ul>
+<h3 id="视频教程（B-站）"><a href="#视频教程（B-站）" class="headerlink" title="视频教程（B 站）"></a>视频教程（B 站）</h3><ul>
+<li>《提示词不会写？99% 听话的 Prompt Skill｜官方规范 + A/B 实测》6 分钟，同剧情两版对照，是真正做过实验的一条：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV13a4Z6DEur">https://www.bilibili.com/video/BV13a4Z6DEur</a></li>
+<li>《空间人物一致性分镜制作详解》2 小时 09 分，多角色与空间一致性：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1CG4D6HEdD">https://www.bilibili.com/video/BV1CG4D6HEdD</a></li>
+<li>《AI 影视剧专业创作流程思路讲解》42 分钟：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1w1u26hEQ7">https://www.bilibili.com/video/BV1w1u26hEQ7</a></li>
+<li>官方 Skills 提示词生成器使用教程：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Ctu463EXd">https://www.bilibili.com/video/BV1Ctu463EXd</a></li>
+</ul>
+<h3 id="提示词库（用来抄，注意标注）"><a href="#提示词库（用来抄，注意标注）" class="headerlink" title="提示词库（用来抄，注意标注）"></a>提示词库（用来抄，注意标注）</h3><ul>
+<li>awesome-minimax-h3-prompts（274 条带成片；202 条作者原文 + 72 条 AI 反推，已分开标注）：<a target="_blank" rel="noopener" href="https://github.com/xianyu110/awesome-minimax-h3-prompts">https://github.com/xianyu110/awesome-minimax-h3-prompts</a></li>
+<li>在线画廊：<a target="_blank" rel="noopener" href="https://tryminimax.asia/zh/minimax-h3-prompts">https://tryminimax.asia/zh/minimax-h3-prompts</a></li>
+<li>God MiniMax H3（5 条逆向拆解 + 分段/一致性/拼接脚本）：<a target="_blank" rel="noopener" href="https://github.com/LIUFelix2004/God-minmax-H3">https://github.com/LIUFelix2004/God-minmax-H3</a></li>
+</ul>
+<blockquote>
+<p>抄的时候记一条：<strong>学写法看反推，真要用抄作者原文</strong>。AI 反推能还原画面，但恢复不了负面约束、准确台词和参考图工作流。</p>
+</blockquote>
+<h3 id="怎么识别营销号内容"><a href="#怎么识别营销号内容" class="headerlink" title="怎么识别营销号内容"></a>怎么识别营销号内容</h3><p>四个特征够用：通篇形容词没有一个参数；没有 A/B 对照只放最好那条；把 SD 的 steps/CFG 套到托管 API 上还说「这样最稳」；通篇不提 <code>integrated_multimodal_description</code>、<code>&lt;d&gt;</code>、retention 这些真实字段，只给「万能公式」。</p>
+<h2 id="十三、上手路径"><a href="#十三、上手路径" class="headerlink" title="十三、上手路径"></a>十三、上手路径</h2><ol>
+<li>读官方 <code>base-en.txt</code> + <code>ref-en.txt</code>，半小时建立坐标系。</li>
+<li>看官方 README 那三个 Context-IR 输出案例，知道「标准答案」长什么样。</li>
+<li>抄一条最接近的模板，跑 768P。</li>
+<li>给自己做一次 A/B：同一剧情，大白话版 vs 结构化版，各跑一条。做完这一步，直觉会超过看十条教程。</li>
+<li>要本地跑，再进 ComfyUI 官方文档的六个子页。</li>
+</ol>
+<p>最后一条心法，来自那条 A/B 视频，也是整篇笔记的收束：</p>
+<blockquote>
+<p>提示词不是在写作文，是在写一份给导演、摄影师和演员看的拍摄说明。目标只有一个——<strong>少让模型猜</strong>。</p>
+</blockquote>
+<div id="paginator"></div></div><div id="post-footer"><div id="pages" style="justify-content: flex-end"><div class="footer-link" style="width: 50%;right:1px;border-left:1px #fe2 solid"><a href="/2026/11/15/agent-dev-04-streaming-and-agent-events/">流式输出：让 Agent 边执行边反馈 上一篇 →</a></div></div></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" onClick="tocControl.change()" title="文章目录"><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span><span class="tocBtnIconBar"></span></a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="NomiraX 的博客" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">NomiraX</a></h1><div id="description"><p>Deep Learning...</p></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E7%B3%BB%E7%BB%9F%E5%88%86%E4%B8%89%E6%AD%A5%EF%BC%8C%E5%86%99%E6%B3%95%E5%9B%A0%E6%AD%A4%E5%88%86%E6%88%90%E4%B8%A4%E5%B2%94"><span class="toc-number">1.</span> <span class="toc-text">一、系统分三步，写法因此分成两岔</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E8%AE%B0%E4%BD%8F%E8%BF%99%E5%BC%A0%E7%A1%AC%E7%BA%A6%E6%9D%9F%E8%A1%A8"><span class="toc-number">2.</span> <span class="toc-text">二、先记住这张硬约束表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81base-%E6%A8%A1%E5%BC%8F%EF%BC%9A%E4%B8%80%E6%9D%A1%E5%AF%B9%E9%BD%90%E6%8C%87%E4%BB%A4-%E4%B8%89%E4%B8%AA%E5%AD%97%E6%AE%B5"><span class="toc-number">3.</span> <span class="toc-text">三、base 模式：一条对齐指令 + 三个字段</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%88%86%E9%95%9C%E4%B8%8E%E6%97%B6%E9%97%B4%E7%A0%81"><span class="toc-number">4.</span> <span class="toc-text">四、分镜与时间码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E8%BF%90%E9%95%9C%E8%AF%8D%E8%A1%A8"><span class="toc-number">5.</span> <span class="toc-text">五、运镜词表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E5%8F%B0%E8%AF%8D%E3%80%81%E8%AF%B4%E8%AF%9D%E4%BA%BA%E4%B8%8E%E5%A3%B0%E9%9F%B3"><span class="toc-number">6.</span> <span class="toc-text">六、台词、说话人与声音</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%B4%E8%AF%9D%E4%BA%BA"><span class="toc-number">6.1.</span> <span class="toc-text">说话人</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E6%9D%A1%E5%A3%B0%E9%9F%B3%E7%BA%BF%E5%88%AB%E5%86%99%E6%B7%B7"><span class="toc-number">6.2.</span> <span class="toc-text">三条声音线别写混</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81Ref2VA%EF%BC%9A%E5%85%AD%E6%AE%B5%E5%BC%8F%E4%B8%8E%E5%9B%9B%E7%A7%8D%E6%A0%87%E7%AD%BE"><span class="toc-number">7.</span> <span class="toc-text">七、Ref2VA：六段式与四种标签</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E7%A7%8D%E6%A0%87%E7%AD%BE%EF%BC%8C%E5%90%84%E7%AE%A1%E4%B8%80%E4%BB%B6%E4%BA%8B"><span class="toc-number">7.1.</span> <span class="toc-text">四种标签，各管一件事</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#summary-%E4%B8%8E-retention"><span class="toc-number">7.2.</span> <span class="toc-text">summary 与 retention</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#detailed-description"><span class="toc-number">7.3.</span> <span class="toc-text">detailed_description</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%89%98%E7%AE%A1%E7%AB%AF%EF%BC%9A%E4%BA%BA%E8%AF%9D%E5%85%AD%E6%A8%A1%E5%9D%97"><span class="toc-number">8.</span> <span class="toc-text">八、托管端：人话六模块</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E5%87%8F%E6%B3%95%E5%BC%8F%EF%BC%9A%E5%8F%AA%E7%BB%99%E4%B8%80%E4%B8%AA%E4%B8%BB%E5%AF%BC%E9%80%9F%E5%BA%A6%E5%90%91%E9%87%8F"><span class="toc-number">9.</span> <span class="toc-text">九、减法式：只给一个主导速度向量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E7%BF%BB%E8%BD%A6%E5%AF%B9%E7%85%A7%E8%A1%A8"><span class="toc-number">10.</span> <span class="toc-text">十、翻车对照表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E8%BF%AD%E4%BB%A3%E7%BA%AA%E5%BE%8B"><span class="toc-number">11.</span> <span class="toc-text">十一、成本与迭代纪律</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E8%B5%84%E6%BA%90%E6%B8%85%E5%8D%95"><span class="toc-number">12.</span> <span class="toc-text">十二、资源清单</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E6%89%8B%E8%B5%84%E6%96%99%EF%BC%88%E5%85%B6%E5%AE%83%E5%9F%BA%E6%9C%AC%E9%83%BD%E6%98%AF%E8%BD%AC%E8%BF%B0%EF%BC%89"><span class="toc-number">12.1.</span> <span class="toc-text">一手资料（其它基本都是转述）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%89%E5%AE%9E%E6%B5%8B%E6%95%B0%E6%8D%AE%E7%9A%84%E9%95%BF%E6%96%87"><span class="toc-number">12.2.</span> <span class="toc-text">有实测数据的长文</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%86%E9%A2%91%E6%95%99%E7%A8%8B%EF%BC%88B-%E7%AB%99%EF%BC%89"><span class="toc-number">12.3.</span> <span class="toc-text">视频教程（B 站）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%BA%93%EF%BC%88%E7%94%A8%E6%9D%A5%E6%8A%84%EF%BC%8C%E6%B3%A8%E6%84%8F%E6%A0%87%E6%B3%A8%EF%BC%89"><span class="toc-number">12.4.</span> <span class="toc-text">提示词库（用来抄，注意标注）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%8E%E4%B9%88%E8%AF%86%E5%88%AB%E8%90%A5%E9%94%80%E5%8F%B7%E5%86%85%E5%AE%B9"><span class="toc-number">12.5.</span> <span class="toc-text">怎么识别营销号内容</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E4%B8%8A%E6%89%8B%E8%B7%AF%E5%BE%84"><span class="toc-number">13.</span> <span class="toc-text">十三、上手路径</span></a></li></ol></div></div></aside></div></main><script defer src="/js/home-hero.js?v=20261116-perf"></script><script defer src="/js/reading-progress.js?v=20261116-perf"></script><canvas id="canvas-dust"></canvas></body></html>
